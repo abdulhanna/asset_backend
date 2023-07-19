@@ -30,14 +30,17 @@ authService.doRegister = async (data) => {
       )
     );
   
-
-    const existingUser = await userModel.findOne({ email: data.email });
+    const existingUser = await userModel.findOne({ 
+      email: data.email,
+      is_deleted: false,
+    });
+    
     assert(!existingUser, 'Account already exists');
     
     const token = await jwtService.generatePair(data.email);
     const access_token = token.access_token;
     const hashedPassword = bcrypt.hashSync(data.password, 8);
-    const sendEmail = await emailtemplate.sendEmail(data.email, access_token)
+    const sendEmail = await emailtemplate.accountVerificationEmail(data.email, access_token)
      assert(sendEmail == true , `Something went wrong, please try again!`)
      
    const result = await userModel.create({
@@ -54,37 +57,40 @@ authService.doRegister = async (data) => {
 // email confirmation
 
 authService.verifyUser = async (token) => {
-  const userToken = token;
-  const usercheckVerify = await userModel.findOne({
-    token: userToken,
-    isDeleted: false,
-    is_email_verified: true,
-    is_profile_completed: true,
-  });
-
-
-  assert(
-    !usercheckVerify,
-    createError(StatusCodes.BAD_REQUEST, "email already verified")
-  );
-
   const user = await userModel.findOne({
     token,
   });
 
   assert(user, createError(StatusCodes.NOT_FOUND, "User not found"));
 
+  const userToken = await jwtService.verifyAccessToken(user.token);
+
+  const usercheckVerify = await userModel.findOne({
+    is_deleted: false,
+    is_email_verified: true,
+  });
+
+  assert(
+    !usercheckVerify,
+    createError(StatusCodes.BAD_REQUEST, "email already verified")
+  );
+
+ 
   const result = await userModel.findOneAndUpdate(
     { token },
     { is_email_verified: "true" },
     { new: true }
-  );
+  ).select({
+    _id: 1,
+    email: 1,
+    is_email_verified: 1,
+  });
+
+;
   return result;
-
-
-
-
 }
+
+
 
 
 
