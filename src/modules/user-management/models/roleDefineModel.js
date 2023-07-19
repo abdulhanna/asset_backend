@@ -5,10 +5,6 @@ const roleDefineSchema = new mongoose.Schema(
                type: String,
           },
           permissions: {
-               type: Boolean,
-               default: false,
-          },
-          permissions: {
                type: [
                     {
                          moduleName: {
@@ -20,7 +16,7 @@ const roleDefineSchema = new mongoose.Schema(
                          read_write: {
                               type: Boolean,
                          },
-                         actiob: {
+                         actions: {
                               type: Boolean,
                          },
                     },
