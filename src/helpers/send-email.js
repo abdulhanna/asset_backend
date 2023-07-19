@@ -3,7 +3,7 @@ import sgMail from "@sendgrid/mail";
 
 const emailtemplate = {}
 
-emailtemplate.sendEmail = async (toemail, token) => {
+emailtemplate.accountVerificationEmail = async (toemail, token) => {
     sgMail.setApiKey(secret.sendgrid.api_key);
     const msg = {
       to: toemail, // Change to your recipient
