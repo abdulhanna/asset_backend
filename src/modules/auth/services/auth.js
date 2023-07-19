@@ -91,6 +91,13 @@ authService.verifyUser = async (token) => {
 }
 
 
+authService.completeProfille = async (token) =>{
+  const user = await userModel.findOne({
+    token,
+  });
+
+  assert(user, createError(StatusCodes.NOT_FOUND, "User not found"));
+}
 
 
 
