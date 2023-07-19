@@ -26,4 +26,16 @@ router.get(
   })
 );
 
+
+// profile complete
+
+router.get(
+  "/profileComplete/:token",
+  httpHandler(async (req, res) => {
+    const { token } = req.params;
+    const result = await authService.verifyUser(token);
+    res.send(result);
+  })
+)
+
 export default router;
