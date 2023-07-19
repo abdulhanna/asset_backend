@@ -78,7 +78,7 @@ authService.verifyUser = async (token) => {
  
   const result = await userModel.findOneAndUpdate(
     { token },
-    { is_email_verified: "true" },
+    { is_email_verified: "true", token: null},
     { new: true }
   ).select({
     _id: 1,
