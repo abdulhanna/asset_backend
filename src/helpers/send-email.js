@@ -78,4 +78,24 @@ emailtemplate.accountVerificationEmail = async (toemail, token) => {
      else return false;
 };
 
+emailtemplate.sendInvitationEmail = async (email, verificationToken) => {
+     console.log('email', 'verificationToken', email, verificationToken);
+     sgMail.setApiKey(secret.sendgrid.api_key);
+     const message = {
+          to: email,
+          from: 'dhananjay@plaxonic.com',
+          subject: 'Invitation to Set Password',
+          html: `<p>Hello,</p><p>You have been invited to set your password. Click the following link to set your password:</p>
+        <a href="https://your-app-url/set-password/${verificationToken}">Set Password</a>`,
+     };
+
+     try {
+          await sgMail.send(message);
+          console.log('Invitation email sent successfully.');
+     } catch (error) {
+          console.error('Error sending invitation email:', error);
+          throw new Error('Failed to send invitation email');
+     }
+};
+
 export default emailtemplate;

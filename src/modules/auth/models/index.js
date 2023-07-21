@@ -17,11 +17,12 @@ const userSchema = new mongoose.Schema({
      role: {
           type: String,
           enum: ['root', 'superadmin'],
-          default: null,
+          //default: null,
+          required: false,
      },
      teamrole: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: 'Role',
+          ref: 'Roles',
           default: null,
      },
      token: {

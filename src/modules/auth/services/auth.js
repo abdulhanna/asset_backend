@@ -105,60 +105,43 @@ authService.completeProfille = async (token) => {
      assert(user, createError(StatusCodes.NOT_FOUND, 'User not found'));
 };
 
-// authService.createMember = async (req, res) => {
-//      try {
-//           const { email, password, parentId, permissions, teamrole } = req.body;
-
-//           // Perform validation checks here
-//           // ...
-
-//           // Check if the parentId belongs to an existing superadmin
-//           const parentUser = await userModel.findById(parentId);
-//           if (!parentUser || parentUser.role !== 'superadmin') {
-//                return res
-//                     .status(400)
-//                     .json({ error: 'Invalid parentId or not a superadmin' });
-//           }
-
-//           // Check if the specified teamrole exists in the roleDefineModel
-//           // You can add more validation checks for permissions and roles if needed
-
-//           // Create the new user in the database
-//           const newUser = await userModel.create({
-//                email,
-//                password,
-//                parentId,
-//                permissions,
-//                teamrole,
-//                role: 'team', // Set the role as 'team' for members
-//           });
-
-//           res.status(201).json(newUser);
-//      } catch (err) {
-//           res.status(500).json({ error: 'Unable to create user' });
-//      }
-// };
-
 authService.createMember = async (userData) => {
      try {
+          // Generate a verification token
+          const verificationToken = await jwtService.generatePair(
+               userData.email
+          );
+
+          // Send the invitation email to the member
+          await emailtemplate.sendInvitationEmail(
+               userData.email,
+               verificationToken
+          );
+
+          // Save the member with the verification token to the database
           const member = new userModel({
                email: userData.email,
                password: userData.password,
                parentId: userData.parentId,
-               //role: 'member',
+               teamrole: userData.teamrole,
                userProfile: userData.userProfile,
+               verificationToken: verificationToken,
           });
 
           const savedMember = await member.save();
+
           return savedMember;
      } catch (error) {
+          console.log(error);
           throw new Error('Failed to create member');
      }
 };
 
 authService.getAllMembers = async (parentId) => {
      try {
-          const members = await userModel.find({ parentId });
+          const members = await userModel
+               .find({ parentId })
+               .populate('teamrole');
           return members;
      } catch (error) {
           throw new Error('Failed to fetch members');

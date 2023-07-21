@@ -1,8 +1,8 @@
-import Permission from '../models/permissions.js';
+import { permissionModel } from '../models';
 
 export const createPermission = async (moduleName, allAccess) => {
      try {
-          const permission = new Permission({
+          const permission = new permissionModel({
                moduleName,
                read: allAccess,
                read_write: allAccess,
@@ -18,7 +18,7 @@ export const createPermission = async (moduleName, allAccess) => {
 
 export const updatePermission = async (id, read, read_write, actions) => {
      try {
-          return await Permission.findByIdAndUpdate(
+          return await permissionModel.findByIdAndUpdate(
                id,
                {
                     read,
@@ -35,7 +35,7 @@ export const updatePermission = async (id, read, read_write, actions) => {
 
 export const getAllPermissions = async () => {
      try {
-          return await Permission.find();
+          return await permissionModel.find();
      } catch (error) {
           throw new Error(error.message);
      }
