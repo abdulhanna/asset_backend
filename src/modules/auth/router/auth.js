@@ -3,6 +3,7 @@ import { httpHandler } from '@madhouselabs/http-helpers';
 import StatusCodes from 'http-status-codes';
 import { isLoggedIn } from './passport.js';
 import authService from '../services/auth';
+import userModel from '../models/index.js';
 
 const router = Router();
 
@@ -66,35 +67,29 @@ router.get('/members/:parentId', async (req, res) => {
      }
 });
 
-// Add this route to your router file (memberRoutes.js)
-router.post('/set-password', async (req, res) => {
+// Set password for the member using verification token
+router.post('/members/set-password', async (req, res) => {
      try {
           const { verificationToken, password } = req.body;
 
           // You can handle the verification token validation here
 
-          // Find the member using the verification token and set their password
-          const member = await userModel.findOneAndUpdate(
-               { verificationToken },
-               { password },
-               { new: true }
+          const result = await authService.setPassword(
+               verificationToken,
+               password
           );
 
-          if (!member) {
-               return res.status(404).json({
+          if (result.success) {
+               res.status(200).json({
+                    success: true,
+                    message: 'Password set successfully',
+               });
+          } else {
+               res.status(404).json({
                     success: false,
                     message: 'Invalid verification token',
                });
           }
-
-          // Clear the verification token after the password has been set
-          member.verificationToken = null;
-          await member.save();
-
-          res.status(200).json({
-               success: true,
-               message: 'Password set successfully',
-          });
      } catch (error) {
           res.status(500).json({
                success: false,

@@ -149,4 +149,25 @@ authService.getAllMembers = async (parentId) => {
      }
 };
 
+authService.setPassword = async (verificationToken, password) => {
+     try {
+          // Find the member using the verification token
+          const member = await userModel.findOne({ verificationToken });
+
+          if (!member) {
+               return { success: false };
+          }
+
+          // Set the new password
+          member.password = password;
+          member.verificationToken = null;
+          await member.save();
+
+          return { success: true };
+     } catch (error) {
+          console.log(error);
+          throw new Error('Failed to set password');
+     }
+};
+
 export default authService;
