@@ -8,7 +8,7 @@ const roleSchema = new mongoose.Schema(
           permissions: [
                {
                     type: mongoose.Schema.Types.ObjectId,
-                    ref: 'Permission',
+                    ref: 'permissions',
                },
           ],
           added_by_userId: {
@@ -39,6 +39,6 @@ const roleSchema = new mongoose.Schema(
      { new: true }
 );
 
-const roleModel = mongoose.model('Role', roleSchema);
+const roleModel = mongoose.model('roles', roleSchema);
 
 export default roleModel;
