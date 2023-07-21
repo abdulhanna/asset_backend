@@ -6,7 +6,7 @@ const roleDefineSchema = new mongoose.Schema({
   permissions:[
     {
          type: mongoose.Schema.Types.ObjectId,
-         ref: 'Permission',
+         ref: "permissions",
     },
 ],
   added_by_userId:{
@@ -34,4 +34,4 @@ updated_at: {
     default: null,
 }
 },{new:true})
-export default mongoose.model('Role', roleDefineSchema);
+export default mongoose.model('roles', roleDefineSchema);

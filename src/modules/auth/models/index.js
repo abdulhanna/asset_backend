@@ -55,7 +55,7 @@ const userSchema = new mongoose.Schema(
       type: {
         organizationId:{
           type: mongoose.Schema.Types.ObjectId,
-          ref: "Organization",
+          ref: "organizations",
         },
         userIdentificationNo: {
           type: String                  
@@ -79,6 +79,9 @@ const userSchema = new mongoose.Schema(
           type: String
         },
         state: {
+          type: String
+        },
+        country:{
           type: String
         },
         pinCode: {

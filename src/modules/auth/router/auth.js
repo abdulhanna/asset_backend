@@ -3,6 +3,7 @@ import { httpHandler } from "@madhouselabs/http-helpers";
 import StatusCodes from "http-status-codes";
 import { isLoggedIn } from './passport.js';
 import authService from "../services/auth";
+import { attachCookie } from "../../../helpers/cookie-manager.js";
 
 
 const router = Router();
@@ -34,8 +35,26 @@ router.post(
   "/profileComplete",
   httpHandler(async (req, res) => {
     const result = await authService.completeProfille(req.body);
-    res.send(result);
+     attachCookie(res,  {access_token: result.access_token});
+     console.log(result.redirectURL);
+    res.redirect(result.redirectURL);
   })
 )
+
+
+//login API
+
+router.post(
+  '/login',
+  httpHandler(async (req, res) => {
+    const result = await authService.doLogin({
+      email: req.body.email,
+      password: req.body.password,
+    });
+    attachCookie(res, {access_token: result.access_token});
+    res.sendStatus(StatusCodes.OK);
+  })
+);
+
 
 export default router;

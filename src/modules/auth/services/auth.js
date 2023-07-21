@@ -6,6 +6,8 @@ import jwtService from "./jwt-services";
 import { secret } from "../../../../src/config/secret";
 import emailtemplate from "../../../helpers/send-email"
 import userModel from "../models/"
+import { organizationModel } from "../../organization/models";
+
 
 const authService = {};
 
@@ -39,16 +41,15 @@ authService.doRegister = async (data) => {
     assert(!existingUser, 'Account already exists');
     
     const token = await jwtService.generatePair(data.email);
-    const access_token = token.access_token;
     const hashedPassword = bcrypt.hashSync(data.password, 8);
-    const sendEmail = await emailtemplate.accountVerificationEmail(data.email, access_token)
+    const sendEmail = await emailtemplate.accountVerificationEmail(data.email, token)
      assert(sendEmail == true , `Something went wrong, please try again!`)
      
    const result = await userModel.create({
         ...data,
         password: hashedPassword,
         role: role,
-        verificationToken: access_token,
+        verificationToken: token,
       });
      return result;
   };
@@ -80,16 +81,25 @@ authService.verifyUser = async (verificationToken) => {
   const companyToken = await jwtService.generatePair(user.email);
   const result = await userModel.findOneAndUpdate(
     { verificationToken},
-    { is_email_verified: "true", companyProfileToken: companyToken.access_token},
+    { is_email_verified: "true", companyProfileToken: companyToken},
     { new: true }
   );
 
-  const redirectURL = `${secret.frontend_baseURL}/company-profile?confirmation_token=${companyToken.access_token}`;
+  const redirectURL = `${secret.frontend_baseURL}/company-profile?confirmation_token=${companyToken}`;
   return redirectURL;
 }
 
 
 authService.completeProfille = async (data) =>{
+
+  assertEvery(
+    [data.token, data.organizationName, data.organizationRegistrationNumber, data.contactNo],
+    createError(
+      StatusCodes.BAD_REQUEST,
+      "Invalid Data: [token], [organizationName], [organizationRegistrationNumber] and [confirmPassword] fields must exist"
+    )
+  );
+
   const companyProfileToken = data.token;
   const user = await userModel.findOne({
     companyProfileToken,
@@ -107,14 +117,62 @@ authService.completeProfille = async (data) =>{
   if(usercheckVerify)
   {
     const redirectURL = `${secret.frontend_baseURL}/login`;
-    return redirectURL;
+    return {"redirectURL": redirectURL};
   }
+  
 
-  const checkCompanyname = await userModel.findOne({
-    
+   const organizationName = data.organizationName;
+  const existiingCompanyname = await organizationModel.findOne({
+    organizationName
   })
+  assert(!existiingCompanyname, "Company Name already exists");
 
+  const getToken = await jwtService.generatePair(user.email);
+  const updateToken = await userModel.findOneAndUpdate(
+    { companyProfileToken},
+    { token: getToken, is_profile_completed: "true"},
+    { new: true }
+  );
+
+  assert(updateToken, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"));
+  const newOrganization = new organizationModel({
+      userId:user._id,
+      organizationName: data.organizationName,
+      organizationRegistrationNumber:data.organizationRegistrationNumber,
+      pan:data.pan,
+      gstin:data.gstin,
+      contactNo:data.contactNo,
+      mainAddress:{
+          address1:data.mainAddress.address1,
+          address2:data.mainAddress.address2,
+          city:data.mainAddress.city,
+          state:data.mainAddress.state,
+          country:data.mainAddress.country,
+          pinCode:data.mainAddress.pinCode,
+      }
+  
+  });
+  const savedOrganization = await newOrganization.save();
+  assert(
+    savedOrganization,
+    createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout")
+  );
+  const redirectURL = `${secret.frontend_baseURL}/dashboard`;
+  return {"userId":user._id, "access_token":getToken, "redirectURL":redirectURL};
 }
+
+
+authService.doLogin = async ({ email, password }) => {
+  const existingUser = await userModel.findOne({ email });
+  assert(
+    existingUser,
+    createError(StatusCodes.UNAUTHORIZED, 'User does not exist')
+  );
+  const isValid = bcrypt.compareSync(password, existingUser.password);
+  assert(isValid, createError(StatusCodes.UNAUTHORIZED, "Invalid password"));
+  const getToken = await jwtService.generatePair(existingUser.email);
+  return {"userId":existingUser._id, "access_token":getToken};
+};
 
 
 
