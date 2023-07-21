@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
-
-const roleSchema = new mongoose.Schema(
+const roleDefineSchema = new mongoose.Schema(
      {
           rolename: {
                type: String,
@@ -38,5 +37,4 @@ const roleSchema = new mongoose.Schema(
      },
      { new: true }
 );
-
-export default mongoose.model('Role', roleSchema);
+export default mongoose.model('Role', roleDefineSchema);

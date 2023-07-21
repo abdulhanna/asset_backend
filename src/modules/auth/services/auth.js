@@ -3,6 +3,7 @@ import createError from 'http-errors-lite';
 import bcrypt from 'bcryptjs';
 import { assert, assertEvery } from '../../../helpers/mad-assert';
 import jwtService from './jwt-services';
+import { secret } from '../../../../src/config/secret';
 import emailtemplate from '../../../helpers/send-email';
 import userModel from '../models/';
 
@@ -17,6 +18,14 @@ authService.doRegister = async (data) => {
           createError(
                StatusCodes.BAD_REQUEST,
                'Invalid Data: [email], [password] and [confirmPassword] fields must exist'
+          )
+     );
+
+     assert(
+          data.password == data.confirmPassword,
+          createError(
+               StatusCodes.UNAUTHORIZED,
+               "Password and confirm Password don't match"
           )
      );
 
@@ -48,45 +57,44 @@ authService.doRegister = async (data) => {
           ...data,
           password: hashedPassword,
           role: role,
-          token: access_token,
+          verificationToken: access_token,
      });
      return result;
 };
 
 // email confirmation
 
-authService.verifyUser = async (token) => {
+authService.verifyUser = async (verificationToken) => {
      const user = await userModel.findOne({
-          token,
+          verificationToken,
      });
-
-     assert(user, createError(StatusCodes.NOT_FOUND, 'User not found'));
-
-     const userToken = await jwtService.verifyAccessToken(user.token);
+     assert(user, createError(StatusCodes.NOT_FOUND, 'Invalid token provided'));
 
      const usercheckVerify = await userModel.findOne({
+          verificationToken,
           is_deleted: false,
           is_email_verified: true,
+          is_profile_completed: true,
      });
 
-     assert(
-          !usercheckVerify,
-          createError(StatusCodes.BAD_REQUEST, 'email already verified')
+     if (usercheckVerify) {
+          const redirectURL = `${secret.frontend_baseURL}/login`;
+          return redirectURL;
+     }
+
+     const userToken = await jwtService.verifyAccessToken(verificationToken);
+     const companyToken = await jwtService.generatePair(user.email);
+     const result = await userModel.findOneAndUpdate(
+          { verificationToken },
+          {
+               is_email_verified: 'true',
+               companyProfileToken: companyToken.access_token,
+          },
+          { new: true }
      );
 
-     const result = await userModel
-          .findOneAndUpdate(
-               { token },
-               { is_email_verified: 'true', token: null },
-               { new: true }
-          )
-          .select({
-               _id: 1,
-               email: 1,
-               is_email_verified: 1,
-          });
-
-     return result;
+     const redirectURL = `${secret.frontend_baseURL}/company-profile?confirmation_token=${companyToken.access_token}`;
+     return redirectURL;
 };
 
 authService.completeProfille = async (token) => {

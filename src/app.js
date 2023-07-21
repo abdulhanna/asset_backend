@@ -13,7 +13,7 @@ export const createApp = () => {
      app.set('trust proxy', true);
      app.use(
           cors({
-               origin: ['http://localhost:3000'],
+               origin: ['http://localhost:3000', 'http://localhost:4000'],
                credentials: true,
           })
      );

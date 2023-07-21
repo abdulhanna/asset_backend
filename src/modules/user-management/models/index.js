@@ -1,2 +1,2 @@
-export { default as Role } from './roles';
-export { default as Permission } from './permissions';
+export { default as roleDefineModel } from './roles';
+export { default as permissionDefineModel } from './permissions';
