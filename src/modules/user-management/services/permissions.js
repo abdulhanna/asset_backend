@@ -1,6 +1,6 @@
 import { permissionModel } from '../models';
 
-export const createPermission = async (moduleName, allAccess) => {
+const createPermission = async (moduleName, allAccess) => {
      try {
           const permission = new permissionModel({
                moduleName,
@@ -16,7 +16,7 @@ export const createPermission = async (moduleName, allAccess) => {
      }
 };
 
-export const updatePermission = async (id, read, read_write, actions) => {
+const updatePermission = async (id, read, read_write, actions) => {
      try {
           return await permissionModel.findByIdAndUpdate(
                id,
@@ -33,7 +33,7 @@ export const updatePermission = async (id, read, read_write, actions) => {
      }
 };
 
-export const getAllPermissions = async () => {
+const getAllPermissions = async () => {
      try {
           return await permissionModel.find();
      } catch (error) {
