@@ -35,4 +35,7 @@ router.get(
      })
 );
 
+// Create a new user as a member under a superadmin and assign permissions and roles
+router.post('/create-member', authService.createMember);
+
 export default router;

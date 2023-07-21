@@ -97,4 +97,38 @@ authService.completeProfille = async (token) => {
      assert(user, createError(StatusCodes.NOT_FOUND, 'User not found'));
 };
 
+authService.createMember = async (req, res) => {
+     try {
+          const { email, password, parentId, permissions, teamrole } = req.body;
+
+          // Perform validation checks here
+          // ...
+
+          // Check if the parentId belongs to an existing superadmin
+          const parentUser = await userModel.findById(parentId);
+          if (!parentUser || parentUser.role !== 'superadmin') {
+               return res
+                    .status(400)
+                    .json({ error: 'Invalid parentId or not a superadmin' });
+          }
+
+          // Check if the specified teamrole exists in the roleDefineModel
+          // You can add more validation checks for permissions and roles if needed
+
+          // Create the new user in the database
+          const newUser = await userModel.create({
+               email,
+               password,
+               parentId,
+               permissions,
+               teamrole,
+               role: 'team', // Set the role as 'team' for members
+          });
+
+          res.status(201).json(newUser);
+     } catch (err) {
+          res.status(500).json({ error: 'Unable to create user' });
+     }
+};
+
 export default authService;

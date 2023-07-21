@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
-const permissionDefineSchema = new mongoose.Schema(
+
+const permissionSchema = new mongoose.Schema(
      {
           moduleName: {
                type: String,
@@ -39,4 +40,5 @@ const permissionDefineSchema = new mongoose.Schema(
      },
      { new: true }
 );
-export default mongoose.model('permissionDefineModel', permissionDefineSchema);
+
+export default mongoose.model('Permission', permissionSchema);

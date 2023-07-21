@@ -4,8 +4,9 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import { errorHandler, notFoundHandler } from './helpers/express-middleware';
 import authModule from './modules/auth';
+import userManagementModule from './modules/user-management';
 
-const modules = [authModule];
+const modules = [authModule, userManagementModule];
 
 export const createApp = () => {
      const app = express();
