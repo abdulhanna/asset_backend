@@ -1,16 +1,22 @@
 import { roleModel } from '../models';
 
-const createRole = async (rolename, permissions, added_by_userId) => {
+const createRole = async (
+     rolename,
+     description,
+     permissions,
+     added_by_userId
+) => {
      try {
           // Create the new role in the database
           const role = await roleModel.create({
                rolename,
+               description,
                permissions,
                added_by_userId,
           });
 
           return role;
-     } catch (err) {
+     } catch (error) {
           throw new Error('Unable to create role');
      }
 };
@@ -25,7 +31,7 @@ const getAllRoles = async () => {
                .exec();
 
           return roles;
-     } catch (err) {
+     } catch (error) {
           throw new Error('Unable to fetch roles');
      }
 };

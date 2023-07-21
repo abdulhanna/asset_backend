@@ -5,6 +5,10 @@ const roleSchema = new mongoose.Schema(
           rolename: {
                type: String,
           },
+          description: {
+               type: String,
+               default: null, // Set the default value to null
+          },
           permissions: [
                {
                     type: mongoose.Schema.Types.ObjectId,
