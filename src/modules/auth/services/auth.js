@@ -108,9 +108,10 @@ authService.completeProfille = async (token) => {
 authService.createMember = async (userData) => {
      try {
           // Generate a verification token
-          const verificationToken = await jwtService.generatePair(
+          const verificationTokenPayload = await jwtService.generatePair(
                userData.email
           );
+          const verificationToken = verificationTokenPayload.access_token;
 
           // Send the invitation email to the member
           await emailtemplate.sendInvitationEmail(
