@@ -145,6 +145,7 @@ authService.getAllMembers = async (parentId) => {
                .populate('teamrole');
           return members;
      } catch (error) {
+          console.log(error);
           throw new Error('Failed to fetch members');
      }
 };
