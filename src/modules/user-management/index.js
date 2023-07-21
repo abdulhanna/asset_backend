@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import userManagementRouter from './router/permission.js';
+import userManagementRouter from './router/permissions.js';
 import userRoleRouter from './router/roles.js';
 
 const router = Router();

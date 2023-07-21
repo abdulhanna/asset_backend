@@ -35,7 +35,34 @@ router.get(
      })
 );
 
-// Create a new user as a member under a superadmin and assign permissions and roles
-router.post('/create-member', authService.createMember);
+// Create a new member
+router.post('/createMember', async (req, res) => {
+     try {
+          const { email, password, parentId, userProfile } = req.body;
+
+          const userData = {
+               email,
+               password,
+               parentId,
+               userProfile,
+          };
+
+          const member = await authService.createMember(userData);
+          res.status(201).json({ success: true, member });
+     } catch (error) {
+          res.status(500).json({ success: false, error: error.message });
+     }
+});
+
+// Get all members of a superadmin
+router.get('/members/:parentId', async (req, res) => {
+     try {
+          const { parentId } = req.params;
+          const members = await authService.getAllMembers(parentId);
+          res.status(200).json({ success: true, members });
+     } catch (error) {
+          res.status(500).json({ success: false, error: error.message });
+     }
+});
 
 export default router;

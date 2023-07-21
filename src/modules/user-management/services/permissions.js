@@ -1,4 +1,4 @@
-import Permission from '../models/permission.js';
+import Permission from '../models/permissions.js';
 
 export const createPermission = async (moduleName, allAccess) => {
      try {
