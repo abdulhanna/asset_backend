@@ -80,12 +80,11 @@ emailtemplate.accountVerificationEmail = async (toemail, token) => {
 
 emailtemplate.sendInvitationEmail = async (email, verificationToken) => {
      try {
-          //  console.log('email', 'verificationToken', email, verificationToken);
           sgMail.setApiKey(secret.sendgrid.api_key);
-          // console.log('secret.sendgrid.api_key', secret.sendgrid.api_key);
+
           const message = {
                to: email,
-               from: 'dhananjay@plaxonic.com',
+               from: secret.sendgrid.from_user, // Change to your verified sender
                subject: 'Invitation to Set Password',
                html: `<p>Hello,</p><p>You have been invited to set your password. Click the following link to set your password:</p>
         <a href="${secret.frontend_baseURL}/set-password/${verificationToken}">Set Password</a>`,
