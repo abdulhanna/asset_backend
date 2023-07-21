@@ -1,15 +1,15 @@
-import { secret } from "../config/secret";
-import sgMail from "@sendgrid/mail";
+import { secret } from '../config/secret';
+import sgMail from '@sendgrid/mail';
 
-const emailtemplate = {}
+const emailtemplate = {};
 
 emailtemplate.accountVerificationEmail = async (toemail, token) => {
-    sgMail.setApiKey(secret.sendgrid.api_key);
-    const msg = {
-      to: toemail, // Change to your recipient
-      from:secret.sendgrid.from_user, // Change to your verified sender
-      subject: "Please confirm your account on Asset Monitoring",
-    html: `<!DOCTYPE html>
+     sgMail.setApiKey(secret.sendgrid.api_key);
+     const msg = {
+          to: toemail, // Change to your recipient
+          from: secret.sendgrid.from_user, // Change to your verified sender
+          subject: 'Please confirm your account on Asset Monitoring',
+          html: `<!DOCTYPE html>
 <html>
 <head>
   <title>Confirm Template</title>
@@ -72,13 +72,10 @@ emailtemplate.accountVerificationEmail = async (toemail, token) => {
    </table>
 </body>
 </html>`,
-    };
-      const sendEmail =  await sgMail.send(msg)
-      if(sendEmail) return true
-  else return false
+     };
+     const sendEmail = await sgMail.send(msg);
+     if (sendEmail) return true;
+     else return false;
 };
 
-
 export default emailtemplate;
-
-
