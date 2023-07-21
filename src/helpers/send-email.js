@@ -59,7 +59,7 @@ emailtemplate.accountVerificationEmail = async (toemail, token) => {
         </tr>
         <tr>
           <td align="center" style="padding: 52px 0;">
-              <a href="http://localhost:4000/confirm/${token}" style="background-color: #F97316; padding: 16px 26px 16px 26px; border-radius: 8px; font-weight: 400;
+              <a href="${secret.frontend_baseURL}/confirm?confirmation_token=${token}" style="background-color: #F97316; padding: 16px 26px 16px 26px; border-radius: 8px; font-weight: 400;
                color: #fff; font-size: 18px; text-decoration: none;">Confirm your email</a>
           </td>
         </tr>

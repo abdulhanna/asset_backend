@@ -1,19 +1,17 @@
 import mongoose from "mongoose"
-const permissionDefineSchema = new mongoose.Schema({
-  moduleName:{
+const roleDefineSchema = new mongoose.Schema({
+  rolename:{
     type:String
   },
-  read:{
-    type:Boolean,
-    default:false
-  },
-  read_write:{
-    type:Boolean,
-    default:false
-  },
-  actions:{
-    type:Boolean,
-    default:false
+  permissions:[
+    {
+         type: mongoose.Schema.Types.ObjectId,
+         ref: 'Permission',
+    },
+],
+  added_by_userId:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "users",
   },
   is_deleted: {
     type: Boolean,
@@ -36,4 +34,4 @@ updated_at: {
     default: null,
 }
 },{new:true})
-export default mongoose.model('permissionDefineModel', permissionDefineSchema);
+export default mongoose.model('Role', roleDefineSchema);

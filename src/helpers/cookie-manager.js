@@ -1,13 +1,14 @@
 import  userModel  from '../../src/modules/auth/models/'
+import { config } from '../config/config';
 export const attachCookie = (
   res,
   { access_token: accessToken}
 ) => {
   res.cookie('access_token', accessToken, {
-    httpOnly: true,
-    secure: false,
-    samesite: 'strict',
-    path: "/",
+    httpOnly: config.cookie.http_only,
+    secure: config.cookie.secure,
+    samesite: config.cookie.same_site,
+    path: config.cookie.path,
   });
 };
 

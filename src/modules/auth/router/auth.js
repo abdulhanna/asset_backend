@@ -22,18 +22,18 @@ router.get(
   httpHandler(async (req, res) => {
     const { token } = req.params;
     const result = await authService.verifyUser(token);
-    res.send(result);
+    console.log(result);
+    res.redirect(result);
   })
 );
 
 
 // profile complete
 
-router.get(
-  "/profileComplete/:token",
+router.post(
+  "/profileComplete",
   httpHandler(async (req, res) => {
-    const { token } = req.params;
-    const result = await authService.verifyUser(token);
+    const result = await authService.completeProfille(req.body);
     res.send(result);
   })
 )
