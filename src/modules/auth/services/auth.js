@@ -1,12 +1,12 @@
-import StatusCodes from 'http-status-codes';
-import createError from 'http-errors-lite';
-import bcrypt from 'bcryptjs';
-import { assert, assertEvery } from '../../../helpers/mad-assert';
-import jwtService from './jwt-services';
-import { secret } from '../../../../src/config/secret';
-import emailtemplate from '../../../helpers/send-email';
-import userModel from '../models/';
-import { organizationModel } from '../../organization/models';
+import StatusCodes from "http-status-codes";
+import createError from "http-errors-lite";
+import bcrypt from "bcryptjs";
+import { assert, assertEvery } from "../../../helpers/mad-assert";
+import jwtService from "./jwt-services";
+import { secret } from "../../../../src/config/secret";
+import emailtemplate from "../../../helpers/send-email"
+import userModel from "../models/"
+import { organizationModel } from "../../organization/models";
 
 const authService = {};
 
@@ -82,17 +82,10 @@ authService.verifyUser = async (verificationToken) => {
           return redirectURL;
      }
 
-     const userToken = await jwtService.verifyAccessToken(verificationToken);
-     const companyToken = await jwtService.generatePair(user.email);
-     const result = await userModel.findOneAndUpdate(
-          { verificationToken },
-          { is_email_verified: 'true', companyProfileToken: companyToken },
-          { new: true }
-     );
+  const redirectURLcompany = `${secret.frontend_baseURL}/company-profile?confirmation_token=${companyToken}`;
+  return redirectURLcompany;
+}
 
-     const redirectURL = `${secret.frontend_baseURL}/company-profile?confirmation_token=${companyToken}`;
-     return redirectURL;
-};
 
 authService.completeProfille = async (data) => {
      assertEvery(
@@ -115,89 +108,30 @@ authService.completeProfille = async (data) => {
 
      assert(user, createError(StatusCodes.NOT_FOUND, 'User not found'));
 
-     const usercheckVerify = await userModel.findOne({
-          companyProfileToken,
-          is_deleted: false,
-          is_email_verified: true,
-          is_profile_completed: true,
-     });
-
-     if (usercheckVerify) {
-          const redirectURL = `${secret.frontend_baseURL}/login`;
-          return { redirectURL: redirectURL };
-     }
-
-     const organizationName = data.organizationName;
-     const existiingCompanyname = await organizationModel.findOne({
-          organizationName,
-     });
-     assert(!existiingCompanyname, 'Company Name already exists');
-
-     const getToken = await jwtService.generatePair(user.email);
-     const updateToken = await userModel.findOneAndUpdate(
-          { companyProfileToken },
-          { token: getToken, is_profile_completed: 'true' },
-          { new: true }
-     );
-
-     assert(
-          updateToken,
-          createError(StatusCodes.REQUEST_TIMEOUT, 'Request Timeout')
-     );
-     const newOrganization = new organizationModel({
-          userId: user._id,
-          organizationName: data.organizationName,
-          organizationRegistrationNumber: data.organizationRegistrationNumber,
-          pan: data.pan,
-          gstin: data.gstin,
-          contactNo: data.contactNo,
-          mainAddress: {
-               address1: data.mainAddress.address1,
-               address2: data.mainAddress.address2,
-               city: data.mainAddress.city,
-               state: data.mainAddress.state,
-               country: data.mainAddress.country,
-               pinCode: data.mainAddress.pinCode,
-          },
-     });
-     const savedOrganization = await newOrganization.save();
-     assert(
-          savedOrganization,
-          createError(StatusCodes.REQUEST_TIMEOUT, 'Request Timeout')
-     );
-     const redirectURL = `${secret.frontend_baseURL}/dashboard`;
-     return {
-          userId: user._id,
-          access_token: getToken,
-          redirectURL: redirectURL,
-     };
-};
-
 authService.doLogin = async ({ email, password }) => {
-     const existingUser = await userModel.findOne({ email });
-     assert(
-          existingUser,
-          createError(StatusCodes.UNAUTHORIZED, 'User does not exist')
-     );
-     const isValid = bcrypt.compareSync(password, existingUser.password);
-     assert(isValid, createError(StatusCodes.UNAUTHORIZED, 'Invalid password'));
-     const getToken = await jwtService.generatePair(existingUser.email);
-
-     const getUserData = await userModel
-          .findOne({ email })
-          .select({
-               email: 1,
-               role: 1,
-               teamrole: 1,
-          })
-          .populate({
-               path: 'teamrole',
-               select: 'permissions',
-               populate: {
-                    path: 'permissions',
-                    select: 'moduleName read read_write actions',
-               },
-          });
+  const existingUser = await userModel.findOne({ email });
+  assert(
+    existingUser,
+    createError(StatusCodes.UNAUTHORIZED, 'User does not exist')
+  );
+  const isValid = bcrypt.compareSync(password, existingUser.password);
+  assert(isValid, createError(StatusCodes.UNAUTHORIZED, "Invalid password"));
+  
+       
+       const getUserData = await userModel.findOne({ email})
+       .select({
+        email:1,
+        role:1,
+        teamrole:1
+      })
+       .populate({
+        path: 'teamrole',
+        select: 'permissions',
+        populate: {
+          path: 'permissions',
+          select: 'moduleName read read_write actions',
+        },
+      })
 
      let permissions;
      if (getUserData.role === 'superadmin' || getUserData.role === 'root') {
@@ -208,13 +142,82 @@ authService.doLogin = async ({ email, password }) => {
           permissions = []; // Default to empty array if no permissions found
      }
 
-     const userData = {
-          email: getUserData.email,
-          role: getUserData.role,
-          permissions,
-     };
+      const userData = {
+        email: getUserData.email,
+        role: getUserData.role,
+        permissions,
+      }
+     
+      const getToken = await jwtService.generatePair({_id:existingUser._id});
 
-     return { userData: userData, access_token: getToken };
+  return {"userData":userData, "access_token":getToken};
 };
 
-export default authService;
+
+
+authService.changePassword = async (id, data) => {
+ 
+
+  const pass = data.password;
+  const confirmPass = data.confirmPassword;
+  const oldPass = data.oldPassword;
+  assert(
+    pass && confirmPass && oldPass,
+    createError(
+      StatusCodes.NOT_FOUND,
+      "New password, confirm password and old password are required"
+    )
+  );
+  
+  const userData = await userModel.findOne({ _id: id });
+  assert(
+    userData,
+    createError(StatusCodes.INTERNAL_SERVER_ERROR, "Internal server")
+  );
+  const checkOldPass = bcrypt.compareSync(oldPass, userData.password);
+  assert(
+    checkOldPass,
+    createError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Your old password is incorrect"
+    )
+  );
+
+  const isMatch = pass === oldPass;
+  assert(
+    !isMatch,
+    createError(
+      StatusCodes.METHOD_NOT_ALLOWED,
+      "You used this password recently, Please choose a different one."
+    )
+  );
+
+  const check = pass === confirmPass;
+  assert(
+    check,
+    createError(
+      StatusCodes.CONFLICT,
+      "password and confirm password don't match"
+    )
+  );
+ 
+  const hashPass = bcrypt.hashSync(pass, 8);
+  assert(
+    hashPass,
+    createError(StatusCodes.NOT_IMPLEMENTED, "error in implementing")
+  );
+  const updatePass = await userModel.findByIdAndUpdate(
+    { _id: userData._id },
+    { $set: { password: hashPass } },
+    { new: true }
+  ).select('email role');
+  assert(
+    updatePass,
+    createError(StatusCodes.INTERNAL_SERVER_ERROR, "Internal server")
+  );
+
+  return updatePass;
+};
+
+
+  export default authService;

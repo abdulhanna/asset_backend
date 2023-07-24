@@ -52,5 +52,27 @@ router.post(
   })
 );
 
+// Router for getting the current user
+router.get(
+  '/who-am-i',
+  isLoggedIn,
+  httpHandler(async(req, res) => {
+      res.json(req.user);
+  })
+);
+
+// change password
+router.post(
+  '/change-password',
+  isLoggedIn,
+  httpHandler(async (req, res) => {
+    const id = req.user.data._id;
+    const data = req.body;
+    const result = await authService.changePassword(id, data);
+    res.send(result);
+  })
+);
+
+
 
 export default router;
