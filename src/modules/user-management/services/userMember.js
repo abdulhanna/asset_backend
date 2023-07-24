@@ -35,6 +35,25 @@ const createMember = async (userData) => {
      }
 };
 
+const updateMember = async (id, data) => {
+     try {
+          const existingMember = await userModel.findById(id);
+
+          if (!existingMember) {
+               throw new Error('Member not found');
+          }
+          return await userModel.findByIdAndUpdate(
+               { _id: id },
+               { $set: data },
+               {
+                    new: true,
+               }
+          );
+     } catch (error) {
+          throw new Error(error.message);
+     }
+};
+
 const getAllMembers = async (parentId) => {
      try {
           const members = await userModel
@@ -70,6 +89,7 @@ const setPassword = async (verificationToken, password) => {
 
 export const memberService = {
      createMember,
+     updateMember,
      getAllMembers,
      setPassword,
 };

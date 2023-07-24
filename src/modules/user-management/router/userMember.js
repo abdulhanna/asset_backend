@@ -22,6 +22,25 @@ router.post('/createMember', async (req, res) => {
      }
 });
 
+// Update member
+router.put('/updateMember/:id', async (req, res) => {
+     try {
+          const { id } = req.params;
+          const data = req.body;
+
+          const updateMember = await memberService.updateMember(id, data);
+          res.status(201).json({
+               success: true,
+               updateMember,
+          });
+     } catch (error) {
+          res.status(500).json({
+               success: false,
+               error: error.message,
+          });
+     }
+});
+
 // Set password for the member using verification token
 router.post('/set-password', async (req, res) => {
      try {
