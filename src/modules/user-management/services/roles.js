@@ -1,34 +1,66 @@
-import Role from '../models/roles.js';
+import { roleModel } from '../models';
 
-const createRole = async (rolename, permissions, added_by_userId) => {
+const createRole = async (
+     roleName,
+     description,
+     permissions,
+     addedByUserId
+) => {
      try {
           // Create the new role in the database
-          const role = await Role.create({
-               rolename,
+          const role = await roleModel.create({
+               roleName,
+               description,
                permissions,
-               added_by_userId,
+               addedByUserId,
           });
 
           return role;
-     } catch (err) {
+     } catch (error) {
           throw new Error('Unable to create role');
+     }
+};
+
+const updateRole = async (roleId, roleName, description, permissions) => {
+     try {
+          // Create an object with the updated fields and current timestamp
+          const updateData = {
+               roleName,
+               description,
+               permissions,
+               updatedAt: new Date(),
+          };
+
+          // Find the role by its ID and update the fields
+          const updatedRole = await roleModel.findByIdAndUpdate(
+               roleId,
+               updateData,
+               { new: true }
+          );
+
+          return updatedRole;
+     } catch (error) {
+          throw new Error('Unable to update role');
      }
 };
 
 const getAllRoles = async () => {
      try {
           // Fetch all roles from the database
-          const roles = await Role.find()
-               .populate('added_by_userId')
+          const roles = await roleModel
+               .find()
+               .populate('addedByUserId')
                .populate('permissions')
                .exec();
+
           return roles;
-     } catch (err) {
+     } catch (error) {
           throw new Error('Unable to fetch roles');
      }
 };
 
 export const rolesService = {
      createRole,
+     updateRole,
      getAllRoles,
 };

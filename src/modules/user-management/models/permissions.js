@@ -9,7 +9,7 @@ const permissionSchema = new mongoose.Schema(
                type: Boolean,
                default: false,
           },
-          read_write: {
+          readWrite: {
                type: Boolean,
                default: false,
           },
@@ -17,23 +17,35 @@ const permissionSchema = new mongoose.Schema(
                type: Boolean,
                default: false,
           },
-          is_deleted: {
+          allAccess: {
                type: Boolean,
                default: false,
           },
-          is_deactivated: {
+          removeAccess: {
                type: Boolean,
                default: false,
           },
-          deleted_at: {
+          restoreDefaults: {
+               type: Boolean,
+               default: false,
+          },
+          isDeleted: {
+               type: Boolean,
+               default: false,
+          },
+          isDeactivated: {
+               type: Boolean,
+               default: false,
+          },
+          deletedAt: {
                type: Date,
                default: null,
           },
-          created_at: {
+          createdAt: {
                type: Date,
                default: null,
           },
-          updated_at: {
+          updatedAt: {
                type: Date,
                default: null,
           },
@@ -41,4 +53,6 @@ const permissionSchema = new mongoose.Schema(
      { new: true }
 );
 
-export default mongoose.model('Permission', permissionSchema);
+const permissionModel = mongoose.model('permissions', permissionSchema);
+
+export default permissionModel;

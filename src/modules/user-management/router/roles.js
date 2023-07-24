@@ -6,15 +6,41 @@ const router = express.Router();
 // Route for creating a new role with permissions
 router.post('/', async (req, res) => {
      try {
-          const { rolename, permissions, added_by_userId } = req.body;
+          const { roleName, description, permissions, addedByUserId } =
+               req.body;
+
           const role = await rolesService.createRole(
-               rolename,
+               roleName,
+               description,
                permissions,
-               added_by_userId
+               addedByUserId
           );
           res.status(201).json(role);
      } catch (err) {
           res.status(500).json({ error: 'Unable to create role' });
+     }
+});
+
+// Route for updating an existing role by role ID
+router.put('/:roleId', async (req, res) => {
+     try {
+          const { roleId } = req.params;
+          const { roleName, description, permissions } = req.body;
+
+          const role = await rolesService.updateRole(
+               roleId,
+               roleName,
+               description,
+               permissions
+          );
+
+          if (!role) {
+               return res.status(404).json({ message: 'Role not found' });
+          }
+
+          res.status(200).json(role);
+     } catch (error) {
+          res.status(500).json({ error: 'Unable to update role' });
      }
 });
 
