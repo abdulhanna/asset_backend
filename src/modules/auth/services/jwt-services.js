@@ -23,8 +23,8 @@ const verifyToken = (token, secret) =>
      });
 
 jwtService.generatePair = async (data) => {
-     const accessToken = await signToken(data, secret.JWT_KEY, '86400000');
-     return { access_token: accessToken };
+  const accessToken = await signToken(data, secret.JWT_KEY, '86400000');
+  return accessToken ;
 };
 
 jwtService.verifyAccessToken = async (token) => {
