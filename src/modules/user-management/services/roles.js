@@ -1,4 +1,4 @@
-import { roleModel } from '../models';
+import { roleDefineModel } from '../models';
 
 const createRole = async (
      roleName,
@@ -8,7 +8,7 @@ const createRole = async (
 ) => {
      try {
           // Create the new role in the database
-          const role = await roleModel.create({
+          const role = await roleDefineModel.create({
                roleName,
                description,
                permissions,
@@ -32,7 +32,7 @@ const updateRole = async (roleId, roleName, description, permissions) => {
           };
 
           // Find the role by its ID and update the fields
-          const updatedRole = await roleModel.findByIdAndUpdate(
+          const updatedRole = await roleDefineModel.findByIdAndUpdate(
                roleId,
                updateData,
                { new: true }
@@ -47,7 +47,7 @@ const updateRole = async (roleId, roleName, description, permissions) => {
 const getAllRoles = async () => {
      try {
           // Fetch all roles from the database
-          const roles = await roleModel
+          const roles = await roleDefineModel
                .find()
                .populate('addedByUserId')
                .populate('permissions')

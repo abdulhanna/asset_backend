@@ -30,32 +30,35 @@ authService.doRegister = async (data) => {
           )
      );
 
-    assert(
-      data.password == data.confirmPassword,
-      createError(
-        StatusCodes.UNAUTHORIZED,
-        "Password and confirm Password don't match"
-      )
-    );
-  
-    const existingUser = await userModel.findOne({ 
-      email: data.email,
-      is_deleted: false,
-    });
-    
-    assert(!existingUser, 'Account already exists');
-    
-    const token = await jwtService.generatePair(data.email);
-    const hashedPassword = bcrypt.hashSync(data.password, 8);
-    const sendEmail = await emailtemplate.accountVerificationEmail(data.email, token)
-     assert(sendEmail == true , `Something went wrong, please try again!`)
-     
-   const result = await userModel.create({
-        ...data,
-        password: hashedPassword,
-        role: role,
-        verificationToken: token,
-      });
+     assert(
+          data.password == data.confirmPassword,
+          createError(
+               StatusCodes.UNAUTHORIZED,
+               "Password and confirm Password don't match"
+          )
+     );
+
+     const existingUser = await userModel.findOne({
+          email: data.email,
+          is_deleted: false,
+     });
+
+     assert(!existingUser, 'Account already exists');
+
+     const token = await jwtService.generatePair(data.email);
+     const hashedPassword = bcrypt.hashSync(data.password, 8);
+     const sendEmail = await emailtemplate.accountVerificationEmail(
+          data.email,
+          token
+     );
+     assert(sendEmail == true, `Something went wrong, please try again!`);
+
+     const result = await userModel.create({
+          ...data,
+          password: hashedPassword,
+          role: role,
+          verificationToken: token,
+     });
      return result;
 };
 
@@ -74,96 +77,36 @@ authService.verifyUser = async (verificationToken) => {
           is_profile_completed: true,
      });
 
-  if(usercheckVerify)
-  {
-    const redirectURL = `${secret.frontend_baseURL}/login`;
-    return redirectURL;
-  }
-  
-  const userToken = await jwtService.verifyAccessToken(verificationToken);
-  const companyToken = await jwtService.generatePair(user.email);
-  const result = await userModel.findOneAndUpdate(
-    { verificationToken},
-    { is_email_verified: "true", companyProfileToken: companyToken},
-    { new: true }
-  );
+     if (usercheckVerify) {
+          const redirectURL = `${secret.frontend_baseURL}/login`;
+          return redirectURL;
+     }
 
   const redirectURLcompany = `${secret.frontend_baseURL}/company-profile?confirmation_token=${companyToken}`;
   return redirectURLcompany;
 }
 
 
-authService.completeProfille = async (data) =>{
+authService.completeProfille = async (data) => {
+     assertEvery(
+          [
+               data.token,
+               data.organizationName,
+               data.organizationRegistrationNumber,
+               data.contactNo,
+          ],
+          createError(
+               StatusCodes.BAD_REQUEST,
+               'Invalid Data: [token], [organizationName], [organizationRegistrationNumber] and [confirmPassword] fields must exist'
+          )
+     );
 
-  assertEvery(
-    [data.token, data.organizationName, data.organizationRegistrationNumber, data.contactNo],
-    createError(
-      StatusCodes.BAD_REQUEST,
-      "Invalid Data: [token], [organizationName], [organizationRegistrationNumber] and [confirmPassword] fields must exist"
-    )
-  );
-
-  const companyProfileToken = data.token;
-  const user = await userModel.findOne({
-    companyProfileToken,
-  });
+     const companyProfileToken = data.token;
+     const user = await userModel.findOne({
+          companyProfileToken,
+     });
 
      assert(user, createError(StatusCodes.NOT_FOUND, 'User not found'));
-
-  const usercheckVerify = await userModel.findOne({
-    companyProfileToken,
-    is_deleted: false,
-    is_email_verified: true,
-    is_profile_completed: true,
-  });
-
-  if(usercheckVerify)
-  {
-    const redirectURL = `${secret.frontend_baseURL}/login`;
-    return {"redirectURL": redirectURL};
-  }
-  
-
-   const organizationName = data.organizationName;
-  const existiingCompanyname = await organizationModel.findOne({
-    organizationName
-  })
-  assert(!existiingCompanyname, "Company Name already exists");
-
-  const getToken = await jwtService.generatePair(user.email);
-  const updateToken = await userModel.findOneAndUpdate(
-    { companyProfileToken},
-    { token: getToken, is_profile_completed: "true"},
-    { new: true }
-  );
-
-  assert(updateToken, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"));
-  const newOrganization = new organizationModel({
-      userId:user._id,
-      organizationName: data.organizationName,
-      organizationRegistrationNumber:data.organizationRegistrationNumber,
-      pan:data.pan,
-      gstin:data.gstin,
-      contactNo:data.contactNo,
-      mainAddress:{
-          address1:data.mainAddress.address1,
-          address2:data.mainAddress.address2,
-          city:data.mainAddress.city,
-          state:data.mainAddress.state,
-          country:data.mainAddress.country,
-          pinCode:data.mainAddress.pinCode,
-      }
-  
-  });
-  const savedOrganization = await newOrganization.save();
-  assert(
-    savedOrganization,
-    createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout")
-  );
-  const redirectURL = `${secret.frontend_baseURL}/dashboard`;
-  return {"userId":user._id, "access_token":getToken, "redirectURL":redirectURL};
-}
-
 
 authService.doLogin = async ({ email, password }) => {
   const existingUser = await userModel.findOne({ email });
@@ -190,14 +133,14 @@ authService.doLogin = async ({ email, password }) => {
         },
       })
 
-      let permissions;
-      if (getUserData.role === 'superadmin' || getUserData.role === 'root') {
-        permissions = {}; // Empty key for superadmin and root roles
-      } else if (getUserData.teamrole && getUserData.teamrole.permissions) {
-        permissions = getUserData.teamrole.permissions; // Use teamrole's permissions if available
-      } else {
-        permissions = []; // Default to empty array if no permissions found
-      }
+     let permissions;
+     if (getUserData.role === 'superadmin' || getUserData.role === 'root') {
+          permissions = {}; // Empty key for superadmin and root roles
+     } else if (getUserData.teamrole && getUserData.teamrole.permissions) {
+          permissions = getUserData.teamrole.permissions; // Use teamrole's permissions if available
+     } else {
+          permissions = []; // Default to empty array if no permissions found
+     }
 
       const userData = {
         email: getUserData.email,
