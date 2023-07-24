@@ -7,7 +7,6 @@ import { secret } from '../../../../src/config/secret';
 import emailtemplate from '../../../helpers/send-email';
 import userModel from '../models/';
 import { organizationModel } from '../../organization/models';
-import { permissionDefineModel } from '../../user-management/models';
 
 const authService = {};
 
