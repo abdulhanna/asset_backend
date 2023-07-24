@@ -1,0 +1,31 @@
+import express from 'express';
+import { locationService } from '../services/locations.js';
+
+const router = express.Router();
+
+// Route for creating a new location
+router.post('/', async (req, res) => {
+     try {
+          const {
+               locationName,
+               industryType,
+               assignedUser,
+               address,
+               children,
+          } = req.body;
+
+          const newLocation = await locationService.createLocation(
+               locationName,
+               industryType,
+               assignedUser,
+               address,
+               children
+          );
+
+          res.status(201).json(newLocation);
+     } catch (error) {
+          res.status(500).json({ error: 'Unable to create location' });
+     }
+});
+
+export default router;
