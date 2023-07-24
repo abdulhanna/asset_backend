@@ -23,7 +23,7 @@ router.post('/createMember', async (req, res) => {
 });
 
 // Set password for the member using verification token
-router.post('/members/set-password', async (req, res) => {
+router.post('/set-password', async (req, res) => {
      try {
           const { verificationToken, password } = req.body;
 
@@ -54,7 +54,7 @@ router.post('/members/set-password', async (req, res) => {
 });
 
 // Get all members of a superadmin
-router.get('/members/:parentId', async (req, res) => {
+router.get('/:parentId', async (req, res) => {
      try {
           const { parentId } = req.params;
           const members = await memberService.getAllMembers(parentId);
