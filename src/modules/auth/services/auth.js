@@ -89,13 +89,10 @@ authService.verifyUser = async (verificationToken) => {
     { new: true }
   );
 
-  const redirectURL = `${secret.frontend_baseURL}/company-profile?confirmation_token=${companyToken}`;
-  return redirectURL;
+  const redirectURLcompany = `${secret.frontend_baseURL}/company-profile?confirmation_token=${companyToken}`;
+  return redirectURLcompany;
 }
 
-     const redirectURL = `${secret.frontend_baseURL}/company-profile?confirmation_token=${companyToken.access_token}`;
-     return redirectURL;
-};
 
 authService.completeProfille = async (data) =>{
 
