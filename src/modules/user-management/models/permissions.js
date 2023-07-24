@@ -17,6 +17,18 @@ const permissionSchema = new mongoose.Schema(
                type: Boolean,
                default: false,
           },
+          allAccess: {
+               type: Boolean,
+               default: false,
+          },
+          removeAccess: {
+               type: Boolean,
+               default: false,
+          },
+          restoreDefaults: {
+               type: Boolean,
+               default: false,
+          },
           isDeleted: {
                type: Boolean,
                default: false,

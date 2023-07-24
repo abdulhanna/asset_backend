@@ -31,7 +31,14 @@ router.post('/create', async (req, res) => {
 router.put('/update/:id', async (req, res) => {
      try {
           const { id } = req.params;
-          const { read, readWrite, actions } = req.body;
+          const {
+               read,
+               readWrite,
+               actions,
+               allAccess,
+               removeAccess,
+               restoreDefaults,
+          } = req.body;
 
           // Custom validation for the update permission request
           if (!id.match(/^[0-9a-fA-F]{24}$/)) {
@@ -41,24 +48,14 @@ router.put('/update/:id', async (req, res) => {
                });
           }
 
-          if (
-               (read !== undefined && typeof read !== 'boolean') ||
-               (readWrite !== undefined && typeof readWrite !== 'boolean') ||
-               (actions !== undefined && typeof actions !== 'boolean')
-          ) {
-               return res.status(400).json({
-                    success: false,
-                    errors: [
-                         'Invalid request data. read, readWrite, and actions should be booleans.',
-                    ],
-               });
-          }
-
           const permission = await permissionService.updatePermission(
                id,
                read,
                readWrite,
-               actions
+               actions,
+               allAccess,
+               removeAccess,
+               restoreDefaults
           );
 
           if (!permission) {
