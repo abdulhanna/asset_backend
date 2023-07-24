@@ -5,9 +5,9 @@ const createPermission = async (moduleName, allAccess) => {
           const permission = new permissionModel({
                moduleName,
                read: allAccess,
-               read_write: allAccess,
+               readWrite: allAccess,
                actions: allAccess,
-               created_at: new Date(),
+               createdAt: new Date(),
           });
 
           return await permission.save();
@@ -16,15 +16,15 @@ const createPermission = async (moduleName, allAccess) => {
      }
 };
 
-const updatePermission = async (id, read, read_write, actions) => {
+const updatePermission = async (id, read, readWrite, actions) => {
      try {
           return await permissionModel.findByIdAndUpdate(
                id,
                {
                     read,
-                    read_write,
+                    readWrite,
                     actions,
-                    updated_at: new Date(),
+                    updatedAt: new Date(),
                },
                { new: true }
           );

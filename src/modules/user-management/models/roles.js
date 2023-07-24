@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const roleSchema = new mongoose.Schema(
      {
-          rolename: {
+          roleName: {
                type: String,
           },
           description: {
@@ -15,27 +15,27 @@ const roleSchema = new mongoose.Schema(
                     ref: 'permissions',
                },
           ],
-          added_by_userId: {
+          addedByUserId: {
                type: mongoose.Schema.Types.ObjectId,
                ref: 'users',
           },
-          is_deleted: {
+          isDeleted: {
                type: Boolean,
                default: false,
           },
-          is_deactivated: {
+          isDeactivated: {
                type: Boolean,
                default: false,
           },
-          deleted_at: {
+          deletedAt: {
                type: Date,
                default: null,
           },
-          created_at: {
+          createdAt: {
                type: Date,
                default: null,
           },
-          updated_at: {
+          updatedAt: {
                type: Date,
                default: null,
           },

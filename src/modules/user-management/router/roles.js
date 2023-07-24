@@ -6,14 +6,14 @@ const router = express.Router();
 // Route for creating a new role with permissions
 router.post('/', async (req, res) => {
      try {
-          const { rolename, description, permissions, added_by_userId } =
+          const { roleName, description, permissions, addedByUserId } =
                req.body;
 
           const role = await rolesService.createRole(
-               rolename,
+               roleName,
                description,
                permissions,
-               added_by_userId
+               addedByUserId
           );
           res.status(201).json(role);
      } catch (err) {

@@ -1,18 +1,18 @@
 import { roleModel } from '../models';
 
 const createRole = async (
-     rolename,
+     roleName,
      description,
      permissions,
-     added_by_userId
+     addedByUserId
 ) => {
      try {
           // Create the new role in the database
           const role = await roleModel.create({
-               rolename,
+               roleName,
                description,
                permissions,
-               added_by_userId,
+               addedByUserId,
           });
 
           return role;
@@ -26,7 +26,7 @@ const getAllRoles = async () => {
           // Fetch all roles from the database
           const roles = await roleModel
                .find()
-               .populate('added_by_userId')
+               .populate('addedByUserId')
                .populate('permissions')
                .exec();
 
