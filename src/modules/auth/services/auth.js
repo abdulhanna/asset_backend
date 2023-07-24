@@ -40,7 +40,7 @@ authService.doRegister = async (data) => {
 
      const existingUser = await userModel.findOne({
           email: data.email,
-          is_deleted: false,
+          isDeleted: false,
      });
 
      assert(!existingUser, 'Account already exists');
@@ -58,12 +58,12 @@ authService.doRegister = async (data) => {
           password: hashedPassword,
           role: role,
           verificationToken: token,
+          createdAt: Date.now(),
      });
      return result;
 };
 
-// email confirmation
-
+//////// email confirmation ////////////
 authService.verifyUser = async (verificationToken) => {
      const user = await userModel.findOne({
           verificationToken,
@@ -72,7 +72,7 @@ authService.verifyUser = async (verificationToken) => {
 
      const usercheckVerify = await userModel.findOne({
           verificationToken,
-          is_deleted: false,
+          isDeleted: false,
           is_email_verified: true,
           is_profile_completed: true,
      });
@@ -84,16 +84,21 @@ authService.verifyUser = async (verificationToken) => {
 
      const userToken = await jwtService.verifyAccessToken(verificationToken);
      const companyToken = await jwtService.generatePair(user.email);
-     const result = await userModel.findOneAndUpdate(
+     const updateToken = await userModel.findOneAndUpdate(
           { verificationToken },
-          { is_email_verified: 'true', companyProfileToken: companyToken },
+          {
+               is_email_verified: 'true',
+               companyProfileToken: companyToken,
+               updatedAt: Date.now(),
+          },
           { new: true }
      );
 
-     const redirectURL = `${secret.frontend_baseURL}/company-profile?confirmation_token=${companyToken}`;
-     return redirectURL;
+     const redirectURLcompany = `${secret.frontend_baseURL}/company-profile?confirmation_token=${companyToken}`;
+     return redirectURLcompany;
 };
 
+////////////// Profiel complete ///////////////
 authService.completeProfille = async (data) => {
      assertEvery(
           [
@@ -113,30 +118,35 @@ authService.completeProfille = async (data) => {
           companyProfileToken,
      });
 
-     assert(user, createError(StatusCodes.NOT_FOUND, 'User not found'));
-
+     assert(user, createError(StatusCodes.NOT_FOUND, 'Invalid token provided'));
      const usercheckVerify = await userModel.findOne({
           companyProfileToken,
-          is_deleted: false,
+          isDeleted: false,
           is_email_verified: true,
           is_profile_completed: true,
      });
 
      if (usercheckVerify) {
           const redirectURL = `${secret.frontend_baseURL}/login`;
-          return { redirectURL: redirectURL };
+          return redirectURL;
      }
 
+     await jwtService.verifyAccessToken(companyProfileToken);
+
      const organizationName = data.organizationName;
-     const existiingCompanyname = await organizationModel.findOne({
+     const existingCompanyname = await organizationModel.findOne({
           organizationName,
      });
-     assert(!existiingCompanyname, 'Company Name already exists');
+     assert(!existingCompanyname, 'Company Name already exists');
 
-     const getToken = await jwtService.generatePair(user.email);
+     const getToken = await jwtService.generatePair({ _id: user._id });
      const updateToken = await userModel.findOneAndUpdate(
           { companyProfileToken },
-          { token: getToken, is_profile_completed: 'true' },
+          {
+               token: getToken,
+               is_profile_completed: 'true',
+               updatedAt: Date.now(),
+          },
           { new: true }
      );
 
@@ -159,6 +169,7 @@ authService.completeProfille = async (data) => {
                country: data.mainAddress.country,
                pinCode: data.mainAddress.pinCode,
           },
+          createdAt: Date.now(),
      });
      const savedOrganization = await newOrganization.save();
      assert(
@@ -173,23 +184,22 @@ authService.completeProfille = async (data) => {
      };
 };
 
+///////////////// login ///////////////////////////
 authService.doLogin = async ({ email, password }) => {
-     const existingUser = await userModel.findOne({ email });
+     const existingUser = await userModel.findOne({
+          email,
+          isDeleted: false,
+     });
      assert(
           existingUser,
           createError(StatusCodes.UNAUTHORIZED, 'User does not exist')
      );
      const isValid = bcrypt.compareSync(password, existingUser.password);
      assert(isValid, createError(StatusCodes.UNAUTHORIZED, 'Invalid password'));
-     const getToken = await jwtService.generatePair(existingUser.email);
 
      const getUserData = await userModel
           .findOne({ email })
-          .select({
-               email: 1,
-               role: 1,
-               teamrole: 1,
-          })
+          .select('email role teamrole:')
           .populate({
                path: 'teamrole',
                select: 'permissions',
@@ -214,7 +224,81 @@ authService.doLogin = async ({ email, password }) => {
           permissions,
      };
 
+     const getToken = await jwtService.generatePair({ _id: existingUser._id });
+
      return { userData: userData, access_token: getToken };
+};
+
+/////////// change password ////////////////
+authService.changePassword = async (id, data) => {
+     const pass = data.password;
+     const confirmPass = data.confirmPassword;
+     const oldPass = data.oldPassword;
+     assert(
+          pass && confirmPass && oldPass,
+          createError(
+               StatusCodes.NOT_FOUND,
+               'New password, confirm password and old password are required'
+          )
+     );
+
+     const userData = await userModel.findOne({ _id: id, isDeleted: false });
+     assert(
+          userData,
+          createError(StatusCodes.INTERNAL_SERVER_ERROR, 'Internal server')
+     );
+     const checkOldPass = bcrypt.compareSync(oldPass, userData.password);
+     assert(
+          checkOldPass,
+          createError(
+               StatusCodes.INTERNAL_SERVER_ERROR,
+               'Your old password is incorrect'
+          )
+     );
+
+     const isMatch = pass === oldPass;
+     assert(
+          !isMatch,
+          createError(
+               StatusCodes.METHOD_NOT_ALLOWED,
+               'You used this password recently, Please choose a different one.'
+          )
+     );
+
+     const check = pass === confirmPass;
+     assert(
+          check,
+          createError(
+               StatusCodes.CONFLICT,
+               "password and confirm password don't match"
+          )
+     );
+
+     const hashPass = bcrypt.hashSync(pass, 8);
+     assert(
+          hashPass,
+          createError(StatusCodes.NOT_IMPLEMENTED, 'error in implementing')
+     );
+
+     const updatePass = await userModel
+          .findByIdAndUpdate(
+               { _id: userData._id },
+               {
+                    $set: {
+                         password: hashPass,
+                         updatedAt: Date.now(),
+                    },
+               },
+               { new: true }
+          )
+          .select('email role');
+
+     assert(
+          updatePass,
+          createError(StatusCodes.INTERNAL_SERVER_ERROR, 'Internal server')
+     );
+
+     return updatePass;
 };
 
 export default authService;

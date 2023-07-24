@@ -103,23 +103,23 @@ const userSchema = new mongoose.Schema({
           type: Boolean,
           default: false,
      },
-     is_deleted: {
+     isDeleted: {
           type: Boolean,
           default: false,
      },
-     is_deactivated: {
+     isDeactivated: {
           type: Boolean,
           default: false,
      },
-     deleted_at: {
+     deletedAt: {
           type: Date,
           default: null,
      },
-     created_at: {
+     createdAt: {
           type: Date,
           default: null,
      },
-     updated_at: {
+     updatedAt: {
           type: Date,
           default: null,
      },
