@@ -40,7 +40,7 @@ authService.doRegister = async (data) => {
 
      const existingUser = await userModel.findOne({
           email: data.email,
-          is_deleted: false,
+          isDeleted: false,
      });
 
      assert(!existingUser, 'Account already exists');
@@ -58,12 +58,12 @@ authService.doRegister = async (data) => {
           password: hashedPassword,
           role: role,
           verificationToken: token,
+          createdAt : Date.now()
      });
      return result;
 };
 
-// email confirmation
-
+//////// email confirmation ////////////
 authService.verifyUser = async (verificationToken) => {
      const user = await userModel.findOne({
           verificationToken,
@@ -72,7 +72,7 @@ authService.verifyUser = async (verificationToken) => {
 
      const usercheckVerify = await userModel.findOne({
           verificationToken,
-          is_deleted: false,
+          isDeleted: false,
           is_email_verified: true,
           is_profile_completed: true,
      });
@@ -81,35 +81,100 @@ authService.verifyUser = async (verificationToken) => {
           const redirectURL = `${secret.frontend_baseURL}/login`;
           return redirectURL;
      }
+    
+     const userToken = await jwtService.verifyAccessToken(verificationToken);
+     const companyToken = await jwtService.generatePair(user.email);
+     const updateToken = await userModel.findOneAndUpdate(
+      { verificationToken},
+      { is_email_verified: "true", companyProfileToken: companyToken, updatedAt : Date.now()},
+      { new: true }
+    );
+  
 
   const redirectURLcompany = `${secret.frontend_baseURL}/company-profile?confirmation_token=${companyToken}`;
   return redirectURLcompany;
 }
 
+////////////// Profiel complete ///////////////
+    authService.completeProfille = async (data) =>{
 
-authService.completeProfille = async (data) => {
-     assertEvery(
-          [
-               data.token,
-               data.organizationName,
-               data.organizationRegistrationNumber,
-               data.contactNo,
-          ],
-          createError(
-               StatusCodes.BAD_REQUEST,
-               'Invalid Data: [token], [organizationName], [organizationRegistrationNumber] and [confirmPassword] fields must exist'
-          )
-     );
+      assertEvery(
+        [data.token, data.organizationName, data.organizationRegistrationNumber, data.contactNo],
+        createError(
+          StatusCodes.BAD_REQUEST,
+          "Invalid Data: [token], [organizationName], [organizationRegistrationNumber] and [confirmPassword] fields must exist"
+        )
+      );
+    
+      const companyProfileToken = data.token;
+      const user = await userModel.findOne({
+        companyProfileToken,
+      });
 
-     const companyProfileToken = data.token;
-     const user = await userModel.findOne({
-          companyProfileToken,
-     });
+      assert(user, createError(StatusCodes.NOT_FOUND, 'Invalid token provided'));
+      const usercheckVerify = await userModel.findOne({
+        companyProfileToken,
+        isDeleted: false,
+        is_email_verified: true,
+        is_profile_completed: true,
+   });
 
-     assert(user, createError(StatusCodes.NOT_FOUND, 'User not found'));
+   if (usercheckVerify) {
+        const redirectURL = `${secret.frontend_baseURL}/login`;
+        return redirectURL;
+   }
 
+      await jwtService.verifyAccessToken(companyProfileToken);
+
+      const organizationName = data.organizationName;
+      const existingCompanyname = await organizationModel.findOne({
+        organizationName
+      })
+      assert(!existingCompanyname, "Company Name already exists");
+     
+      const getToken = await jwtService.generatePair({_id:user._id});
+      const updateToken = await userModel.findOneAndUpdate(
+        { companyProfileToken},
+        { token: getToken, is_profile_completed: "true", updatedAt : Date.now()},
+        { new: true }
+      );
+    
+      assert(updateToken, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"));
+      const newOrganization = new organizationModel({
+          userId:user._id,
+          organizationName: data.organizationName,
+          organizationRegistrationNumber:data.organizationRegistrationNumber,
+          pan:data.pan,
+          gstin:data.gstin,
+          contactNo:data.contactNo,
+          mainAddress:{
+              address1:data.mainAddress.address1,
+              address2:data.mainAddress.address2,
+              city:data.mainAddress.city,
+              state:data.mainAddress.state,
+              country:data.mainAddress.country,
+              pinCode:data.mainAddress.pinCode,
+          },
+        createdAt: Date.now()
+      
+      });
+      const savedOrganization = await newOrganization.save();
+      assert(
+        savedOrganization,
+        createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout")
+      );
+      const redirectURL = `${secret.frontend_baseURL}/dashboard`;
+      return {"userId":user._id, "access_token":getToken, "redirectURL":redirectURL};
+    }
+    
+
+
+///////////////// login ///////////////////////////
 authService.doLogin = async ({ email, password }) => {
-  const existingUser = await userModel.findOne({ email });
+  const existingUser = await userModel.findOne({ 
+    email,
+    isDeleted:false
+   });
   assert(
     existingUser,
     createError(StatusCodes.UNAUTHORIZED, 'User does not exist')
@@ -117,13 +182,8 @@ authService.doLogin = async ({ email, password }) => {
   const isValid = bcrypt.compareSync(password, existingUser.password);
   assert(isValid, createError(StatusCodes.UNAUTHORIZED, "Invalid password"));
   
-       
        const getUserData = await userModel.findOne({ email})
-       .select({
-        email:1,
-        role:1,
-        teamrole:1
-      })
+       .select('email role teamrole:')
        .populate({
         path: 'teamrole',
         select: 'permissions',
@@ -155,9 +215,11 @@ authService.doLogin = async ({ email, password }) => {
 
 
 
-authService.changePassword = async (id, data) => {
- 
 
+
+
+/////////// change password ////////////////
+authService.changePassword = async (id, data) => {
   const pass = data.password;
   const confirmPass = data.confirmPassword;
   const oldPass = data.oldPassword;
@@ -169,7 +231,7 @@ authService.changePassword = async (id, data) => {
     )
   );
   
-  const userData = await userModel.findOne({ _id: id });
+  const userData = await userModel.findOne({ _id: id, isDeleted: false});
   assert(
     userData,
     createError(StatusCodes.INTERNAL_SERVER_ERROR, "Internal server")
@@ -206,11 +268,16 @@ authService.changePassword = async (id, data) => {
     hashPass,
     createError(StatusCodes.NOT_IMPLEMENTED, "error in implementing")
   );
+
   const updatePass = await userModel.findByIdAndUpdate(
     { _id: userData._id },
-    { $set: { password: hashPass } },
+    {$set:{
+      password: hashPass,
+      updatedAt: Date.now()
+   }},
     { new: true }
   ).select('email role');
+
   assert(
     updatePass,
     createError(StatusCodes.INTERNAL_SERVER_ERROR, "Internal server")
