@@ -1,37 +1,44 @@
-import mongoose from "mongoose"
-const roleDefineSchema = new mongoose.Schema({
-  rolename:{
-    type:String
-  },
-  permissions:[
-    {
-         type: mongoose.Schema.Types.ObjectId,
-         ref: "permissions",
-    },
-],
-  added_by_userId:{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "users",
-  },
-  is_deleted: {
-    type: Boolean,
-    default: false,
-},
- is_deactivated: {
-    type: Boolean,
-    default: false,
-},
-deleted_at: {
-    type : Date,
-    default : null,
-},
-created_at: { 
-    type: Date,
-    default: null,
-},
-updated_at: {
-    type: Date,
-    default: null,
-}
-},{new:true})
-export default mongoose.model('roles', roleDefineSchema);
+import mongoose from 'mongoose';
+
+const roleDefineSchema = new mongoose.Schema(
+     {
+          roleName: {
+               type: String,
+          },
+          permissions: [
+               {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'permissions',
+               },
+          ],
+          addedByUserId: {
+               type: mongoose.Schema.Types.ObjectId,
+               ref: 'users',
+          },
+          isDeleted: {
+               type: Boolean,
+               default: false,
+          },
+          isDeactivated: {
+               type: Boolean,
+               default: false,
+          },
+          deletedAt: {
+               type: Date,
+               default: null,
+          },
+          createdAt: {
+               type: Date,
+               default: null,
+          },
+          updatedAt: {
+               type: Date,
+               default: null,
+          },
+     },
+     { new: true }
+);
+
+const roleDefineModel = mongoose.model('roles', roleDefineSchema);
+
+export default roleDefineModel;
