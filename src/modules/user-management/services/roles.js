@@ -21,6 +21,29 @@ const createRole = async (
      }
 };
 
+const updateRole = async (roleId, roleName, description, permissions) => {
+     try {
+          // Create an object with the updated fields and current timestamp
+          const updateData = {
+               roleName,
+               description,
+               permissions,
+               updatedAt: new Date(),
+          };
+
+          // Find the role by its ID and update the fields
+          const updatedRole = await roleModel.findByIdAndUpdate(
+               roleId,
+               updateData,
+               { new: true }
+          );
+
+          return updatedRole;
+     } catch (error) {
+          throw new Error('Unable to update role');
+     }
+};
+
 const getAllRoles = async () => {
      try {
           // Fetch all roles from the database
@@ -38,5 +61,6 @@ const getAllRoles = async () => {
 
 export const rolesService = {
      createRole,
+     updateRole,
      getAllRoles,
 };

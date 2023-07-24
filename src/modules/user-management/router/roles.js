@@ -21,6 +21,29 @@ router.post('/', async (req, res) => {
      }
 });
 
+// Route for updating an existing role by role ID
+router.put('/:roleId', async (req, res) => {
+     try {
+          const { roleId } = req.params;
+          const { roleName, description, permissions } = req.body;
+
+          const role = await rolesService.updateRole(
+               roleId,
+               roleName,
+               description,
+               permissions
+          );
+
+          if (!role) {
+               return res.status(404).json({ message: 'Role not found' });
+          }
+
+          res.status(200).json(role);
+     } catch (error) {
+          res.status(500).json({ error: 'Unable to update role' });
+     }
+});
+
 // Route to retrieve all roles
 router.get('/', async (req, res) => {
      try {
