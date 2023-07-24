@@ -42,6 +42,7 @@ const updateMember = async (id, data) => {
           if (!existingMember) {
                throw new Error('Member not found');
           }
+
           return await userModel.findByIdAndUpdate(
                { _id: id },
                { $set: data },
