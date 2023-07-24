@@ -23,7 +23,6 @@ router.get(
   httpHandler(async (req, res) => {
     const { token } = req.params;
     const result = await authService.verifyUser(token);
-    console.log(result);
     res.redirect(result);
   })
 );
@@ -36,7 +35,6 @@ router.post(
   httpHandler(async (req, res) => {
     const result = await authService.completeProfille(req.body);
      attachCookie(res,  {access_token: result.access_token});
-     console.log(result.redirectURL);
     res.redirect(result.redirectURL);
   })
 )
@@ -52,7 +50,7 @@ router.post(
       password: req.body.password,
     });
     attachCookie(res, {access_token: result.access_token});
-    res.sendStatus(StatusCodes.OK);
+    res.send(result.userData);
   })
 );
 

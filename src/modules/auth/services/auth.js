@@ -7,7 +7,7 @@ import { secret } from "../../../../src/config/secret";
 import emailtemplate from "../../../helpers/send-email"
 import userModel from "../models/"
 import { organizationModel } from "../../organization/models";
-
+import { permissionDefineModel } from "../../user-management/models";
 
 const authService = {};
 
@@ -171,7 +171,40 @@ authService.doLogin = async ({ email, password }) => {
   const isValid = bcrypt.compareSync(password, existingUser.password);
   assert(isValid, createError(StatusCodes.UNAUTHORIZED, "Invalid password"));
   const getToken = await jwtService.generatePair(existingUser.email);
-  return {"userId":existingUser._id, "access_token":getToken};
+
+   
+       
+       const getUserData = await userModel.findOne({ email})
+       .select({
+        email:1,
+        role:1,
+        teamrole:1
+      })
+       .populate({
+        path: 'teamrole',
+        select: 'permissions',
+        populate: {
+          path: 'permissions',
+          select: 'moduleName read read_write actions',
+        },
+      })
+
+      let permissions;
+      if (getUserData.role === 'superadmin' || getUserData.role === 'root') {
+        permissions = {}; // Empty key for superadmin and root roles
+      } else if (getUserData.teamrole && getUserData.teamrole.permissions) {
+        permissions = getUserData.teamrole.permissions; // Use teamrole's permissions if available
+      } else {
+        permissions = []; // Default to empty array if no permissions found
+      }
+
+      const userData = {
+        email: getUserData.email,
+        role: getUserData.role,
+        permissions,
+      }
+     
+  return {"userData":userData, "access_token":getToken};
 };
 
 

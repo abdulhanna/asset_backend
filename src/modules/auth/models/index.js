@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema(
     },
     teamrole:{
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Role",
+        ref: "roles",
         default: null
     },
     token:{
