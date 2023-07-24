@@ -22,12 +22,20 @@ const userSchema = new mongoose.Schema(
     },
     teamrole:{
         type: mongoose.Schema.Types.ObjectId,
-        ref: "roleDefineModel",
+        ref: "roles",
         default: null
     },
     token:{
         type: String,
         default: null,
+    },
+    verificationToken:{
+      type: String,
+      default: null,
+    },
+    companyProfileToken:{
+      type: String,
+      default: null,
     },
     device_or_token: {
         type : [{
@@ -47,7 +55,7 @@ const userSchema = new mongoose.Schema(
       type: {
         organizationId:{
           type: mongoose.Schema.Types.ObjectId,
-          ref: "organization",
+          ref: "organizations",
         },
         userIdentificationNo: {
           type: String                  
@@ -71,6 +79,9 @@ const userSchema = new mongoose.Schema(
           type: String
         },
         state: {
+          type: String
+        },
+        country:{
           type: String
         },
         pinCode: {
@@ -117,8 +128,4 @@ userSchema.index({ email: true });
 
 const userModel = mongoose.model('users', userSchema);
 
-
 export default userModel;
-
-
-

@@ -9,13 +9,13 @@ opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 opts.secretOrKey = secret.JWT_KEY;
 
 export const initPassport = () => {
-  passport.use(
-    new JwtStrategy(opts, (payload, done) => {
-      return done(null, payload);
-    })
-  );
+     passport.use(
+          new JwtStrategy(opts, (payload, done) => {
+               return done(null, payload);
+          })
+     );
 };
 
 export const isLoggedIn = (req, res, next) => {
-  return passport.authenticate('jwt', { session: false })(req, res, next);
+     return passport.authenticate('jwt', { session: false })(req, res, next);
 };

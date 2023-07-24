@@ -36,4 +36,4 @@ updated_at: {
     default: null,
 }
 },{new:true})
-export default mongoose.model('permissionDefineModel', permissionDefineSchema);
+export default mongoose.model('permissions', permissionDefineSchema);

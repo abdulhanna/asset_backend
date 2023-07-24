@@ -3,27 +3,12 @@ const roleDefineSchema = new mongoose.Schema({
   rolename:{
     type:String
   },
-  permissions:{
-    type:Boolean,
-    default:false
-  },
-  permissions:{
-    type: [{
-        moduleName: {
-        type: String                  
-      },
-      read: {
-        type: Boolean                  
-      },
-      read_write: {
-        type: Boolean
-      },
-      actiob: {
-        type: Boolean
-      },
-    }],
-    default: null
-  },
+  permissions:[
+    {
+         type: mongoose.Schema.Types.ObjectId,
+         ref: "permissions",
+    },
+],
   added_by_userId:{
     type: mongoose.Schema.Types.ObjectId,
     ref: "users",
@@ -49,4 +34,4 @@ updated_at: {
     default: null,
 }
 },{new:true})
-export default mongoose.model('roleDefineModel', roleDefineSchema);
+export default mongoose.model('roles', roleDefineSchema);
