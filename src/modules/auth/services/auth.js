@@ -11,19 +11,25 @@ import { permissionDefineModel } from "../../user-management/models";
 
 const authService = {};
 
-
 // user registration
 authService.doRegister = async (data) => {
+     const role = 'superadmin'; // on comapany onboard default role will be superadmin
 
-    const role = 'superadmin';   // on comapany onboard default role will be superadmin
+     assertEvery(
+          [data.email, data.password, data.confirmPassword],
+          createError(
+               StatusCodes.BAD_REQUEST,
+               'Invalid Data: [email], [password] and [confirmPassword] fields must exist'
+          )
+     );
 
-    assertEvery(
-      [data.email, data.password, data.confirmPassword],
-      createError(
-        StatusCodes.BAD_REQUEST,
-        "Invalid Data: [email], [password] and [confirmPassword] fields must exist"
-      )
-    );
+     assert(
+          data.password == data.confirmPassword,
+          createError(
+               StatusCodes.UNAUTHORIZED,
+               "Password and confirm Password don't match"
+          )
+     );
 
     assert(
       data.password == data.confirmPassword,
@@ -52,24 +58,22 @@ authService.doRegister = async (data) => {
         verificationToken: token,
       });
      return result;
-  };
-  
-
+};
 
 // email confirmation
 
 authService.verifyUser = async (verificationToken) => {
-  const user = await userModel.findOne({
-    verificationToken
-  });
-  assert(user, createError(StatusCodes.NOT_FOUND, "Invalid token provided"));
+     const user = await userModel.findOne({
+          verificationToken,
+     });
+     assert(user, createError(StatusCodes.NOT_FOUND, 'Invalid token provided'));
 
-  const usercheckVerify = await userModel.findOne({
-    verificationToken,
-    is_deleted: false,
-    is_email_verified: true,
-    is_profile_completed: true,
-  });
+     const usercheckVerify = await userModel.findOne({
+          verificationToken,
+          is_deleted: false,
+          is_email_verified: true,
+          is_profile_completed: true,
+     });
 
   if(usercheckVerify)
   {
@@ -89,6 +93,9 @@ authService.verifyUser = async (verificationToken) => {
   return redirectURL;
 }
 
+     const redirectURL = `${secret.frontend_baseURL}/company-profile?confirmation_token=${companyToken.access_token}`;
+     return redirectURL;
+};
 
 authService.completeProfille = async (data) =>{
 
@@ -105,7 +112,8 @@ authService.completeProfille = async (data) =>{
     companyProfileToken,
   });
 
-  assert(user, createError(StatusCodes.NOT_FOUND, "Invalid Token Provided"));
+     assert(user, createError(StatusCodes.NOT_FOUND, 'User not found'));
+};
 
   const usercheckVerify = await userModel.findOne({
     companyProfileToken,

@@ -1,6 +1,6 @@
-import { Router } from "express";
-import { httpHandler } from "@madhouselabs/http-helpers";
-import StatusCodes from "http-status-codes";
+import { Router } from 'express';
+import { httpHandler } from '@madhouselabs/http-helpers';
+import StatusCodes from 'http-status-codes';
 import { isLoggedIn } from './passport.js';
 import authService from "../services/auth";
 import { attachCookie } from "../../../helpers/cookie-manager.js";
@@ -9,13 +9,12 @@ import { attachCookie } from "../../../helpers/cookie-manager.js";
 const router = Router();
 
 router.post(
-    "/register",
-    httpHandler(async (req, res) => {
-      const result = await authService.doRegister(req.body);
-      res.send(result);
-    })
-  );
-
+     '/register',
+     httpHandler(async (req, res) => {
+          const result = await authService.doRegister(req.body);
+          res.send(result);
+     })
+);
 
 // Token verify on email
 router.get(
@@ -26,7 +25,6 @@ router.get(
     res.redirect(result);
   })
 );
-
 
 // profile complete
 

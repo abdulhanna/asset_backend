@@ -1,15 +1,15 @@
-import { secret } from "../config/secret";
-import sgMail from "@sendgrid/mail";
+import { secret } from '../config/secret';
+import sgMail from '@sendgrid/mail';
 
-const emailtemplate = {}
+const emailtemplate = {};
 
 emailtemplate.accountVerificationEmail = async (toemail, token) => {
-    sgMail.setApiKey(secret.sendgrid.api_key);
-    const msg = {
-      to: toemail, // Change to your recipient
-      from:secret.sendgrid.from_user, // Change to your verified sender
-      subject: "Please confirm your account on Asset Monitoring",
-    html: `<!DOCTYPE html>
+     sgMail.setApiKey(secret.sendgrid.api_key);
+     const msg = {
+          to: toemail, // Change to your recipient
+          from: secret.sendgrid.from_user, // Change to your verified sender
+          subject: 'Please confirm your account on Asset Monitoring',
+          html: `<!DOCTYPE html>
 <html>
 <head>
   <title>Confirm Template</title>
@@ -72,13 +72,30 @@ emailtemplate.accountVerificationEmail = async (toemail, token) => {
    </table>
 </body>
 </html>`,
-    };
-      const sendEmail =  await sgMail.send(msg)
-      if(sendEmail) return true
-  else return false
+     };
+     const sendEmail = await sgMail.send(msg);
+     if (sendEmail) return true;
+     else return false;
 };
 
+emailtemplate.sendInvitationEmail = async (email, verificationToken) => {
+     try {
+          sgMail.setApiKey(secret.sendgrid.api_key);
+
+          const message = {
+               to: email,
+               from: secret.sendgrid.from_user, // Change to your verified sender
+               subject: 'Invitation to Set Password',
+               html: `<p>Hello,</p><p>You have been invited to set your password. Click the following link to set your password:</p>
+        <a href="${secret.frontend_baseURL}/set-password/${verificationToken}">Set Password</a>`,
+          };
+
+          await sgMail.send(message);
+          console.log('Invitation email sent successfully.');
+     } catch (error) {
+          console.error('Error sending invitation email:', error);
+          throw new Error('Failed to send invitation email');
+     }
+};
 
 export default emailtemplate;
-
-
