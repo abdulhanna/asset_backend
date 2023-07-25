@@ -38,10 +38,6 @@ const roleDefineSchema = new mongoose.Schema(
                          type: Boolean,
                          default: false,
                     },
-                    restoreDefaults: {
-                         type: Boolean,
-                         default: false,
-                    },
                },
           ],
           addedByUserId: {

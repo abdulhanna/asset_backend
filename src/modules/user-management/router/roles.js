@@ -96,12 +96,10 @@ router.put('/:roleId', isLoggedIn, async (req, res) => {
                     permission.read = true;
                     permission.readWrite = true;
                     permission.actions = true;
-                    permission.restoreDefaults = false;
                } else if (permission.removeAccess) {
                     permission.read = false;
                     permission.readWrite = false;
                     permission.actions = false;
-                    permission.restoreDefaults = false;
                }
           }
 
