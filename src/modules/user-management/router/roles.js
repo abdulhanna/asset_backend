@@ -1,6 +1,7 @@
 import express from 'express';
 import { rolesService } from '../services/roles.js';
 import { isLoggedIn } from '../../auth/router/passport.js';
+import mongoose from 'mongoose';
 
 const router = express.Router();
 
@@ -9,6 +10,17 @@ router.post('/', isLoggedIn, async (req, res) => {
      try {
           const userId = req.user.data._id;
           const { roleName, description, permissions } = req.body;
+
+          // Validate the moduleId before proceeding
+          if (permissions && permissions.length > 0) {
+               for (const permission of permissions) {
+                    if (!mongoose.Types.ObjectId.isValid(permission.moduleId)) {
+                         return res.status(400).json({
+                              error: 'Invalid moduleId, it must be a valid ObjectId.',
+                         });
+                    }
+               }
+          }
 
           const roleData = {
                roleName,
