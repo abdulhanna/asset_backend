@@ -38,13 +38,15 @@ const updateRole = async (roleId, roleName, description, permissions) => {
           throw new Error('Unable to update role');
      }
 };
+
 const getAllRoles = async () => {
      try {
-          // Fetch all roles from the database
+          // Fetch all roles from the database, excluding isDeleted and isDeactivated fields
           const roles = await roleDefineModel
-               .find()
+               .find({ isDeleted: false, isDeactivated: false })
+               .select('-isDeleted -isDeactivated -deletedAt')
                .populate('addedByUserId', 'email') // Only populate 'email' field from addedByUserId
-               .populate('permissions', 'read readWrite actions') // Only populate the specified fields from permissions
+               .populate('permissions', 'read readWrite actions')
                .exec();
 
           return roles;

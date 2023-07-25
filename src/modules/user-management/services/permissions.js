@@ -54,19 +54,12 @@ const updatePermission = async (id, updateData) => {
           throw new Error(error.message);
      }
 };
+
 const getAllPermissions = async () => {
      try {
-          const permissions = await permissionModel.find(
-               { isDeleted: false, isDeactivated: false },
-               {
-                    _id: 1,
-                    moduleName: 1,
-                    read: 1,
-                    readWrite: 1,
-                    actions: 1,
-                    allAccess: 1,
-               }
-          );
+          const permissions = await permissionModel
+               .find({ isDeleted: false, isDeactivated: false })
+               .select('moduleName read readWrite actions allAccess _id');
           return permissions;
      } catch (error) {
           throw new Error(error.message);
