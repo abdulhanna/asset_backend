@@ -2,6 +2,7 @@ import express from 'express';
 import { rolesService } from '../services/roles.js';
 import { isLoggedIn } from '../../auth/router/passport.js';
 import mongoose from 'mongoose';
+import roleDefineModel from '../models/roles.js';
 
 const router = express.Router();
 
@@ -9,12 +10,27 @@ const router = express.Router();
 router.post('/', isLoggedIn, async (req, res) => {
      try {
           const userId = req.user.data._id;
-          const { roleName, description, permissions } = req.body;
+          let { roleName, description, permissions } = req.body;
+
+          // Remove leading and trailing whitespace from roleName
+          roleName = roleName.trim();
 
           if (!roleName) {
                return res.status(400).json({
                     success: false,
                     error: 'Invalid request data. roleName is required.',
+               });
+          }
+
+          // Convert the roleName to lowercase for case-insensitive comparison
+          roleName = roleName.toLowerCase();
+
+          // Check if the roleName already exists
+          const existingRole = await roleDefineModel.findOne({ roleName });
+          if (existingRole) {
+               return res.status(400).json({
+                    success: false,
+                    error: `Role with the name '${roleName}' already exists.`,
                });
           }
 
