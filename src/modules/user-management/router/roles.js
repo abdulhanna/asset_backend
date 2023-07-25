@@ -31,12 +31,13 @@ router.put('/:roleId', isLoggedIn, async (req, res) => {
           const { roleId } = req.params;
           const { roleName, description, permissions } = req.body;
 
-          const role = await rolesService.updateRole(
-               roleId,
+          const updateData = {
                roleName,
                description,
-               permissions
-          );
+               permissions,
+          };
+
+          const role = await rolesService.updateRole(roleId, updateData);
 
           if (!role) {
                return res.status(404).json({ message: 'Role not found' });

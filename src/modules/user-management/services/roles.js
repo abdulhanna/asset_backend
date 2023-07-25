@@ -11,21 +11,18 @@ const createRole = async (roleData) => {
      }
 };
 
-const updateRole = async (roleId, roleName, description, permissions) => {
+const updateRole = async (roleId, updateData) => {
      try {
-          // Create an object with the updated fields and current timestamp
-          const updateData = {
-               roleName,
-               description,
-               permissions,
-               updatedAt: new Date(),
-          };
+          // Add the updatedAt field with the current timestamp to updateData
+          updateData.updatedAt = new Date();
 
           // Find the role by its ID and update the fields
           const updatedRole = await roleDefineModel.findByIdAndUpdate(
                roleId,
                updateData,
-               { new: true }
+               {
+                    new: true,
+               }
           );
 
           return updatedRole;
@@ -41,7 +38,7 @@ const getAllRoles = async () => {
                .find({ isDeleted: false, isDeactivated: false })
                .select('-isDeleted -isDeactivated -deletedAt')
                .populate('addedByUserId', 'email') // Only populate 'email' field from addedByUserId
-               .populate('permissions', 'read readWrite actions')
+               .populate('permissions', 'moduleName read readWrite actions')
                .exec();
 
           return roles;
