@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.post('/create', isLoggedIn, async (req, res) => {
      try {
-          const { moduleName, allAccess } = req.body;
+          const { moduleName } = req.body;
 
           // Custom validation for the create permission request
           if (!moduleName) {
