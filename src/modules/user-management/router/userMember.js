@@ -1,18 +1,21 @@
 import { Router } from 'express';
 import { memberService } from '../services/userMember.js';
+import { isLoggedIn } from '../../auth/router/passport.js';
 
 const router = Router();
 // Create a new member
-router.post('/createMember', async (req, res) => {
+router.post('/createMember', isLoggedIn, async (req, res) => {
      try {
-          const { email, password, parentId, userProfile, teamrole } = req.body;
+          const parentId = req.user.data._id;
+
+          const { email, password, userProfile, teamrole } = req.body;
 
           const userData = {
                email,
                password,
-               parentId,
                userProfile,
                teamrole,
+               parentId,
           };
 
           const member = await memberService.createMember(userData);

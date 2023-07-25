@@ -20,9 +20,9 @@ const createMember = async (userData) => {
           const member = new userModel({
                email: userData.email,
                password: userData.password,
-               parentId: userData.parentId,
-               teamrole: userData.teamrole,
                userProfile: userData.userProfile,
+               teamrole: userData.teamrole,
+               parentId: userData.parentId,
                verificationToken: verificationToken,
           });
 
