@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 
 const router = express.Router();
 
-// Route for creating a new role with permissions
+// POST route for creating a new role with permissions
 router.post('/', isLoggedIn, async (req, res) => {
      try {
           const userId = req.user.data._id;
@@ -18,6 +18,13 @@ router.post('/', isLoggedIn, async (req, res) => {
                          return res.status(400).json({
                               error: 'Invalid moduleId, it must be a valid ObjectId.',
                          });
+                    }
+
+                    // Handle automatic updates based on allAccess field
+                    if (permission.allAccess) {
+                         permission.read = true;
+                         permission.readWrite = true;
+                         permission.actions = true;
                     }
                }
           }
@@ -37,6 +44,7 @@ router.post('/', isLoggedIn, async (req, res) => {
      }
 });
 
+// PUT route for updating a role with permissions
 router.put('/:roleId', isLoggedIn, async (req, res) => {
      try {
           const { roleName, description, permissions } = req.body;
@@ -56,6 +64,21 @@ router.put('/:roleId', isLoggedIn, async (req, res) => {
                               error: 'Invalid moduleId, it must be a valid ObjectId.',
                          });
                     }
+               }
+          }
+
+          // Handle automatic updates based on allAccess and removeAccess fields
+          for (const permission of permissions) {
+               if (permission.allAccess) {
+                    permission.read = true;
+                    permission.readWrite = true;
+                    permission.actions = true;
+                    permission.restoreDefaults = false;
+               } else if (permission.removeAccess) {
+                    permission.read = false;
+                    permission.readWrite = false;
+                    permission.actions = false;
+                    permission.restoreDefaults = false;
                }
           }
 
