@@ -8,15 +8,17 @@ const router = express.Router();
 router.post('/', isLoggedIn, async (req, res) => {
      try {
           const userId = req.user.data._id;
-
           const { roleName, description, permissions } = req.body;
 
-          const role = await rolesService.createRole(
+          const roleData = {
                roleName,
                description,
                permissions,
-               userId
-          );
+               addedByUserId: userId,
+               createdAt: new Date(), // Set createdAt to the current date/time
+          };
+
+          const role = await rolesService.createRole(roleData);
           res.status(201).json(role);
      } catch (err) {
           res.status(500).json({ error: 'Unable to create role' });

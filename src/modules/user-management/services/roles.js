@@ -1,14 +1,9 @@
 import { roleDefineModel } from '../models';
 
-const createRole = async (roleName, description, permissions, userId) => {
+const createRole = async (roleData) => {
      try {
           // Create the new role in the database
-          const role = await roleDefineModel.create({
-               roleName,
-               description,
-               permissions,
-               addedByUserId: userId,
-          });
+          const role = await roleDefineModel.create(roleData);
 
           return role;
      } catch (error) {
