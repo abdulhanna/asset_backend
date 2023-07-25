@@ -1,19 +1,21 @@
 import express from 'express';
 import { rolesService } from '../services/roles.js';
+import { isLoggedIn } from '../../auth/router/passport.js';
 
 const router = express.Router();
 
 // Route for creating a new role with permissions
-router.post('/', async (req, res) => {
+router.post('/', isLoggedIn, async (req, res) => {
      try {
-          const { roleName, description, permissions, addedByUserId } =
-               req.body;
+          const userId = req.user.data._id;
+
+          const { roleName, description, permissions } = req.body;
 
           const role = await rolesService.createRole(
                roleName,
                description,
                permissions,
-               addedByUserId
+               userId
           );
           res.status(201).json(role);
      } catch (err) {
@@ -22,7 +24,7 @@ router.post('/', async (req, res) => {
 });
 
 // Route for updating an existing role by role ID
-router.put('/:roleId', async (req, res) => {
+router.put('/:roleId', isLoggedIn, async (req, res) => {
      try {
           const { roleId } = req.params;
           const { roleName, description, permissions } = req.body;
@@ -45,7 +47,7 @@ router.put('/:roleId', async (req, res) => {
 });
 
 // Route to retrieve all roles
-router.get('/', async (req, res) => {
+router.get('/', isLoggedIn, async (req, res) => {
      try {
           // Retrieve all roles from the database
           const roles = await rolesService.getAllRoles();

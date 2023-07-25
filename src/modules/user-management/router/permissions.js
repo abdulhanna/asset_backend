@@ -1,9 +1,10 @@
 import express from 'express';
 import { permissionService } from '../services/permissions.js';
+import { isLoggedIn } from '../../auth/router/passport.js';
 
 const router = express.Router();
 
-router.post('/create', async (req, res) => {
+router.post('/create', isLoggedIn, async (req, res) => {
      try {
           const { moduleName, allAccess } = req.body;
 
