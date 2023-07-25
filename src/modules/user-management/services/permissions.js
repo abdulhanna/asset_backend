@@ -13,15 +13,7 @@ const createPermission = async (moduleName, allAccess) => {
      }
 };
 
-const updatePermission = async (
-     id,
-     read,
-     readWrite,
-     actions,
-     allAccess,
-     removeAccess,
-     restoreDefaults
-) => {
+const updatePermission = async (id, updateData) => {
      try {
           const existingPermission = await permissionModel.findById(id);
 
@@ -29,42 +21,33 @@ const updatePermission = async (
                throw new Error('Permission not found');
           }
 
-          const updateData = {
+          const updatedData = {
                updatedAt: new Date(),
+               ...updateData,
           };
 
-          if (allAccess) {
-               updateData.allAccess = true;
-               updateData.removeAccess = false;
-               updateData.restoreDefaults = false;
-               updateData.read = true;
-               updateData.readWrite = true;
-               updateData.actions = true;
-          } else if (removeAccess) {
-               updateData.allAccess = false;
-               updateData.removeAccess = true;
-               updateData.restoreDefaults = false;
-               updateData.read = false;
-               updateData.readWrite = false;
-               updateData.actions = false;
-          } else if (restoreDefaults) {
-               updateData.allAccess = false;
-               updateData.removeAccess = false;
-               updateData.restoreDefaults = true;
-          } else {
-               // Update individual fields if not using allAccess, removeAccess, or restoreDefaults
-               if (typeof read === 'boolean') {
-                    updateData.read = read;
-               }
-               if (typeof readWrite === 'boolean') {
-                    updateData.readWrite = readWrite;
-               }
-               if (typeof actions === 'boolean') {
-                    updateData.actions = actions;
-               }
+          // Handle access flags
+          if (updateData.allAccess) {
+               updatedData.allAccess = true;
+               updatedData.removeAccess = false;
+               updatedData.restoreDefaults = false;
+               updatedData.read = true;
+               updatedData.readWrite = true;
+               updatedData.actions = true;
+          } else if (updateData.removeAccess) {
+               updatedData.allAccess = false;
+               updatedData.removeAccess = true;
+               updatedData.restoreDefaults = false;
+               updatedData.read = false;
+               updatedData.readWrite = false;
+               updatedData.actions = false;
+          } else if (updateData.restoreDefaults) {
+               updatedData.allAccess = false;
+               updatedData.removeAccess = false;
+               updatedData.restoreDefaults = true;
           }
 
-          return await permissionModel.findByIdAndUpdate(id, updateData, {
+          return await permissionModel.findByIdAndUpdate(id, updatedData, {
                new: true,
           });
      } catch (error) {

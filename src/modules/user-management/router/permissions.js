@@ -29,14 +29,7 @@ router.post('/create', isLoggedIn, async (req, res) => {
 router.put('/update/:id', async (req, res) => {
      try {
           const { id } = req.params;
-          const {
-               read,
-               readWrite,
-               actions,
-               allAccess,
-               removeAccess,
-               restoreDefaults,
-          } = req.body;
+          const updateData = req.body;
 
           // Custom validation for the update permission request
           if (!id.match(/^[0-9a-fA-F]{24}$/)) {
@@ -48,12 +41,7 @@ router.put('/update/:id', async (req, res) => {
 
           const permission = await permissionService.updatePermission(
                id,
-               read,
-               readWrite,
-               actions,
-               allAccess,
-               removeAccess,
-               restoreDefaults
+               updateData
           );
 
           if (!permission) {
