@@ -4,9 +4,6 @@ const createPermission = async (moduleName, allAccess) => {
      try {
           const permission = new permissionModel({
                moduleName,
-               read: allAccess,
-               readWrite: allAccess,
-               actions: allAccess,
                createdAt: new Date(),
           });
 

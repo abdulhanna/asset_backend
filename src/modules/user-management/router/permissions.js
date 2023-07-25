@@ -9,18 +9,15 @@ router.post('/create', isLoggedIn, async (req, res) => {
           const { moduleName, allAccess } = req.body;
 
           // Custom validation for the create permission request
-          if (!moduleName || typeof allAccess !== 'boolean') {
+          if (!moduleName) {
                return res.status(400).json({
                     success: false,
-                    errors: [
-                         'Invalid request data. moduleName is required and allAccess should be a boolean.',
-                    ],
+                    errors: ['Invalid request data. moduleName is required.'],
                });
           }
 
           const permission = await permissionService.createPermission(
-               moduleName,
-               allAccess
+               moduleName
           );
 
           res.status(201).json({ success: true, permission });
