@@ -11,6 +11,13 @@ router.post('/', isLoggedIn, async (req, res) => {
           const userId = req.user.data._id;
           const { roleName, description, permissions } = req.body;
 
+          if (!roleName) {
+               return res.status(400).json({
+                    success: false,
+                    error: 'Invalid request data. roleName is required.',
+               });
+          }
+
           // Validate the moduleId before proceeding
           if (permissions && permissions.length > 0) {
                for (const permission of permissions) {
