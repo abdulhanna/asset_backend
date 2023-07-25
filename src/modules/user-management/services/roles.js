@@ -11,18 +11,13 @@ const createRole = async (roleData) => {
      }
 };
 
-const updateRole = async (roleId, updateData) => {
+const updateRole = async (roleId, updatedRoleData) => {
      try {
-          // Add the updatedAt field with the current timestamp to updateData
-          updateData.updatedAt = new Date();
-
-          // Find the role by its ID and update the fields
+          // Find the role by roleId and update it with the new data
           const updatedRole = await roleDefineModel.findByIdAndUpdate(
                roleId,
-               updateData,
-               {
-                    new: true,
-               }
+               { $set: updatedRoleData },
+               { new: true }
           );
 
           return updatedRole;

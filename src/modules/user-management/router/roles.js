@@ -37,26 +37,34 @@ router.post('/', isLoggedIn, async (req, res) => {
      }
 });
 
-// Route for updating an existing role by role ID
 router.put('/:roleId', isLoggedIn, async (req, res) => {
      try {
-          const { roleId } = req.params;
           const { roleName, description, permissions } = req.body;
-
-          const updateData = {
+          const roleId = req.params.roleId;
+          const updatedRoleData = {
                roleName,
                description,
                permissions,
+               updatedAt: new Date(),
           };
 
-          const role = await rolesService.updateRole(roleId, updateData);
-
-          if (!role) {
-               return res.status(404).json({ message: 'Role not found' });
+          // Validate the moduleId before proceeding
+          if (permissions && permissions.length > 0) {
+               for (const permission of permissions) {
+                    if (!mongoose.Types.ObjectId.isValid(permission.moduleId)) {
+                         return res.status(400).json({
+                              error: 'Invalid moduleId, it must be a valid ObjectId.',
+                         });
+                    }
+               }
           }
 
-          res.status(200).json(role);
-     } catch (error) {
+          const updatedRole = await rolesService.updateRole(
+               roleId,
+               updatedRoleData
+          );
+          res.json(updatedRole);
+     } catch (err) {
           res.status(500).json({ error: 'Unable to update role' });
      }
 });

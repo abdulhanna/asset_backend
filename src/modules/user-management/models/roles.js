@@ -5,6 +5,9 @@ const roleDefineSchema = new mongoose.Schema(
           roleName: {
                type: String,
           },
+          description: {
+               type: String,
+          },
           permissions: [
                {
                     moduleId: {
