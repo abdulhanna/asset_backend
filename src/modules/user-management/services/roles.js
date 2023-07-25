@@ -38,7 +38,7 @@ const getAllRoles = async () => {
                .find({ isDeleted: false, isDeactivated: false })
                .select('-isDeleted -isDeactivated -deletedAt')
                .populate('addedByUserId', 'email') // Only populate 'email' field from addedByUserId
-               .populate('permissions', 'moduleNameread readWrite actions')
+               .populate('permissions', 'moduleName read readWrite actions')
                .exec();
 
           return roles;
