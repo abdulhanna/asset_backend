@@ -94,6 +94,12 @@ const getAllRoles = async () => {
                );
           });
 
+          // roles.forEach((role) => {
+          //      role.permissions = role.permissions.filter((permission) => {
+          //           return permission.removeAccess === false;
+          //      });
+          // });g
+
           return roles;
      } catch (error) {
           throw new Error('Unable to fetch roles');
