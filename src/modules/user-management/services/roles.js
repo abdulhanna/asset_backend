@@ -46,6 +46,8 @@ const updateRole = async (roleId, updatedRoleData) => {
                               },
                               {
                                    $set: {
+                                        'permissions.$.moduleName':
+                                             permission.moduleName,
                                         'permissions.$.read': permission.read,
                                         'permissions.$.readWrite':
                                              permission.readWrite,
