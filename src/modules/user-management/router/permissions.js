@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.post('/create', isLoggedIn, async (req, res) => {
      try {
-          const { moduleName } = req.body;
+          const { moduleName, read, readWrite, actions } = req.body;
 
           // Custom validation for the create permission request
           if (!moduleName) {
@@ -16,8 +16,16 @@ router.post('/create', isLoggedIn, async (req, res) => {
                });
           }
 
+          const permissionData = {
+               moduleName,
+               read,
+               readWrite,
+               actions,
+               createdAt: new Date(),
+          };
+
           const permission = await permissionService.createPermission(
-               moduleName
+               permissionData
           );
 
           res.status(201).json({ success: true, permission });

@@ -1,13 +1,10 @@
 import { permissionModel } from '../models';
 
-const createPermission = async (moduleName, allAccess) => {
+const createPermission = async (permissionData) => {
      try {
-          const permission = new permissionModel({
-               moduleName,
-               createdAt: new Date(),
-          });
+          const permission = await permissionModel.create(permissionData);
 
-          return await permission.save();
+          return permission;
      } catch (error) {
           throw new Error(error.message);
      }
