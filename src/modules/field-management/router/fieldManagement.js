@@ -3,7 +3,7 @@ import { fieldManagementService } from '../services/fieldManagement.js';
 
 const router = express.Router();
 
-router.post('/add', async (req, res) => {
+router.post('/add-groups', async (req, res) => {
      try {
           const { name } = req.body;
 
