@@ -48,7 +48,7 @@ const fieldManagementSchema = new mongoose.Schema({
 });
 
 const fieldManagementModel = mongoose.model(
-     'fieldManagement',
+     'field_management',
      fieldManagementSchema
 );
 
