@@ -13,6 +13,8 @@ const createRole = async (roleData) => {
 
 const updateRole = async (roleId, updatedRoleData) => {
      try {
+          const { roleName, description } = updatedRoleData;
+
           // Handle automatic updates based on allAccess and removeAccess fields
           if (
                updatedRoleData.permissions &&
@@ -57,6 +59,12 @@ const updateRole = async (roleId, updatedRoleData) => {
                                              permission.allAccess,
                                         'permissions.$.removeAccess':
                                              permission.removeAccess,
+                                        roleName:
+                                             roleName ||
+                                             existingPermission.roleName,
+                                        description:
+                                             description ||
+                                             existingPermission.description,
                                    },
                               }
                          );
