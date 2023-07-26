@@ -6,12 +6,24 @@ const router = express.Router();
 router.post('/add', async (req, res) => {
      try {
           const { name, fields } = req.body;
-          const newFieldGroup = await fieldManagementService.createFieldGroup(
-               name,
-               fields
-          );
+          let newFieldGroup;
+
+          if (fields) {
+               // If fields are provided, create/update with fields array
+               newFieldGroup = await fieldManagementService.createFieldGroup(
+                    name,
+                    fields
+               );
+          } else {
+               // If fields are not provided, create with just the name property
+               newFieldGroup = await fieldManagementService.createFieldGroup(
+                    name
+               );
+          }
+
           res.status(201).json(newFieldGroup);
      } catch (error) {
+          console.log(error);
           res.status(500).json({ error: 'Unable to create field group' });
      }
 });

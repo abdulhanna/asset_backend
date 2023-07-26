@@ -26,7 +26,7 @@ const fieldSchema = new mongoose.Schema(
                required: true,
           },
      },
-     { _id: false } // This ensures that Mongoose doesn't create an _id for each field object
+     { _id: true }
 );
 
 const fieldManagementSchema = new mongoose.Schema({
@@ -37,13 +37,13 @@ const fieldManagementSchema = new mongoose.Schema({
      },
      fields: {
           type: [fieldSchema],
-          required: true,
-          validate: {
-               validator: function (fields) {
-                    return fields.length > 0; // Ensure there is at least one field defined
-               },
-               message: 'At least one field must be defined for the groupName.',
-          },
+          // required: true,
+          // validate: {
+          //      validator: function (fields) {
+          //           return fields.length > 0; // Ensure there is at least one field defined
+          //      },
+          //      message: 'At least one field must be defined for the groupName.',
+          // },
      },
 });
 
