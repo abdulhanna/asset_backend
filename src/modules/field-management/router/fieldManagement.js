@@ -20,13 +20,13 @@ router.post('/add', async (req, res) => {
      }
 });
 
-router.put('/:name/add-fields', async (req, res) => {
+router.put('/:groupId/add-fields', async (req, res) => {
      try {
-          const { name } = req.params;
+          const { groupId } = req.params;
           const { fields } = req.body;
 
           const updatedFieldGroup =
-               await fieldManagementService.addFieldToGroup(name, fields);
+               await fieldManagementService.addFieldToGroup(groupId, fields);
           res.status(200).json(updatedFieldGroup);
      } catch (error) {
           console.log(error);

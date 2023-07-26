@@ -12,9 +12,9 @@ const createMultipleFieldGroups = async (names) => {
      return newFieldGroups;
 };
 
-const addFieldToGroup = async (name, fields) => {
+const addFieldToGroup = async (groupId, fields) => {
      return await fieldManagementModel.findOneAndUpdate(
-          { name },
+          { _id: groupId },
           { $push: { fields } },
           { new: true }
      );
