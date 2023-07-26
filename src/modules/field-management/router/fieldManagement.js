@@ -16,4 +16,14 @@ router.post('/add', async (req, res) => {
      }
 });
 
+router.get('/list', async (req, res) => {
+     try {
+          const filedGroups = await fieldManagementService.getFieldGroups();
+
+          res.status(200).json(filedGroups);
+     } catch (error) {
+          res.status(500).json({ error: 'Unable to get field group' });
+     }
+});
+
 export default router;

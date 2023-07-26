@@ -12,6 +12,17 @@ const createFieldGroup = async (name, fields) => {
      }
 };
 
+const getFieldGroups = async () => {
+     try {
+          const filedGroups = await fieldManagementModel.find();
+
+          return filedGroups;
+     } catch (error) {
+          throw new Error('Unable to get field group');
+     }
+};
+
 export const fieldManagementService = {
      createFieldGroup,
+     getFieldGroups,
 };
