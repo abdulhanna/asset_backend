@@ -1,19 +1,9 @@
 import { roleDefineModel } from '../models';
 
-const createRole = async (
-     roleName,
-     description,
-     permissions,
-     addedByUserId
-) => {
+const createRole = async (roleData) => {
      try {
           // Create the new role in the database
-          const role = await roleDefineModel.create({
-               roleName,
-               description,
-               permissions,
-               addedByUserId,
-          });
+          const role = await roleDefineModel.create(roleData);
 
           return role;
      } catch (error) {
@@ -21,20 +11,12 @@ const createRole = async (
      }
 };
 
-const updateRole = async (roleId, roleName, description, permissions) => {
+const updateRole = async (roleId, updatedRoleData) => {
      try {
-          // Create an object with the updated fields and current timestamp
-          const updateData = {
-               roleName,
-               description,
-               permissions,
-               updatedAt: new Date(),
-          };
-
-          // Find the role by its ID and update the fields
+          // Find the role by roleId and update it with the new data
           const updatedRole = await roleDefineModel.findByIdAndUpdate(
                roleId,
-               updateData,
+               { $set: updatedRoleData },
                { new: true }
           );
 
@@ -46,11 +28,12 @@ const updateRole = async (roleId, roleName, description, permissions) => {
 
 const getAllRoles = async () => {
      try {
-          // Fetch all roles from the database
+          // Fetch all roles from the database, excluding isDeleted and isDeactivated fields
           const roles = await roleDefineModel
-               .find()
-               .populate('addedByUserId')
-               .populate('permissions')
+               .find({ isDeleted: false, isDeactivated: false })
+               .select('-isDeleted -isDeactivated -deletedAt')
+               .populate('addedByUserId', 'email') // Only populate 'email' field from addedByUserId
+               .populate('permissions', 'moduleName read readWrite actions')
                .exec();
 
           return roles;

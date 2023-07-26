@@ -5,10 +5,39 @@ const roleDefineSchema = new mongoose.Schema(
           roleName: {
                type: String,
           },
+          description: {
+               type: String,
+          },
           permissions: [
                {
-                    type: mongoose.Schema.Types.ObjectId,
-                    ref: 'permissions',
+                    moduleId: {
+                         type: mongoose.Schema.Types.ObjectId,
+                         ref: 'permissions',
+                    },
+                    moduleName: {
+                         type: String,
+                         default: null,
+                    },
+                    read: {
+                         type: Boolean,
+                         default: false,
+                    },
+                    readWrite: {
+                         type: Boolean,
+                         default: false,
+                    },
+                    actions: {
+                         type: Boolean,
+                         default: false,
+                    },
+                    allAccess: {
+                         type: Boolean,
+                         default: false,
+                    },
+                    removeAccess: {
+                         type: Boolean,
+                         default: false,
+                    },
                },
           ],
           addedByUserId: {

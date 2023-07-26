@@ -1,25 +1,31 @@
 import express from 'express';
 import { permissionService } from '../services/permissions.js';
+import { isLoggedIn } from '../../auth/router/passport.js';
 
 const router = express.Router();
 
-router.post('/create', async (req, res) => {
+router.post('/create', isLoggedIn, async (req, res) => {
      try {
-          const { moduleName, allAccess } = req.body;
+          const { moduleName, read, readWrite, actions } = req.body;
 
           // Custom validation for the create permission request
-          if (!moduleName || typeof allAccess !== 'boolean') {
+          if (!moduleName) {
                return res.status(400).json({
                     success: false,
-                    errors: [
-                         'Invalid request data. moduleName is required and allAccess should be a boolean.',
-                    ],
+                    errors: ['Invalid request data. moduleName is required.'],
                });
           }
 
-          const permission = await permissionService.createPermission(
+          const permissionData = {
                moduleName,
-               allAccess
+               read,
+               readWrite,
+               actions,
+               createdAt: new Date(),
+          };
+
+          const permission = await permissionService.createPermission(
+               permissionData
           );
 
           res.status(201).json({ success: true, permission });
@@ -31,14 +37,7 @@ router.post('/create', async (req, res) => {
 router.put('/update/:id', async (req, res) => {
      try {
           const { id } = req.params;
-          const {
-               read,
-               readWrite,
-               actions,
-               allAccess,
-               removeAccess,
-               restoreDefaults,
-          } = req.body;
+          const updateData = req.body;
 
           // Custom validation for the update permission request
           if (!id.match(/^[0-9a-fA-F]{24}$/)) {
@@ -50,12 +49,7 @@ router.put('/update/:id', async (req, res) => {
 
           const permission = await permissionService.updatePermission(
                id,
-               read,
-               readWrite,
-               actions,
-               allAccess,
-               removeAccess,
-               restoreDefaults
+               updateData
           );
 
           if (!permission) {
