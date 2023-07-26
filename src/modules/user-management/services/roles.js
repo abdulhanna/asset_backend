@@ -1,4 +1,4 @@
-import { roleDefineModel } from '../models';
+import { roleDefineModel, permissionModel } from '../models';
 
 const createRole = async (roleData) => {
      try {
@@ -31,6 +31,20 @@ const updateRole = async (roleId, updatedRoleData) => {
                          permission.readWrite = false;
                          permission.actions = false;
                          permission.allAccess = false; // In case removeAccess is true, allAccess should be false
+                    } else {
+                         // If allAccess is false, retrieve the default values from the permission collection
+                         const defaultPermission =
+                              await permissionModel.findById(
+                                   permission.moduleId
+                              );
+
+                         if (defaultPermission) {
+                              permission.read = defaultPermission.read;
+                              permission.readWrite =
+                                   defaultPermission.readWrite;
+                              permission.actions = defaultPermission.actions;
+                              permission.allAccess = false; // Ensure allAccess is false when using default values
+                         }
                     }
 
                     // Check if permission with the given moduleId already exists in the role
