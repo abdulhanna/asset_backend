@@ -6,36 +6,42 @@ const router = express.Router();
 router.post('/add', async (req, res) => {
      try {
           const { name, fields } = req.body;
-          let newFieldGroup;
 
-          if (fields) {
-               // If fields are provided, create/update with fields array
-               newFieldGroup = await fieldManagementService.createFieldGroup(
-                    name,
-                    fields
-               );
+          if (Array.isArray(name)) {
+               const newFieldGroups =
+                    await fieldManagementService.createMultipleFieldGroups(
+                         name
+                    );
+               res.status(201).json(newFieldGroups);
           } else {
-               // If fields are not provided, create with just the name property
-               newFieldGroup = await fieldManagementService.createFieldGroup(
-                    name
-               );
+               const newFieldGroup =
+                    await fieldManagementService.createFieldGroup(name, fields);
+               res.status(201).json(newFieldGroup);
           }
-
-          res.status(201).json(newFieldGroup);
      } catch (error) {
           console.log(error);
           res.status(500).json({ error: 'Unable to create field group' });
      }
 });
 
-router.get('/list', async (req, res) => {
+router.put('/:name/add-fields', async (req, res) => {
      try {
-          const filedGroups = await fieldManagementService.getFieldGroups();
+          const { name } = req.params;
+          const { fields } = req.body;
 
-          res.status(200).json(filedGroups);
+          const updatedFieldGroup =
+               await fieldManagementService.addFieldToGroup(name, fields);
+          res.status(200).json(updatedFieldGroup);
      } catch (error) {
-          res.status(500).json({ error: 'Unable to get field group' });
+          console.log(error);
+          res.status(500).json({ error: 'Unable to update field group' });
      }
+});
+
+router.get('/list', async (req, res) => {
+     const fieldGroups = await fieldManagementService.getFieldGroups();
+
+     res.status(200).json(fieldGroups);
 });
 
 export default router;

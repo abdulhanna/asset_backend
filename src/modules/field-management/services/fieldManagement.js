@@ -1,21 +1,35 @@
 import { fieldManagementModel } from '../models';
 
 const createFieldGroup = async (name, fields) => {
-     try {
-          if (fields) {
-               // If fields are provided, create/update with fields array
-               return await fieldManagementModel.findOneAndUpdate(
-                    { name },
-                    { fields },
-                    { upsert: true, new: true } // Use "upsert" to update if the document exists or create a new one if it doesn't
-               );
-          } else {
-               // If fields are not provided, create with just the name property
-               return await fieldManagementModel.create({ name });
-          }
-     } catch (error) {
-          throw new Error('Unable to create field group');
+     if (fields) {
+          return await fieldManagementModel.findOneAndUpdate(
+               { name },
+               { fields },
+               { upsert: true, new: true }
+          );
+     } else {
+          return await fieldManagementModel.create({ name, fields: [] });
      }
+};
+
+const createMultipleFieldGroups = async (names) => {
+     const newFieldGroups = await Promise.all(
+          names.map(async (groupName) => {
+               return await fieldManagementModel.create({
+                    name: groupName,
+                    fields: [],
+               });
+          })
+     );
+     return newFieldGroups;
+};
+
+const addFieldToGroup = async (name, fields) => {
+     return await fieldManagementModel.findOneAndUpdate(
+          { name },
+          { $push: { fields } },
+          { new: true }
+     );
 };
 
 const getFieldGroups = async () => {
@@ -30,5 +44,7 @@ const getFieldGroups = async () => {
 
 export const fieldManagementService = {
      createFieldGroup,
+     createMultipleFieldGroups,
+     addFieldToGroup,
      getFieldGroups,
 };
