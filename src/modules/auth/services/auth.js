@@ -1,12 +1,12 @@
-import StatusCodes from "http-status-codes";
-import createError from "http-errors-lite";
-import bcrypt from "bcryptjs";
-import { assert, assertEvery } from "../../../helpers/mad-assert";
-import jwtService from "./jwt-services";
-import { secret } from "../../../../src/config/secret";
-import emailtemplate from "../../../helpers/send-email"
-import userModel from "../models/"
-import { organizationModel } from "../../organization/models";
+import StatusCodes from 'http-status-codes';
+import createError from 'http-errors-lite';
+import bcrypt from 'bcryptjs';
+import { assert, assertEvery } from '../../../helpers/mad-assert';
+import jwtService from './jwt-services';
+import { secret } from '../../../../src/config/secret';
+import emailtemplate from '../../../helpers/send-email';
+import userModel from '../models/';
+import { organizationModel } from '../../organization/models';
 
 const authService = {};
 
@@ -58,7 +58,7 @@ authService.doRegister = async (data) => {
           password: hashedPassword,
           role: role,
           verificationToken: token,
-          createdAt : Date.now()
+          createdAt: Date.now(),
      });
      return result;
 };
@@ -81,22 +81,37 @@ authService.verifyUser = async (verificationToken) => {
           const redirectURL = `${secret.frontend_baseURL}/login`;
           return redirectURL;
      }
-    
+
      const userToken = await jwtService.verifyAccessToken(verificationToken);
      const companyToken = await jwtService.generatePair(user.email);
      const updateToken = await userModel.findOneAndUpdate(
-      { verificationToken},
-      { is_email_verified: "true", companyProfileToken: companyToken, updatedAt : Date.now()},
-      { new: true }
-    );
-  
+          { verificationToken },
+          {
+               is_email_verified: 'true',
+               companyProfileToken: companyToken,
+               updatedAt: Date.now(),
+          },
+          { new: true }
+     );
 
-  const redirectURLcompany = `${secret.frontend_baseURL}/company-profile?confirmation_token=${companyToken}`;
-  return redirectURLcompany;
-}
+     const redirectURLcompany = `${secret.frontend_baseURL}/company-profile?confirmation_token=${companyToken}`;
+     return redirectURLcompany;
+};
 
 ////////////// Profiel complete ///////////////
-    authService.completeProfille = async (data) =>{
+authService.completeProfille = async (data) => {
+     assertEvery(
+          [
+               data.token,
+               data.organizationName,
+               data.organizationRegistrationNumber,
+               data.contactNo,
+          ],
+          createError(
+               StatusCodes.BAD_REQUEST,
+               'Invalid Data: [token], [organizationName], [organizationRegistrationNumber] and [confirmPassword] fields must exist'
+          )
+     );
 
       assertEvery(
         [data.token, data.organizationName, data.organizationRegistrationNumber, data.contactNo],
@@ -122,7 +137,7 @@ authService.verifyUser = async (verificationToken) => {
         return {"userId":"", "access_token":"", "redirectUrl":redirectUrl};
    }
 
-      await jwtService.verifyAccessToken(companyProfileToken);
+     await jwtService.verifyAccessToken(companyProfileToken);
 
       const organizationName = data.organizationName;
       const existingCompanyname = await organizationModel.findOne({
@@ -166,6 +181,39 @@ authService.verifyUser = async (verificationToken) => {
     }
     
 
+     assert(
+          updateToken,
+          createError(StatusCodes.REQUEST_TIMEOUT, 'Request Timeout')
+     );
+     const newOrganization = new organizationModel({
+          userId: user._id,
+          organizationName: data.organizationName,
+          organizationRegistrationNumber: data.organizationRegistrationNumber,
+          pan: data.pan,
+          gstin: data.gstin,
+          contactNo: data.contactNo,
+          mainAddress: {
+               address1: data.mainAddress.address1,
+               address2: data.mainAddress.address2,
+               city: data.mainAddress.city,
+               state: data.mainAddress.state,
+               country: data.mainAddress.country,
+               pinCode: data.mainAddress.pinCode,
+          },
+          createdAt: Date.now(),
+     });
+     const savedOrganization = await newOrganization.save();
+     assert(
+          savedOrganization,
+          createError(StatusCodes.REQUEST_TIMEOUT, 'Request Timeout')
+     );
+     const redirectURL = `${secret.frontend_baseURL}/dashboard`;
+     return {
+          userId: user._id,
+          access_token: getToken,
+          redirectURL: redirectURL,
+     };
+};
 
 ///////////////// login ///////////////////////////
 authService.doLogin = async ({ email, password }) => {
@@ -240,77 +288,76 @@ authService.doLogin = async ({ email, password }) => {
   return userData;
 };
 
-
-
-
-
-
 /////////// change password ////////////////
 authService.changePassword = async (id, data) => {
-  const pass = data.password;
-  const confirmPass = data.confirmPassword;
-  const oldPass = data.oldPassword;
-  assert(
-    pass && confirmPass && oldPass,
-    createError(
-      StatusCodes.NOT_FOUND,
-      "New password, confirm password and old password are required"
-    )
-  );
-  
-  const userData = await userModel.findOne({ _id: id, isDeleted: false});
-  assert(
-    userData,
-    createError(StatusCodes.INTERNAL_SERVER_ERROR, "Internal server")
-  );
-  const checkOldPass = bcrypt.compareSync(oldPass, userData.password);
-  assert(
-    checkOldPass,
-    createError(
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      "Your old password is incorrect"
-    )
-  );
+     const pass = data.password;
+     const confirmPass = data.confirmPassword;
+     const oldPass = data.oldPassword;
+     assert(
+          pass && confirmPass && oldPass,
+          createError(
+               StatusCodes.NOT_FOUND,
+               'New password, confirm password and old password are required'
+          )
+     );
 
-  const isMatch = pass === oldPass;
-  assert(
-    !isMatch,
-    createError(
-      StatusCodes.METHOD_NOT_ALLOWED,
-      "You used this password recently, Please choose a different one."
-    )
-  );
+     const userData = await userModel.findOne({ _id: id, isDeleted: false });
+     assert(
+          userData,
+          createError(StatusCodes.INTERNAL_SERVER_ERROR, 'Internal server')
+     );
+     const checkOldPass = bcrypt.compareSync(oldPass, userData.password);
+     assert(
+          checkOldPass,
+          createError(
+               StatusCodes.INTERNAL_SERVER_ERROR,
+               'Your old password is incorrect'
+          )
+     );
 
-  const check = pass === confirmPass;
-  assert(
-    check,
-    createError(
-      StatusCodes.CONFLICT,
-      "password and confirm password don't match"
-    )
-  );
- 
-  const hashPass = bcrypt.hashSync(pass, 8);
-  assert(
-    hashPass,
-    createError(StatusCodes.NOT_IMPLEMENTED, "error in implementing")
-  );
+     const isMatch = pass === oldPass;
+     assert(
+          !isMatch,
+          createError(
+               StatusCodes.METHOD_NOT_ALLOWED,
+               'You used this password recently, Please choose a different one.'
+          )
+     );
 
-  const updatePass = await userModel.findByIdAndUpdate(
-    { _id: userData._id },
-    {$set:{
-      password: hashPass,
-      updatedAt: Date.now()
-   }},
-    { new: true }
-  ).select('email role');
+     const check = pass === confirmPass;
+     assert(
+          check,
+          createError(
+               StatusCodes.CONFLICT,
+               "password and confirm password don't match"
+          )
+     );
 
-  assert(
-    updatePass,
-    createError(StatusCodes.INTERNAL_SERVER_ERROR, "Internal server")
-  );
+     const hashPass = bcrypt.hashSync(pass, 8);
+     assert(
+          hashPass,
+          createError(StatusCodes.NOT_IMPLEMENTED, 'error in implementing')
+     );
 
-  return updatePass;
+     const updatePass = await userModel
+          .findByIdAndUpdate(
+               { _id: userData._id },
+               {
+                    $set: {
+                         password: hashPass,
+                         updatedAt: Date.now(),
+                    },
+               },
+               { new: true }
+          )
+          .select('email role');
+
+     assert(
+          updatePass,
+          createError(StatusCodes.INTERNAL_SERVER_ERROR, 'Internal server')
+     );
+
+     return updatePass;
 };
 
 

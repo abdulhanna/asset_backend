@@ -20,9 +20,9 @@ const createMember = async (userData) => {
           const member = new userModel({
                email: userData.email,
                password: userData.password,
-               parentId: userData.parentId,
-               teamrole: userData.teamrole,
                userProfile: userData.userProfile,
+               teamrole: userData.teamrole,
+               parentId: userData.parentId,
                verificationToken: verificationToken,
           });
 
@@ -58,8 +58,10 @@ const updateMember = async (id, data) => {
 const getAllMembers = async (parentId) => {
      try {
           const members = await userModel
-               .find({ parentId })
-               .populate('teamrole');
+               .find({ parentId, isDeleted: false, isDeactivated: false })
+               .populate('teamrole', 'roleName')
+               .select('-deletedAt');
+
           return members;
      } catch (error) {
           console.log(error);
