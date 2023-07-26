@@ -9,7 +9,7 @@ const fieldSchema = new mongoose.Schema(
           },
           dataType: {
                type: String,
-               enum: ['number', 'string', 'list'],
+               enum: ['number', 'string', 'list', 'date'],
                required: true,
           },
           fieldLength: {
@@ -24,6 +24,10 @@ const fieldSchema = new mongoose.Schema(
           errorTitle: {
                type: String,
                required: true,
+          },
+          isMandatory: {
+               type: Boolean,
+               default: false,
           },
      },
      { _id: true }
