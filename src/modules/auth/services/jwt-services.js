@@ -14,6 +14,18 @@ const signToken = (data, secret, expiry) =>
           });
      });
 
+
+const resetSignToken = (data, secret, expiry) =>
+     new Promise((resolve, reject) => {
+     sign({ data }, secret, { expiresIn: expiry }, (err, token) => {
+          if (err) {
+               console.log('ERR:', err.message);
+               return reject(err);
+          }
+          return resolve(token);
+     });
+     });
+
 const verifyToken = (token, secret) =>
      new Promise((resolve, reject) => {
           verify(token, secret, (err, decoded) => {
@@ -21,6 +33,14 @@ const verifyToken = (token, secret) =>
                return resolve(decoded);
           });
      });
+
+ const  ResetTokenverify = (token, secret) =>
+ new Promise((resolve, reject) => {
+      verify(token, secret, (err, decoded) => {
+           if (err) return reject(err);
+           return resolve(decoded);
+      });
+ });   
 
 jwtService.generatePair = async (data) => {
   const accessToken = await signToken(data, secret.JWT_KEY, '86400000');
@@ -30,5 +50,15 @@ jwtService.generatePair = async (data) => {
 jwtService.verifyAccessToken = async (token) => {
      return verifyToken(token, secret.JWT_KEY);
 };
+
+jwtService.verifyResetToken = async (token) => {
+     return ResetTokenverify(token, secret.RESET_PASS_KEY);
+};
+
+jwtService.generateResetToken = async (data) => {
+     const resetToken = await resetSignToken(data, secret.RESET_PASS_KEY, '1h');
+     return resetToken;
+}
+
 
 export default jwtService;

@@ -110,18 +110,16 @@ authService.verifyUser = async (verificationToken) => {
       const user = await userModel.findOne({
         companyProfileToken,
       });
-
       assert(user, createError(StatusCodes.NOT_FOUND, 'Invalid token provided'));
       const usercheckVerify = await userModel.findOne({
         companyProfileToken,
-        isDeleted: false,
         is_email_verified: true,
         is_profile_completed: true,
+        isDeleted: false,
    });
-
    if (usercheckVerify) {
-        const redirectURL = `${secret.frontend_baseURL}/login`;
-        return redirectURL;
+        const redirectUrl = `${secret.frontend_baseURL}/login`;
+        return {"userId":"", "access_token":"", "redirectUrl":redirectUrl};
    }
 
       await jwtService.verifyAccessToken(companyProfileToken);
@@ -130,7 +128,7 @@ authService.verifyUser = async (verificationToken) => {
       const existingCompanyname = await organizationModel.findOne({
         organizationName
       })
-      assert(!existingCompanyname, "Company Name already exists");
+      assert(!existingCompanyname, createError(StatusCodes.NOT_FOUND, "Company Name already exists"))
      
       const getToken = await jwtService.generatePair({_id:user._id});
       const updateToken = await userModel.findOneAndUpdate(
@@ -163,54 +161,83 @@ authService.verifyUser = async (verificationToken) => {
         savedOrganization,
         createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout")
       );
-      const redirectURL = `${secret.frontend_baseURL}/dashboard`;
-      return {"userId":user._id, "access_token":getToken, "redirectURL":redirectURL};
+      const redirectUrl = `${secret.frontend_baseURL}/dashboard`;
+      return {"userId":user._id, "access_token":getToken, "redirectUrl":redirectUrl};
     }
     
 
 
 ///////////////// login ///////////////////////////
 authService.doLogin = async ({ email, password }) => {
+
+  assertEvery([email, password], createError(StatusCodes.BAD_REQUEST,"Email and Password fields must exist"))
   const existingUser = await userModel.findOne({ 
     email,
     isDeleted:false
    });
-  assert(
-    existingUser,
-    createError(StatusCodes.UNAUTHORIZED, 'User does not exist')
-  );
-  const isValid = bcrypt.compareSync(password, existingUser.password);
-  assert(isValid, createError(StatusCodes.UNAUTHORIZED, "Invalid password"));
-  
-       const getUserData = await userModel.findOne({ email})
-       .select('email role teamrole:')
-       .populate({
-        path: 'teamrole',
-        select: 'permissions',
-        populate: {
-          path: 'permissions',
-          select: 'moduleName read read_write actions',
-        },
-      })
+   // user does not exist
+   assert(existingUser,  createError(StatusCodes.BAD_REQUEST,"User does not exist",{"errorstatus":"1","redirectUrl":""}))
+   const isValid = bcrypt.compareSync(password, existingUser.password);
 
-     let permissions;
-     if (getUserData.role === 'superadmin' || getUserData.role === 'root') {
-          permissions = {}; // Empty key for superadmin and root roles
-     } else if (getUserData.teamrole && getUserData.teamrole.permissions) {
-          permissions = getUserData.teamrole.permissions; // Use teamrole's permissions if available
-     } else {
-          permissions = []; // Default to empty array if no permissions found
-     }
+// invalid password
+  assert(isValid, createError(StatusCodes.UNAUTHORIZED, "Invalid password", {"errorstatus":"2","redirectUrl":""}));
+
+ // account is deactivated
+ assert(existingUser.isDeactivated == false, createError(StatusCodes.UNAUTHORIZED, "Your account is deactivated", {"errorstatus":"3","redirectUrl":""}));
+
+  // email not verified condition
+  assert(existingUser.is_email_verified == true, createError(StatusCodes.UNAUTHORIZED, "Pendig account verification, please verify your email", {"errorstatus":"4","redirectUrl":""}));
+
+  // profile not completed
+
+  if(existingUser.role == 'superadmin' && existingUser.is_profile_completed == false)
+  {
+    const companyToken = await jwtService.generatePair(email);
+     await userModel.findOneAndUpdate(
+       { email},
+       { companyProfileToken: companyToken, updatedAt : Date.now()},
+       { new: true }
+     );
+    const redirectURLcompany = `${secret.frontend_baseURL}/company-profile?confirmation_token=${companyToken}`;
+    assert(existingUser.role != 'superadmin' && existingUser.is_profile_completed == true, createError(StatusCodes.UNAUTHORIZED,"Company Profile is not completed, please complete your company profile", {"errorstatus":"5","redirectUrl":redirectURLcompany}));
+  }
+      
+      const getToken = await jwtService.generatePair({_id:existingUser._id});
+      const updateToken = await userModel.findByIdAndUpdate(
+        { _id:existingUser._id},
+        { token: getToken, updatedAt : Date.now()},
+        { new: true }
+      );
+
+      assert(updateToken, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"));
+
+      const getUserData = await userModel.findOne({ email})
+      .select('email role teamrole token')
+      .populate({
+       path: 'teamrole',
+       select: 'permissions',
+       populate: {
+         path: 'permissions',
+         select: 'moduleName read read_write actions',
+       },
+     })
+
+    let permissions;
+    if (getUserData.role === 'superadmin' || getUserData.role === 'root') {
+         permissions = {}; // Empty key for superadmin and root roles
+    } else if (getUserData.teamrole && getUserData.teamrole.permissions) {
+         permissions = getUserData.teamrole.permissions; // Use teamrole's permissions if available
+    } else {
+         permissions = []; // Default to empty array if no permissions found
+    }
 
       const userData = {
         email: getUserData.email,
         role: getUserData.role,
         permissions,
+        access_token: getUserData.token
       }
-     
-      const getToken = await jwtService.generatePair({_id:existingUser._id});
-
-  return {"userData":userData, "access_token":getToken};
+  return userData;
 };
 
 
@@ -286,5 +313,124 @@ authService.changePassword = async (id, data) => {
   return updatePass;
 };
 
+
+
+/////// Password Forget /////////
+
+authService.forgetPass = async (data) => {
+  assert(data.email, createError(StatusCodes.UNAUTHORIZED, "email required"));
+  const userData = await userModel.findOne({ email: data.email, isDeleted: false });
+
+    // user does not exist
+    assert(userData,  createError(StatusCodes.BAD_REQUEST,"User does not exist",{"errorstatus":"1","redirectUrl":""}))
+// email not verified condtion
+
+assert(userData.is_email_verified == true, createError(StatusCodes.UNAUTHORIZED, "Pendig account verification, please verify your email", {"errorstatus":"4","redirectUrl":""}));
+
+
+     // profile not completed
+
+  if(userData.role == 'superadmin' && userData.is_profile_completed == false)
+  {
+    const companyToken = await jwtService.generatePair(data.email);
+       await userModel.findOneAndUpdate(
+        { email: data.email },
+         { companyProfileToken: companyToken, updatedAt : Date.now()},
+         { new: true }
+       );
+    const redirectURLcompany = `${secret.frontend_baseURL}/company-profile?confirmation_token=${companyToken}`;
+    assert(userData.role != 'superadmin' && userData.is_profile_completed == true, createError(StatusCodes.UNAUTHORIZED,"Company Profile is not completed, please complete your company profile", {"errorstatus":"5","redirectUrl":redirectURLcompany}));
+  }
+  
+  const token = await jwtService.generateResetToken(data.email);
+  const updateUser = await userModel.findOneAndUpdate(
+    { email: data.email },
+    { $set: { 
+      resetToken: token,
+      updatedAt: Date.now()
+     }},
+    { new: true }
+  );
+  assert(
+    updateUser,
+    createError(StatusCodes.INTERNAL_SERVER_ERROR, "Internal server")
+  );
+  // send email
+
+  const sendForgetpassEmail = await emailtemplate.sendForgetpassEmail(userData.email,token);
+
+assert(sendForgetpassEmail == true, `Something went wrong, please try again!`);
+return {"msg": "Reset Password email sent!"}
+
+};
+
+
+
+/////// Reset Pass after email verification /////////
+
+authService.resetPass = async (data) => {
+  assertEvery(
+    [data.token, data.password, data.confirmPassword],
+    createError(StatusCodes.BAD_REQUEST, 'Invalid Data: [token], [password] and [confirmPassword] fields must exist')
+  );
+
+  const token1 = data.token;
+  const tokencheckreset = await userModel.findOne({
+    resetToken: token1,
+  });
+  assert(
+    tokencheckreset,
+    createError(StatusCodes.UNAUTHORIZED, "Link Invalid or Expired")
+  );
+ 
+  await jwtService.verifyResetToken(token1); 
+  
+  const password = data.password;
+  const confirmPassword = data.confirmPassword;
+  assert(
+    password == confirmPassword,
+    createError(
+      StatusCodes.UNAUTHORIZED,
+      "Password and confirm Password don't match"
+    )
+  );
+  const hash = bcrypt.hashSync(password, 8);
+  const updatePass = await userModel.findOneAndUpdate(
+    { email: tokencheckreset.email },
+    { $set: { password: hash, resetToken: null } }
+  );
+  assert(
+    updatePass,
+    createError(StatusCodes.INTERNAL_SERVER_ERROR, "error in updating password")
+  );
+  return "Password Updated Successfully";
+};
+
+
+// resend confirmation email 
+
+authService.resendVerificationemail = async ({email}) =>{
+  assert(
+    email,
+    createError(
+         StatusCodes.NOT_FOUND,
+         "Email field must exists"
+    )
+);
+
+const userData = await userModel.findOne({email});
+assert(userData, createError(StatusCodes.NOT_FOUND, "User with this email does not exist"))
+const token = await jwtService.generatePair(email);
+
+    const result = await userModel.findOneAndUpdate(
+     { email },
+      { verificationToken: token, updatedAtt : Date.now()}
+     );
+     assert(result, createError(StatusCodes.REQUEST_TIMEOUT, "Request timeout"))
+     const sendEmail = await emailtemplate.accountVerificationEmail(email, token);
+     assert(sendEmail == true, `Something went wrong, please try again!`);
+     return {"msg": "Verification email sent!"}
+ 
+}
 
   export default authService;
