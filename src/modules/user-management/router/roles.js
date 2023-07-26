@@ -72,12 +72,6 @@ router.put('/:roleId', isLoggedIn, async (req, res) => {
      try {
           const { roleName, description, permissions } = req.body;
           const roleId = req.params.roleId;
-          const updatedRoleData = {
-               roleName,
-               description,
-               permissions,
-               updatedAt: new Date(),
-          };
 
           // Validate the moduleId before proceeding
           if (permissions && permissions.length > 0) {
@@ -90,18 +84,12 @@ router.put('/:roleId', isLoggedIn, async (req, res) => {
                }
           }
 
-          // Handle automatic updates based on allAccess and removeAccess fields
-          for (const permission of permissions) {
-               if (permission.allAccess) {
-                    permission.read = true;
-                    permission.readWrite = true;
-                    permission.actions = true;
-               } else if (permission.removeAccess) {
-                    permission.read = false;
-                    permission.readWrite = false;
-                    permission.actions = false;
-               }
-          }
+          const updatedRoleData = {
+               roleName,
+               description,
+               permissions,
+               updatedAt: new Date(),
+          };
 
           const updatedRole = await rolesService.updateRole(
                roleId,
