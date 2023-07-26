@@ -87,6 +87,13 @@ const getAllRoles = async () => {
                .populate('permissions', 'moduleName read readWrite actions')
                .exec();
 
+          // Filter out permissions with removeAccess set to true
+          roles.forEach((role) => {
+               role.permissions = role.permissions.filter(
+                    (permission) => !permission.removeAccess
+               );
+          });
+
           return roles;
      } catch (error) {
           throw new Error('Unable to fetch roles');
