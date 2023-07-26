@@ -1,57 +1,51 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
-const fieldManagementSchema = new mongoose.Schema(
+// Define the dynamic field schema
+const fieldSchema = new mongoose.Schema(
      {
-          moduleName: {
+          name: {
                type: String,
+               required: true,
           },
-          read: {
-               type: Boolean,
-               default: false,
+          fieldType: {
+               type: String,
+               enum: ['number', 'string'],
+               required: true,
           },
-          readWrite: {
-               type: Boolean,
-               default: false,
+          fieldLength: {
+               type: Number,
+               required: function () {
+                    return this.fieldType === 'string';
+               },
           },
-          actions: {
-               type: Boolean,
-               default: false,
+          listOptions: {
+               type: [String],
           },
-          allAccess: {
-               type: Boolean,
-               default: false,
-          },
-          removeAccess: {
-               type: Boolean,
-               default: false,
-          },
-          restoreDefaults: {
-               type: Boolean,
-               default: false,
-          },
-          isDeleted: {
-               type: Boolean,
-               default: false,
-          },
-          isDeactivated: {
-               type: Boolean,
-               default: false,
-          },
-          deletedAt: {
-               type: Date,
-               default: null,
-          },
-          createdAt: {
-               type: Date,
-               default: null,
-          },
-          updatedAt: {
-               type: Date,
-               default: null,
+          errorTitle: {
+               type: String,
+               required: true,
           },
      },
-     { new: true }
+     { _id: false } // This ensures that Mongoose doesn't create an _id for each field object
 );
+
+const fieldManagementSchema = new mongoose.Schema({
+     name: {
+          type: String,
+          required: true,
+          unique: true,
+     },
+     fields: {
+          type: [fieldSchema],
+          required: true,
+          validate: {
+               validator: function (fields) {
+                    return fields.length > 0; // Ensure there is at least one field defined
+               },
+               message: 'At least one field must be defined for the groupName.',
+          },
+     },
+});
 
 const fieldManagementModel = mongoose.model(
      'fieldManagement',

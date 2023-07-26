@@ -2,7 +2,7 @@ import { Router } from 'express';
 import fieldManagementRouter from './router/fieldManagement.js';
 
 const router = Router();
-router.use('/field-management/add', fieldManagementRouter);
+router.use('/field-management', fieldManagementRouter);
 
 const fieldManagementModule = {
      init: (app) => {

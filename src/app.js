@@ -6,8 +6,14 @@ import { errorHandler, notFoundHandler } from './helpers/express-middleware';
 import authModule from './modules/auth';
 import userManagementModule from './modules/user-management';
 import organizationModule from './modules/organization';
+import fieldManagementModule from './modules/field-management';
 
-const modules = [authModule, userManagementModule, organizationModule];
+const modules = [
+     authModule,
+     userManagementModule,
+     organizationModule,
+     fieldManagementModule,
+];
 
 export const createApp = () => {
      const app = express();
