@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-
+import bcrypt from "bcryptjs";
 const userSchema = new mongoose.Schema({
      email: {
           type: String,
@@ -127,5 +127,22 @@ const userSchema = new mongoose.Schema({
 userSchema.index({ email: true });
 
 const userModel = mongoose.model('users', userSchema);
-
 export default userModel;
+
+userModel.findOne({role:"root"},(findErr,findRes)=>{
+     if(findErr){console.log("default admin creation error")}
+     else if(findRes){console.log("Root user already exist")}
+     else{
+       let obj = {
+         email:"root@finbit.com",
+         role:"root",
+         password:bcrypt.hashSync("finbit",10),
+         is_email_verified: true,
+         createdAt: Date.now()
+        };
+        userModel.create(obj,(error,result)=>{
+          if(error){console.log("default admin creation error")}
+          console.log("default root user created", result);
+        })  
+     }
+   })
