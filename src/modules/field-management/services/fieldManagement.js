@@ -1,17 +1,5 @@
 import { fieldManagementModel } from '../models';
 
-const createFieldGroup = async (name, fields) => {
-     if (fields) {
-          return await fieldManagementModel.findOneAndUpdate(
-               { name },
-               { fields },
-               { upsert: true, new: true }
-          );
-     } else {
-          return await fieldManagementModel.create({ name, fields: [] });
-     }
-};
-
 const createMultipleFieldGroups = async (names) => {
      const newFieldGroups = await Promise.all(
           names.map(async (groupName) => {
@@ -43,7 +31,6 @@ const getFieldGroups = async () => {
 };
 
 export const fieldManagementService = {
-     createFieldGroup,
      createMultipleFieldGroups,
      addFieldToGroup,
      getFieldGroups,

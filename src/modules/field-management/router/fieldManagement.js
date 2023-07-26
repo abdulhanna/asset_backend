@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.post('/add', async (req, res) => {
      try {
-          const { name, fields } = req.body;
+          const { name } = req.body;
 
           if (Array.isArray(name)) {
                const newFieldGroups =
@@ -13,10 +13,6 @@ router.post('/add', async (req, res) => {
                          name
                     );
                res.status(201).json(newFieldGroups);
-          } else {
-               const newFieldGroup =
-                    await fieldManagementService.createFieldGroup(name, fields);
-               res.status(201).json(newFieldGroup);
           }
      } catch (error) {
           console.log(error);
