@@ -40,4 +40,16 @@ router.get('/list', async (req, res) => {
      res.status(200).json(fieldGroups);
 });
 
+router.put('/:groupId', async (req, res) => {
+     const { groupId } = req.params;
+     const data = req.body;
+
+     const updatedFieldGroup = await fieldManagementService.updateFieldGroup(
+          groupId,
+          data
+     );
+
+     res.status(200).json(updatedFieldGroup);
+});
+
 export default router;

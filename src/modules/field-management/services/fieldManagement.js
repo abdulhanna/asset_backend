@@ -30,8 +30,14 @@ const getFieldGroups = async () => {
      }
 };
 
+const updateFieldGroup = async (groupId, data) => {
+     try {
+     } catch (error) {}
+};
+
 export const fieldManagementService = {
      createMultipleFieldGroups,
      addFieldToGroup,
      getFieldGroups,
+     updateFieldGroup,
 };
