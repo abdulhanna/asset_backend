@@ -30,35 +30,45 @@ const updateRole = async (roleId, updatedRoleData) => {
                          permission.actions = false;
                          permission.allAccess = false; // In case removeAccess is true, allAccess should be false
                     }
-                    // Find the permission in the existing role data and update it
+
+                    // Check if permission with the given moduleId already exists in the role
                     const existingPermission = await roleDefineModel.findOne({
                          _id: roleId,
                          'permissions.moduleId': permission.moduleId,
                     });
 
                     if (existingPermission) {
-                         const permissionIndex =
-                              existingPermission.permissions.findIndex(
-                                   (p) =>
-                                        p.moduleId.toString() ===
-                                        permission.moduleId.toString()
-                              );
-                         if (permissionIndex !== -1) {
-                              existingPermission.permissions[permissionIndex] =
-                                   permission;
-                              await existingPermission.save();
-                         }
+                         // Update the specific permission using moduleId
+                         await roleDefineModel.updateOne(
+                              {
+                                   _id: roleId,
+                                   'permissions.moduleId': permission.moduleId,
+                              },
+                              {
+                                   $set: {
+                                        'permissions.$.read': permission.read,
+                                        'permissions.$.readWrite':
+                                             permission.readWrite,
+                                        'permissions.$.actions':
+                                             permission.actions,
+                                        'permissions.$.allAccess':
+                                             permission.allAccess,
+                                        'permissions.$.removeAccess':
+                                             permission.removeAccess,
+                                   },
+                              }
+                         );
+                    } else {
+                         // If permission with the moduleId doesn't exist, add the new permission to the array
+                         await roleDefineModel.findByIdAndUpdate(roleId, {
+                              $push: { permissions: permission },
+                         });
                     }
                }
           }
 
-          // Find the role by roleId and update it with the new data
-          const updatedRole = await roleDefineModel.findByIdAndUpdate(
-               roleId,
-               { $set: updatedRoleData },
-               { new: true }
-          );
-
+          // Find the role by roleId and return the updated role
+          const updatedRole = await roleDefineModel.findById(roleId);
           return updatedRole;
      } catch (error) {
           throw new Error('Unable to update role');
