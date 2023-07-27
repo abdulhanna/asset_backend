@@ -1,6 +1,7 @@
 import express from 'express';
 import { permissionService } from '../services/permissions.js';
 import { isLoggedIn } from '../../auth/router/passport.js';
+import permissionModel from '../models/permissions.js';
 import mongoose from 'mongoose';
 
 const router = express.Router();
@@ -16,6 +17,18 @@ router.post('/create', isLoggedIn, async (req, res) => {
                     errors: [
                          'Invalid request data. moduleName is required and should not be empty.',
                     ],
+               });
+          }
+
+          // Check if the roleName already exists
+          const existingModuleName = await permissionModel.findOne({
+               moduleName: { $regex: new RegExp(`^${moduleName}$`, 'i') },
+          });
+
+          if (existingModuleName) {
+               return res.status(400).json({
+                    success: false,
+                    error: `Permission with the name '${moduleName}' already exists.`,
                });
           }
 
