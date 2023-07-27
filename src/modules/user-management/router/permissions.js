@@ -1,6 +1,7 @@
 import express from 'express';
 import { permissionService } from '../services/permissions.js';
 import { isLoggedIn } from '../../auth/router/passport.js';
+import mongoose from 'mongoose';
 
 const router = express.Router();
 
@@ -9,10 +10,12 @@ router.post('/create', isLoggedIn, async (req, res) => {
           const { moduleName, read, readWrite, actions } = req.body;
 
           // Custom validation for the create permission request
-          if (!moduleName) {
+          if (!moduleName || moduleName.trim() === '') {
                return res.status(400).json({
                     success: false,
-                    errors: ['Invalid request data. moduleName is required.'],
+                    errors: [
+                         'Invalid request data. moduleName is required and should not be empty.',
+                    ],
                });
           }
 
@@ -34,13 +37,17 @@ router.post('/create', isLoggedIn, async (req, res) => {
      }
 });
 
+const isValidObjectId = (id) => {
+     return mongoose.Types.ObjectId.isValid(id);
+};
+
 router.put('/update/:id', async (req, res) => {
      try {
           const { id } = req.params;
           const updateData = req.body;
 
           // Custom validation for the update permission request
-          if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+          if (!isValidObjectId(id)) {
                return res.status(400).json({
                     success: false,
                     errors: ['Invalid permission ID'],
