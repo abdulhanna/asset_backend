@@ -1,13 +1,13 @@
 import express from 'express';
 import { permissionService } from '../services/permissions.js';
 import { isLoggedIn } from '../../auth/router/passport.js';
+import permissionModel from '../models/permissions.js';
 import mongoose from 'mongoose';
 
 const router = express.Router();
-
 router.post('/create', isLoggedIn, async (req, res) => {
      try {
-          const { moduleName, read, readWrite, actions } = req.body;
+          let { moduleName, read, readWrite, actions } = req.body;
 
           // Custom validation for the create permission request
           if (!moduleName || moduleName.trim() === '') {
@@ -16,6 +16,21 @@ router.post('/create', isLoggedIn, async (req, res) => {
                     errors: [
                          'Invalid request data. moduleName is required and should not be empty.',
                     ],
+               });
+          }
+
+          // Normalize the moduleName (remove white spaces and convert to lowercase)
+          moduleName = moduleName.trim().toLowerCase();
+
+          // Check if the normalized moduleName already exists
+          const existingModuleName = await permissionModel.findOne({
+               moduleName,
+          });
+
+          if (existingModuleName) {
+               return res.status(400).json({
+                    success: false,
+                    error: `Module with the name '${moduleName}' already exists.`,
                });
           }
 
@@ -54,17 +69,6 @@ router.put('/update/:id', async (req, res) => {
                });
           }
 
-          const permission = await permissionService.updatePermission(
-               id,
-               updateData
-          );
-
-          if (!permission) {
-               return res
-                    .status(404)
-                    .json({ success: false, error: 'Permission not found' });
-          }
-
           // Check if moduleName is provided and is empty during update
           if (
                'moduleName' in updateData &&
@@ -75,6 +79,17 @@ router.put('/update/:id', async (req, res) => {
                     success: false,
                     errors: 'moduleName should not be empty.',
                });
+          }
+
+          const permission = await permissionService.updatePermission(
+               id,
+               updateData
+          );
+
+          if (!permission) {
+               return res
+                    .status(404)
+                    .json({ success: false, error: 'Permission not found' });
           }
 
           res.json({ success: true, permission });
