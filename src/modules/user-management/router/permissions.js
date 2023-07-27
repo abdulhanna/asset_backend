@@ -65,6 +65,18 @@ router.put('/update/:id', async (req, res) => {
                     .json({ success: false, error: 'Permission not found' });
           }
 
+          // Check if moduleName is provided and is empty during update
+          if (
+               'moduleName' in updateData &&
+               typeof updateData.moduleName === 'string' &&
+               updateData.moduleName.trim() === ''
+          ) {
+               return res.status(400).json({
+                    success: false,
+                    errors: 'moduleName should not be empty.',
+               });
+          }
+
           res.json({ success: true, permission });
      } catch (error) {
           res.status(500).json({ success: false, error: error.message });
