@@ -4,6 +4,7 @@ import { isLoggedIn } from '../../auth/router/passport.js';
 import PDFDocument from 'pdfkit';
 import ExcelJS from 'exceljs';
 import { stringify } from 'csv-stringify';
+import puppeteer from 'puppeteer';
 
 const router = Router();
 
@@ -236,5 +237,121 @@ const generateXLSX = async (members) => {
           });
      });
 };
+
+const generateDynamicTable = (membersData) => {
+     let tableRows = '';
+
+     membersData.forEach((member) => {
+          tableRows += `
+         <tr>
+           <td>${member.index}</td>
+           <td>${member.roleName}</td>
+           <td>${member.name}</td>
+           <td>${member.email}</td>
+           <td>${member.phone}</td>
+           <!-- Add more table data cells if needed -->
+         </tr>
+       `;
+     });
+
+     return tableRows;
+};
+const generatePDFWithDynamicTable = async (members) => {
+     const membersData = extractMembersData(members);
+     const dynamicTable = generateDynamicTable(membersData);
+
+     const htmlContent = `
+       <!DOCTYPE html>
+       <html>
+       <head>
+         <style>
+           /* Add your CSS styling for the table here */
+           /* ... */
+         </style>
+       </head>
+       <body>
+         <h1>List of Members</h1>
+         <table>
+           <thead>
+             <tr>
+               <th>Index</th>
+               <th>Role Name</th>
+               <th>Name</th>
+               <th>Email</th>
+               <th>Phone</th>
+               <!-- Add more table headers if needed -->
+             </tr>
+           </thead>
+           <tbody>
+             ${dynamicTable}
+           </tbody>
+         </table>
+       </body>
+       </html>
+     `;
+
+     const browser = await puppeteer.launch();
+     const page = await browser.newPage();
+     await page.setContent(htmlContent);
+
+     // Set the PDF options (e.g., format, margin, etc.)
+     const pdfOptions = {
+          format: 'A4',
+          margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' },
+     };
+
+     const pdfBuffer = await page.pdf(pdfOptions);
+
+     await browser.close();
+
+     return pdfBuffer;
+};
+
+router.get('/v2/:parentId/download', async (req, res) => {
+     try {
+          const { parentId } = req.params;
+          const members = await memberService.getAllMembers(parentId);
+
+          // Get the desired format from query parameter (pdf, csv, xlsx)
+          const format = req.query.format;
+
+          if (format === 'pdf') {
+               // Generate and send PDF
+               const pdfBuffer = await generatePDFWithDynamicTable(members);
+               res.setHeader(
+                    'Content-Disposition',
+                    'attachment; filename=members.pdf'
+               );
+               res.setHeader('Content-Type', 'application/pdf');
+               res.send(pdfBuffer);
+          } else if (format === 'csv') {
+               // Generate and send CSV
+               const csvBuffer = await generateCSV(members);
+
+               res.setHeader(
+                    'Content-Disposition',
+                    'attachment; filename=members.csv'
+               );
+               res.setHeader('Content-Type', 'text/csv');
+               res.send(csvBuffer);
+          } else if (format === 'xlsx') {
+               // Generate and send XLSX
+               const xlsxBuffer = await generateXLSX(members);
+               res.setHeader(
+                    'Content-Disposition',
+                    'attachment; filename=members.xlsx'
+               );
+               res.setHeader(
+                    'Content-Type',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+               );
+               res.send(xlsxBuffer);
+          } else {
+               throw new Error('Invalid format specified.');
+          }
+     } catch (error) {
+          res.status(500).json({ success: false, error: error.message });
+     }
+});
 
 export default router;
