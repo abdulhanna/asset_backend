@@ -2,13 +2,11 @@ import { Router } from 'express';
 import { memberService } from '../services/userMember.js';
 import { isLoggedIn } from '../../auth/router/passport.js';
 import PDFDocument from 'pdfkit';
-const fastcsv = require('fast-csv');
-import concatStream from 'concat-stream';
 import ExcelJS from 'exceljs';
-
-// import fastcsv from 'fast-csv';
+import { stringify } from 'csv-stringify';
 
 const router = Router();
+
 // Create a new member
 router.post('/createMember', isLoggedIn, async (req, res) => {
      try {
@@ -185,29 +183,39 @@ const generatePDF = async (members) => {
           doc.end();
      });
 };
+
 const generateCSV = async (members) => {
      const membersData = extractMembersData(members);
 
-     return new Promise((resolve) => {
+     return new Promise((resolve, reject) => {
           const chunks = [];
-          const csvStream = fastcsv.format({ headers: true });
+          const csvStringifier = stringify({ header: true });
 
-          csvStream.pipe(
-               concatStream((data) => {
-                    resolve(Buffer.concat(chunks));
-               })
-          );
+          csvStringifier.on('readable', () => {
+               let chunk;
+               while ((chunk = csvStringifier.read())) {
+                    chunks.push(chunk);
+               }
+          });
+
+          csvStringifier.on('error', (error) => {
+               reject(error);
+          });
+
+          csvStringifier.on('end', () => {
+               // Concatenate chunks into a single Buffer
+               const csvBuffer = Buffer.concat(chunks);
+               resolve(csvBuffer);
+          });
 
           membersData.forEach((member) => {
-               csvStream.write({ Name: member.name });
+               csvStringifier.write(member);
           });
 
-          csvStream.end();
-          csvStream.on('data', (chunk) => {
-               chunks.push(chunk);
-          });
+          csvStringifier.end();
      });
 };
+
 const generateXLSX = async (members) => {
      const membersData = extractMembersData(members);
      return new Promise((resolve) => {
