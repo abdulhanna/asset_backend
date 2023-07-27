@@ -256,6 +256,7 @@ const generateDynamicTable = (membersData) => {
 
      return tableRows;
 };
+
 const generatePDFWithDynamicTable = async (members) => {
      const membersData = extractMembersData(members);
      const dynamicTable = generateDynamicTable(membersData);
@@ -290,21 +291,31 @@ const generatePDFWithDynamicTable = async (members) => {
        </html>
      `;
 
-     const browser = await puppeteer.launch();
-     const page = await browser.newPage();
-     await page.setContent(htmlContent);
+     try {
+          const browser = await puppeteer.launch();
+          const page = await browser.newPage();
+          await page.setContent(htmlContent);
 
-     // Set the PDF options (e.g., format, margin, etc.)
-     const pdfOptions = {
-          format: 'A4',
-          margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' },
-     };
+          // Set the PDF options (e.g., format, margin, etc.)
+          const pdfOptions = {
+               format: 'A4',
+               margin: {
+                    top: '20px',
+                    right: '20px',
+                    bottom: '20px',
+                    left: '20px',
+               },
+          };
 
-     const pdfBuffer = await page.pdf(pdfOptions);
+          const pdfBuffer = await page.pdf(pdfOptions);
 
-     await browser.close();
+          await browser.close();
 
-     return pdfBuffer;
+          return pdfBuffer;
+     } catch (error) {
+          console.error('PDF generation error:', error);
+          throw new Error('Failed to generate PDF.');
+     }
 };
 
 router.get('/v2/:parentId/download', async (req, res) => {
