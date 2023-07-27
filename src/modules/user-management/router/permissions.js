@@ -28,7 +28,7 @@ router.post('/create', isLoggedIn, async (req, res) => {
           if (existingModuleName) {
                return res.status(400).json({
                     success: false,
-                    error: `Permission with the name '${moduleName}' already exists.`,
+                    error: `Module with the name '${moduleName}' already exists.`,
                });
           }
 
