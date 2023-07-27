@@ -226,6 +226,9 @@ const generateXLSX = async (members) => {
 
           membersData.forEach((member) => {
                worksheet.addRow({ name: member.name });
+               worksheet.addRow({ name: member.roleName });
+               worksheet.addRow({ name: member.email });
+               worksheet.addRow({ name: member.phone });
           });
 
           workbook.xlsx.writeBuffer().then((buffer) => {
