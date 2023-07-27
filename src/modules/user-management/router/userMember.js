@@ -2,6 +2,11 @@ import { Router } from 'express';
 import { memberService } from '../services/userMember.js';
 import { isLoggedIn } from '../../auth/router/passport.js';
 import PDFDocument from 'pdfkit';
+const fastcsv = require('fast-csv');
+import concatStream from 'concat-stream';
+import ExcelJS from 'exceljs';
+
+// import fastcsv from 'fast-csv';
 
 const router = Router();
 // Create a new member
@@ -108,6 +113,7 @@ router.get('/:parentId/download', async (req, res) => {
           } else if (format === 'csv') {
                // Generate and send CSV
                const csvBuffer = await generateCSV(members);
+
                res.setHeader(
                     'Content-Disposition',
                     'attachment; filename=members.csv'
@@ -179,7 +185,6 @@ const generatePDF = async (members) => {
           doc.end();
      });
 };
-
 const generateCSV = async (members) => {
      const membersData = extractMembersData(members);
 
@@ -203,7 +208,6 @@ const generateCSV = async (members) => {
           });
      });
 };
-
 const generateXLSX = async (members) => {
      const membersData = extractMembersData(members);
      return new Promise((resolve) => {
