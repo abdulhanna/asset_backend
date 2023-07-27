@@ -12,16 +12,12 @@ router.post('/', isLoggedIn, async (req, res) => {
           const userId = req.user.data._id;
           let { roleName, description, permissions } = req.body;
 
-          // Remove leading and trailing whitespace from roleName
-          roleName = roleName.trim();
-
-          if (!roleName) {
+          if (!roleName || roleName.trim() === '') {
                return res.status(400).json({
                     success: false,
-                    error: 'Invalid request data. roleName is required.',
+                    errors: 'roleName is required and should not be empty.',
                });
           }
-
           // Convert the roleName to lowercase for case-insensitive comparison
           roleName = roleName.toLowerCase();
 
@@ -67,6 +63,10 @@ router.post('/', isLoggedIn, async (req, res) => {
      }
 });
 
+const isValidObjectId = (id) => {
+     return mongoose.Types.ObjectId.isValid(id);
+};
+
 // PUT route for updating a role with permissions
 router.put('/:roleId', isLoggedIn, async (req, res) => {
      try {
@@ -84,8 +84,27 @@ router.put('/:roleId', isLoggedIn, async (req, res) => {
                }
           }
 
+          // Custom validation for the update permission request
+          if (!isValidObjectId(roleId)) {
+               return res.status(400).json({
+                    success: false,
+                    errors: 'Invalid permission ID',
+               });
+          }
+
+          const existingRoles = await roleDefineModel.findById(roleId);
+          if (!existingRoles) {
+               res.status(404).json({
+                    success: false,
+                    error: 'Roles not found',
+               });
+          }
+
           const updatedRoleData = {
-               roleName,
+               roleName:
+                    roleName && typeof roleName === 'string'
+                         ? roleName.toLowerCase()
+                         : roleName,
                description,
                permissions,
                updatedAt: new Date(),
