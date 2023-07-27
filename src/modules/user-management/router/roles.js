@@ -84,6 +84,14 @@ router.put('/:roleId', isLoggedIn, async (req, res) => {
                }
           }
 
+          const existingRoles = await roleDefineModel.findById(roleId);
+          if (!existingRoles) {
+               res.status(404).json({
+                    success: false,
+                    error: 'Roles not found',
+               });
+          }
+
           const updatedRoleData = {
                roleName,
                description,

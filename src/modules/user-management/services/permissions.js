@@ -15,7 +15,6 @@ const updatePermission = async (id, updateData) => {
           const existingPermission = await permissionModel.findById(id);
 
           if (!existingPermission) {
-               // Throw an error with 404 status when permission is not found
                const error = new Error('Permission not found');
                error.statusCode = 404;
           }
