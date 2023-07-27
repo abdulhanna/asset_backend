@@ -12,16 +12,12 @@ router.post('/', isLoggedIn, async (req, res) => {
           const userId = req.user.data._id;
           let { roleName, description, permissions } = req.body;
 
-          // Remove leading and trailing whitespace from roleName
-          roleName = roleName.trim();
-
-          if (!roleName) {
+          if (!roleName || roleName.trim() === '') {
                return res.status(400).json({
                     success: false,
-                    error: 'Invalid request data. roleName is required.',
+                    errors: 'roleName is required and should not be empty.',
                });
           }
-
           // Convert the roleName to lowercase for case-insensitive comparison
           roleName = roleName.toLowerCase();
 
@@ -105,7 +101,10 @@ router.put('/:roleId', isLoggedIn, async (req, res) => {
           }
 
           const updatedRoleData = {
-               roleName,
+               roleName:
+                    roleName && typeof roleName === 'string'
+                         ? roleName.toLowerCase()
+                         : roleName,
                description,
                permissions,
                updatedAt: new Date(),
