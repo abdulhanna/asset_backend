@@ -67,6 +67,10 @@ router.post('/', isLoggedIn, async (req, res) => {
      }
 });
 
+const isValidObjectId = (id) => {
+     return mongoose.Types.ObjectId.isValid(id);
+};
+
 // PUT route for updating a role with permissions
 router.put('/:roleId', isLoggedIn, async (req, res) => {
      try {
@@ -82,6 +86,14 @@ router.put('/:roleId', isLoggedIn, async (req, res) => {
                          });
                     }
                }
+          }
+
+          // Custom validation for the update permission request
+          if (!isValidObjectId(roleId)) {
+               return res.status(400).json({
+                    success: false,
+                    errors: 'Invalid permission ID',
+               });
           }
 
           const existingRoles = await roleDefineModel.findById(roleId);
