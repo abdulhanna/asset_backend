@@ -5,10 +5,9 @@ import permissionModel from '../models/permissions.js';
 import mongoose from 'mongoose';
 
 const router = express.Router();
-
 router.post('/create', isLoggedIn, async (req, res) => {
      try {
-          const { moduleName, read, readWrite, actions } = req.body;
+          let { moduleName, read, readWrite, actions } = req.body;
 
           // Custom validation for the create permission request
           if (!moduleName || moduleName.trim() === '') {
@@ -20,9 +19,12 @@ router.post('/create', isLoggedIn, async (req, res) => {
                });
           }
 
-          // Check if the roleName already exists
+          // Normalize the moduleName (remove white spaces and convert to lowercase)
+          moduleName = moduleName.trim().toLowerCase();
+
+          // Check if the normalized moduleName already exists
           const existingModuleName = await permissionModel.findOne({
-               moduleName: { $regex: new RegExp(`^${moduleName}$`, 'i') },
+               moduleName,
           });
 
           if (existingModuleName) {
