@@ -54,17 +54,6 @@ router.put('/update/:id', async (req, res) => {
                });
           }
 
-          const permission = await permissionService.updatePermission(
-               id,
-               updateData
-          );
-
-          if (!permission) {
-               return res
-                    .status(404)
-                    .json({ success: false, error: 'Permission not found' });
-          }
-
           // Check if moduleName is provided and is empty during update
           if (
                'moduleName' in updateData &&
@@ -75,6 +64,17 @@ router.put('/update/:id', async (req, res) => {
                     success: false,
                     errors: 'moduleName should not be empty.',
                });
+          }
+
+          const permission = await permissionService.updatePermission(
+               id,
+               updateData
+          );
+
+          if (!permission) {
+               return res
+                    .status(404)
+                    .json({ success: false, error: 'Permission not found' });
           }
 
           res.json({ success: true, permission });
