@@ -64,8 +64,23 @@ const getAllPermissions = async () => {
      }
 };
 
+const deletePermissions = async (id) => {
+     try {
+          const deletePermissions = await permissionModel.deleteOne(
+               {
+                    _id: id,
+               },
+               { isDeactivated: true }
+          );
+          return deletePermissions;
+     } catch (error) {
+          throw new Error('Error in deleting resource');
+     }
+};
+
 export const permissionService = {
      createPermission,
      updatePermission,
      getAllPermissions,
+     deletePermissions,
 };

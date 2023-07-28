@@ -65,7 +65,7 @@ router.put('/update/:id', async (req, res) => {
           if (!isValidObjectId(id)) {
                return res.status(400).json({
                     success: false,
-                    errors: ['Invalid permission ID'],
+                    error: 'Invalid permission ID'g,
                });
           }
 
@@ -101,9 +101,45 @@ router.put('/update/:id', async (req, res) => {
 router.get('/all', async (req, res) => {
      try {
           const permissions = await permissionService.getAllPermissions();
-          res.json({ success: true, permissions });
+          res.status(200).json({ success: true, permissions });
      } catch (error) {
           res.status(500).json({ success: false, error: error.message });
+     }
+});
+
+router.delete('/:id', async (req, res) => {
+     try {
+          const { id } = req.params;
+
+          // Custom validation for the update permission request
+          if (!isValidObjectId(id)) {
+               return res.status(400).json({
+                    success: false,
+                    error: 'Invalid permission ID',
+               });
+          }
+
+          const existingPermission = await permissionModel.findById(id);
+          if (!existingPermission) {
+               res.status(404).json({
+                    success: false,
+                    error: 'moduleName not found',
+               });
+          }
+
+          const deletePermissions = await permissionService.deletePermissions(
+               id
+          );
+          res.status(200).json({
+               success: true,
+               msg: 'Deleted successfully',
+               deletePermissions,
+          });
+     } catch (error) {
+          res.status(500).json({
+               success: false,
+               error: error.message,
+          });
      }
 });
 
