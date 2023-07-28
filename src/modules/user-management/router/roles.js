@@ -84,11 +84,11 @@ router.put('/:roleId', isLoggedIn, async (req, res) => {
                }
           }
 
-          // Custom validation for the update permission request
+          // Custom validation for the update role request
           if (!isValidObjectId(roleId)) {
                return res.status(400).json({
                     success: false,
-                    error: 'Invalid permission ID',
+                    error: 'Invalid role ID',
                });
           }
 
@@ -124,11 +124,10 @@ router.put('/:roleId/restoreDefaults', isLoggedIn, async (req, res) => {
      try {
           const roleId = req.params.roleId;
 
-          // Custom validation for the update permission request
           if (!mongoose.Types.ObjectId.isValid(roleId)) {
                return res.status(400).json({
                     success: false,
-                    error: 'Invalid permission ID',
+                    error: 'Invalid role ID',
                });
           }
 
