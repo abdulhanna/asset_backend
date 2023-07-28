@@ -5,6 +5,7 @@ import permissionModel from '../models/permissions.js';
 import mongoose from 'mongoose';
 
 const router = express.Router();
+
 router.post('/create', isLoggedIn, async (req, res) => {
      try {
           let { moduleName, read, readWrite, actions } = req.body;
