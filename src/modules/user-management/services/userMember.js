@@ -96,9 +96,21 @@ const getMembersByRole = async (parentId, roleName) => {
           const members = await userModel
                .find({
                     parentId,
-                    'teamrole.roleName': roleName,
                })
-               .select('-password'); // Exclude the password field from the query results
+               .populate('teamrole', '-_id -permissions ') // Populate the 'teamrole' field and exclude '_id' from the results
+               .select('-password') // Exclude the password field from the query results
+               .exec();
+
+          // Filter the members based on the 'roleName' if provided
+          if (roleName) {
+               const filteredMembers = members.filter(
+                    (member) =>
+                         member.teamrole &&
+                         member.teamrole.roleName === roleName
+               );
+
+               return filteredMembers;
+          }
 
           return members;
      } catch (error) {
