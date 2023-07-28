@@ -161,6 +161,22 @@ router.delete('/:id', async (req, res) => {
           });
      }
 
+     const existingRole = await roleDefineModel.findById(id);
+     if (!existingRole) {
+          res.status(404).json({
+               success: false,
+               error: 'roleName not found',
+          });
+     }
+
+     const deleteRoles = await rolesService.deleteRoles(id);
+
+     res.status(200).json({
+          success: true,
+          msg: 'Roles deleted successfully',
+          deleteRoles,
+     });
+
      //
 });
 

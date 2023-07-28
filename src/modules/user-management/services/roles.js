@@ -150,7 +150,7 @@ const getAllRoles = async () => {
           // Fetch all roles from the database, excluding isDeleted and isDeactivated fields
           const roles = await roleDefineModel
                .find({ isDeleted: false, isDeactivated: false })
-               .select('-isDeleted -isDeactivated -deletedAt')
+               .select('-isDeactivated -deletedAt')
                .populate('addedByUserId', 'email') // Only populate 'email' field from addedByUserId
                .populate('permissions', 'moduleName read readWrite actions')
                .exec();
@@ -174,9 +174,27 @@ const getAllRoles = async () => {
      }
 };
 
+const deleteRoles = async (id) => {
+     try {
+          const deleteRoleResult = await roleDefineModel.updateOne(
+               {
+                    _id: id,
+               },
+               {
+                    isDeleted: true,
+                    deletedAt: new Date(),
+               }
+          );
+          return deleteRoleResult;
+     } catch (error) {
+          throw new Error('Error in deleting resource');
+     }
+};
+
 export const rolesService = {
      createRole,
      updateRole,
      getAllRoles,
      restoreDefaultPermissions,
+     deleteRoles,
 };

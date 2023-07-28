@@ -164,6 +164,7 @@ router.delete('/v2/:id', async (req, res) => {
 
           const deletePermissions =
                await permissionService.softDeletePermissions(id);
+
           res.status(200).json({
                success: true,
                msg: 'Soft deleted successfully',
