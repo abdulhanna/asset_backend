@@ -28,4 +28,15 @@ router.post('/', async (req, res) => {
      }
 });
 
+router.get('/', async (req, res) => {
+     try {
+          const getLocations = await locationService.getLocations();
+
+          res.status(200).json({
+               success: true,
+               getLocations,
+          });
+     } catch (error) {}
+});
+
 export default router;

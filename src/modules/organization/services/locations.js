@@ -22,6 +22,16 @@ const createLocation = async (
      }
 };
 
+const getLocations = async (req, res) => {
+     try {
+          const getLocations = await locationModel.find();
+          return getLocations;
+     } catch (error) {
+          throw new Error('Error in get location');
+     }
+};
+
 export const locationService = {
      createLocation,
+     getLocations,
 };
