@@ -65,7 +65,7 @@ router.put('/update/:id', async (req, res) => {
           if (!isValidObjectId(id)) {
                return res.status(400).json({
                     success: false,
-                    error: 'Invalid permission ID'g,
+                    error: 'Invalid permission ID',
                });
           }
 
