@@ -25,6 +25,7 @@ router.post('/create', isLoggedIn, async (req, res) => {
           // Check if the normalized moduleName already exists
           const existingModuleName = await permissionModel.findOne({
                moduleName,
+               isDeactivated: false,
           });
 
           if (existingModuleName) {
