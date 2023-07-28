@@ -4,7 +4,7 @@ import { isLoggedIn } from '../../auth/router/passport.js';
 import PDFDocument from 'pdfkit';
 import ExcelJS from 'exceljs';
 import { stringify } from 'csv-stringify';
-import puppeteer from 'puppeteer';
+// import puppeteer from 'puppeteer';
 
 const router = Router();
 
@@ -223,13 +223,23 @@ const generateXLSX = async (members) => {
           const workbook = new ExcelJS.Workbook();
           const worksheet = workbook.addWorksheet('Members');
 
-          worksheet.columns = [{ header: 'Name', key: 'name', width: 20 }];
+          worksheet.columns = [
+               { header: 'Name', key: 'name', width: 20 },
+               { header: 'RoleName', key: 'roleName', width: 20 },
+               { header: 'Email', key: 'email', width: 20 },
+               { header: 'PhoneNumber', key: 'phone', width: 20 },
+          ];
+
+          // membersData.forEach((member) => {
+          //      worksheet.addRow({ name: member.name });
+          //      worksheet.addRow({ name: member.roleName });
+          //      worksheet.addRow({ name: member.email });
+          //      worksheet.addRow({ name: member.phone });
+          // });
 
           membersData.forEach((member) => {
-               worksheet.addRow({ name: member.name });
-               worksheet.addRow({ name: member.roleName });
-               worksheet.addRow({ name: member.email });
-               worksheet.addRow({ name: member.phone });
+               // Add the entire member object as a single row
+               worksheet.addRow(member);
           });
 
           workbook.xlsx.writeBuffer().then((buffer) => {
