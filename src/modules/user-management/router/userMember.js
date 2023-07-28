@@ -92,11 +92,13 @@ router.get('/', isLoggedIn, async (req, res) => {
           const { roleName } = req.query;
           const parentId = req.user.data._id; // Get the parent user ID from the authenticated user
 
-          const members = await memberService.getMembersByRole(
+          const assignedUsers = await memberService.getMembersByRole(
                parentId,
                roleName
           );
-          res.json({ success: true, members });
+
+          const assignedUserCounts = assignedUsers.length;
+          res.json({ success: true, assignedUserCounts, assignedUsers });
      } catch (error) {
           console.log(error);
           res.status(500).json({ success: false, error: error.message });
