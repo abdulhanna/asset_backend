@@ -23,13 +23,30 @@ router.post('/', async (req, res) => {
      }
 });
 
+// POST /api/locations/:parentId/add-child
+router.post('/:parentId/add-child', async (req, res) => {
+     try {
+          const parentId = req.params.parentId;
+          const newLocationData = req.body;
+          const newLocation = await locationService.addChild(
+               parentId,
+               newLocationData
+          );
+          res.status(201).json(newLocation);
+     } catch (err) {
+          res.status(500).json({
+               error: 'Failed to create location under the parent.',
+          });
+     }
+});
+
 router.get('/', async (req, res) => {
      try {
-          const getLocations = await locationService.getLocations();
+          const locations = await locationService.getLocations();
 
           res.status(200).json({
                success: true,
-               getLocations,
+               locations,
           });
      } catch (error) {}
 });

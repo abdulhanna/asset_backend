@@ -31,7 +31,19 @@ const getLocations = async (req, res) => {
      }
 };
 
+const addChild = async (parentId, newLocationData) => {
+     try {
+          newLocationData.parent = parentId; // Set the parent field to the provided parentId
+          const newLocation = await locationModel.create(newLocationData);
+          return newLocation;
+     } catch (err) {
+          throw new Error('Failed to create location under the parent.');
+     }
+};
+
 export const locationService = {
      createLocation,
      getLocations,
+     makeParent,
+     addChild,
 };
