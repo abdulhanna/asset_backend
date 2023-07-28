@@ -4,7 +4,7 @@ import { isLoggedIn } from '../../auth/router/passport.js';
 import PDFDocument from 'pdfkit';
 import ExcelJS from 'exceljs';
 import { stringify } from 'csv-stringify';
-// import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer';
 
 const router = Router();
 
