@@ -97,8 +97,8 @@ const getMembersByRole = async (parentId, roleName) => {
                .find({
                     parentId,
                })
-               .populate('teamrole', '-_id -permissions ') // Populate the 'teamrole' field and exclude '_id' from the results
-               .select('-password') // Exclude the password field from the query results
+               .populate('teamrole', '-_id -permissions ')
+               .select('-password')
                .exec();
 
           // Filter the members based on the 'roleName' if provided
