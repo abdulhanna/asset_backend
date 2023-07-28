@@ -76,12 +76,29 @@ router.post('/set-password', async (req, res) => {
 });
 
 // Get all members of a superadmin
-router.get('/:parentId', async (req, res) => {
+router.get('/:parentId', isLoggedIn, async (req, res) => {
      try {
           const { parentId } = req.params;
           const members = await memberService.getAllMembers(parentId);
           res.status(200).json({ success: true, members });
      } catch (error) {
+          res.status(500).json({ success: false, error: error.message });
+     }
+});
+
+// GET /members (Get members by roleName)
+router.get('/', isLoggedIn, async (req, res) => {
+     try {
+          const { roleName } = req.query;
+          const parentId = req.user.data._id; // Get the parent user ID from the authenticated user
+
+          const members = await memberService.getMembersByRole(
+               parentId,
+               roleName
+          );
+          res.json({ success: true, members });
+     } catch (error) {
+          console.log(error);
           res.status(500).json({ success: false, error: error.message });
      }
 });

@@ -90,9 +90,26 @@ const setPassword = async (verificationToken, password) => {
      }
 };
 
+// Function to get members by roleName and parentId
+const getMembersByRole = async (parentId, roleName) => {
+     try {
+          const members = await userModel
+               .find({
+                    parentId,
+                    'teamrole.roleName': roleName,
+               })
+               .select('-password'); // Exclude the password field from the query results
+
+          return members;
+     } catch (error) {
+          throw new Error('Failed to get members');
+     }
+};
+
 export const memberService = {
      createMember,
      updateMember,
      getAllMembers,
      setPassword,
+     getMembersByRole,
 };
