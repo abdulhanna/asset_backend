@@ -107,7 +107,7 @@ router.get('/all', async (req, res) => {
      }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/v1/:id', async (req, res) => {
      try {
           const { id } = req.params;
 
@@ -127,12 +127,46 @@ router.delete('/:id', async (req, res) => {
                });
           }
 
-          const deletePermissions = await permissionService.deletePermissions(
-               id
-          );
+          const deletePermissions =
+               await permissionService.hardDeletePermissions(id);
           res.status(200).json({
                success: true,
                msg: 'Deleted successfully',
+               deletePermissions,
+          });
+     } catch (error) {
+          res.status(500).json({
+               success: false,
+               error: error.message,
+          });
+     }
+});
+
+router.delete('/v2/:id', async (req, res) => {
+     try {
+          const { id } = req.params;
+
+          // Custom validation for the update permission request
+          if (!isValidObjectId(id)) {
+               return res.status(400).json({
+                    success: false,
+                    error: 'Invalid permission ID',
+               });
+          }
+
+          const existingPermission = await permissionModel.findById(id);
+          if (!existingPermission) {
+               res.status(404).json({
+                    success: false,
+                    error: 'moduleName not found',
+               });
+          }
+
+          const deletePermissions =
+               await permissionService.softDeletePermissions(id);
+          res.status(200).json({
+               success: true,
+               msg: 'Soft deleted successfully',
                deletePermissions,
           });
      } catch (error) {

@@ -64,17 +64,24 @@ const getAllPermissions = async () => {
      }
 };
 
-const deletePermissions = async (id) => {
+const softDeletePermissions = async (id) => {
      try {
-          const deletePermissions = await permissionModel.deleteOne(
-               {
-                    _id: id,
-               },
+          const softDeleteResult = await permissionModel.updateOne(
+               { _id: id },
                { isDeactivated: true }
           );
-          return deletePermissions;
+          return softDeleteResult;
      } catch (error) {
-          throw new Error('Error in deleting resource');
+          throw new Error('Error in soft deleting resource');
+     }
+};
+
+const hardDeletePermissions = async (id) => {
+     try {
+          const hardDeleteResult = await permissionModel.deleteOne({ _id: id });
+          return hardDeleteResult;
+     } catch (error) {
+          throw new Error('Error in hard deleting resource');
      }
 };
 
@@ -82,5 +89,6 @@ export const permissionService = {
      createPermission,
      updatePermission,
      getAllPermissions,
-     deletePermissions,
+     softDeletePermissions,
+     hardDeletePermissions,
 };
