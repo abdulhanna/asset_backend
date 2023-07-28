@@ -120,6 +120,27 @@ router.put('/:roleId', isLoggedIn, async (req, res) => {
      }
 });
 
+router.put('/:roleId/restoreDefaults', isLoggedIn, async (req, res) => {
+     try {
+          const roleId = req.params.roleId;
+
+          // Custom validation for the update permission request
+          if (!mongoose.Types.ObjectId.isValid(roleId)) {
+               return res.status(400).json({
+                    success: false,
+                    errors: 'Invalid permission ID',
+               });
+          }
+
+          const updatedRole = await rolesService.restoreDefaultPermissions(
+               roleId
+          );
+          res.json(updatedRole);
+     } catch (err) {
+          res.status(500).json({ error: 'Unable to update role' });
+     }
+});
+
 // Route to retrieve all roles
 router.get('/', isLoggedIn, async (req, res) => {
      try {
