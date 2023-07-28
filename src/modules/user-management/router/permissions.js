@@ -14,9 +14,7 @@ router.post('/create', isLoggedIn, async (req, res) => {
           if (!moduleName || moduleName.trim() === '') {
                return res.status(400).json({
                     success: false,
-                    errors: [
-                         'Invalid request data. moduleName is required and should not be empty.',
-                    ],
+                    error: 'Invalid request data. moduleName is required and should not be empty.',
                });
           }
 
@@ -79,7 +77,7 @@ router.put('/update/:id', async (req, res) => {
           ) {
                return res.status(400).json({
                     success: false,
-                    errors: 'moduleName should not be empty.',
+                    error: 'moduleName should not be empty.',
                });
           }
 

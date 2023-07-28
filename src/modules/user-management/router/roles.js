@@ -15,7 +15,7 @@ router.post('/', isLoggedIn, async (req, res) => {
           if (!roleName || roleName.trim() === '') {
                return res.status(400).json({
                     success: false,
-                    errors: 'roleName is required and should not be empty.',
+                    error: 'roleName is required and should not be empty.',
                });
           }
           // Convert the roleName to lowercase for case-insensitive comparison
@@ -88,7 +88,7 @@ router.put('/:roleId', isLoggedIn, async (req, res) => {
           if (!isValidObjectId(roleId)) {
                return res.status(400).json({
                     success: false,
-                    errors: 'Invalid permission ID',
+                    error: 'Invalid permission ID',
                });
           }
 
@@ -128,7 +128,7 @@ router.put('/:roleId/restoreDefaults', isLoggedIn, async (req, res) => {
           if (!mongoose.Types.ObjectId.isValid(roleId)) {
                return res.status(400).json({
                     success: false,
-                    errors: 'Invalid permission ID',
+                    error: 'Invalid permission ID',
                });
           }
 
@@ -150,6 +150,19 @@ router.get('/', isLoggedIn, async (req, res) => {
      } catch (err) {
           res.status(500).json({ error: 'Unable to fetch roles' });
      }
+});
+
+router.delete('/:id', async (req, res) => {
+     const { id } = req.params;
+
+     if (!isValidObjectId(id)) {
+          res.status(400).json({
+               success: false,
+               error: 'Invalid roles ID',
+          });
+     }
+
+     //
 });
 
 export default router;
