@@ -6,16 +6,11 @@ const router = express.Router();
 // Route for creating a new location
 router.post('/', async (req, res) => {
      try {
-          const {
-               locationName,
-               industryType,
-               assignedUser,
-               address,
-               children,
-          } = req.body;
+          const { name, industryType, assignedUser, address, children } =
+               req.body;
 
           const newLocation = await locationService.createLocation(
-               locationName,
+               name,
                industryType,
                assignedUser,
                address,

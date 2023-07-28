@@ -1,7 +1,7 @@
 import { locationModel } from '../models';
 
 const createLocation = async (
-     locationName,
+     name,
      industryType,
      assignedUser,
      address,
@@ -9,7 +9,7 @@ const createLocation = async (
 ) => {
      try {
           const newLocation = new locationModel({
-               locationName,
+               name,
                industryType,
                assignedUser,
                address,
