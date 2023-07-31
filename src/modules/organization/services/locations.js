@@ -9,14 +9,19 @@ const createLocation = async (
      isParent
 ) => {
      try {
-          const parent = isParent ? null : parentId;
+          if (parentId) {
+               // If parentId is provided, update the isParent field of the parent location
+               await locationModel.findByIdAndUpdate(parentId, {
+                    isParent: true,
+               });
+          }
 
           const newLocation = new locationModel({
                name,
                organizationId,
                assignedUser,
                address,
-               parentId: parent,
+               parentId: isParent ? null : parentId,
                isParent,
           });
 
