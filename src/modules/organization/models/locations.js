@@ -11,25 +11,23 @@ const locationSchema = new mongoose.Schema(
                type: String,
                required: false,
           },
-          industryType: {
-               type: String,
-               required: true,
+          organizationId: {
+               type: mongoose.Schema.Types.ObjectId,
+               ref: 'organizations',
           },
           assignedUser: {
                type: mongoose.Schema.Types.ObjectId,
                ref: 'users',
           },
-          parent: {
+          parentId: {
                type: mongoose.Schema.Types.ObjectId,
                ref: 'locations',
                default: null,
           },
-          children: [
-               {
-                    type: mongoose.Schema.Types.ObjectId,
-                    ref: 'locations',
-               },
-          ],
+          isParent: {
+               type: Boolean,
+               default: false,
+          },
           address: {
                type: {
                     address1: {
@@ -49,6 +47,14 @@ const locationSchema = new mongoose.Schema(
                     },
                     pinCode: {
                          type: String,
+                    },
+                    latitude: {
+                         type: Number,
+                         required: false,
+                    },
+                    longitude: {
+                         type: Number,
+                         required: false,
                     },
                },
           },
