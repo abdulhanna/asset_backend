@@ -20,9 +20,9 @@ const createMember = async (userData) => {
           const member = new userModel({
                email: userData.email,
                password: userData.password,
-               parentId: userData.parentId,
-               teamrole: userData.teamrole,
                userProfile: userData.userProfile,
+               teamrole: userData.teamrole,
+               parentId: userData.parentId,
                verificationToken: verificationToken,
           });
 
@@ -58,8 +58,10 @@ const updateMember = async (id, data) => {
 const getAllMembers = async (parentId) => {
      try {
           const members = await userModel
-               .find({ parentId })
-               .populate('teamrole');
+               .find({ parentId, isDeleted: false, isDeactivated: false })
+               .populate('teamrole', 'roleName')
+               .select('-deletedAt');
+
           return members;
      } catch (error) {
           console.log(error);
@@ -88,9 +90,38 @@ const setPassword = async (verificationToken, password) => {
      }
 };
 
+// Function to get members by roleName and parentId
+const getMembersByRole = async (parentId, roleName) => {
+     try {
+          const members = await userModel
+               .find({
+                    parentId,
+               })
+               .populate('teamrole', '-_id -permissions ')
+               .select('-password')
+               .exec();
+
+          // Filter the members based on the 'roleName' if provided
+          if (roleName) {
+               const filteredMembers = members.filter(
+                    (member) =>
+                         member.teamrole &&
+                         member.teamrole.roleName === roleName
+               );
+
+               return filteredMembers;
+          }
+
+          return members;
+     } catch (error) {
+          throw new Error('Failed to get members');
+     }
+};
+
 export const memberService = {
      createMember,
      updateMember,
      getAllMembers,
      setPassword,
+     getMembersByRole,
 };

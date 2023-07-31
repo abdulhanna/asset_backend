@@ -1,131 +1,148 @@
 import mongoose from 'mongoose';
-
-const userSchema = new mongoose.Schema(
-  {
-    email: {
-        type: String,
-        default: null,
-    },
-    password: {
-        type: String,
-        default: null,
-    },
-    parentId: {
-      type: mongoose.Schema.Types.ObjectId, // Assuming parentId refers to the _id of another user document
-      ref: 'users', // This refers to the same model
-      default: null, 
-    },
-    role: {
-      type: String,
-      enum: ['root', 'superadmin'],
-      default: null,
-    },
-    teamrole:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "roles",
-        default: null
-    },
-    token:{
-        type: String,
-        default: null,
-    },
-    verificationToken:{
-      type: String,
-      default: null,
-    },
-    companyProfileToken:{
-      type: String,
-      default: null,
-    },
-    device_or_token: {
-        type : [{
-            device_type: {
-            type: String                  
-          },
-          device_name: {
-            type: String                  
-          },
-          setTokenFCM: {
-            type: String
-          }
-      }],
-      default :null
-    },
-    userProfile:{
-      type: {
-        organizationId:{
+import bcrypt from "bcryptjs";
+const userSchema = new mongoose.Schema({
+     email: {
+          type: String,
+          default: null,
+     },
+     password: {
+          type: String,
+          default: null,
+     },
+     parentId: {
+          type: mongoose.Schema.Types.ObjectId, // Assuming parentId refers to the _id of another user document
+          ref: 'users', // This refers to the same model
+          default: null,
+     },
+     role: {
+          type: String,
+          enum: ['root', 'superadmin'],
+     },
+     teamrole: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "organizations",
-        },
-        userIdentificationNo: {
-          type: String                  
-        },
-        name: {
-          type: String                  
-        },
-        profileImg: {
-          type: String
-        },
-        phone: {
-          type: String
-        },
-        address1: {
-          type: String
-        },
-        address2: {
-          type: String
-        },
-        city: {
-          type: String
-        },
-        state: {
-          type: String
-        },
-        country:{
-          type: String
-        },
-        pinCode: {
-          type: String
-        },
-      },
-      default: null
-    },
-    resetToken: {
-        type: String,
-        default: null,
-    },
-    is_email_verified: {
-        type: Boolean,
-        default: false,
-    },
-    is_profile_completed:{
-      type: Boolean,
-      default: false,
-    },
-    is_deleted: {
-      type: Boolean,
-      default: false,
-    },
-    is_deactivated: {
-      type: Boolean,
-      default: false,
-    },
-    deleted_at: {
-        type : Date,
-        default : null,
-    },
-    created_at: { 
-        type: Date,
-        default: null,
-    },
-    updated_at: {
-        type: Date,
-        default: null,
-    }
+          ref: 'roles',
+          default: null,
+     },
+     token: {
+          type: String,
+          default: null,
+     },
+     verificationToken: {
+          type: String,
+          default: null,
+     },
+     companyProfileToken: {
+          type: String,
+          default: null,
+     },
+     device_or_token: {
+          type: [
+               {
+                    device_type: {
+                         type: String,
+                    },
+                    device_name: {
+                         type: String,
+                    },
+                    setTokenFCM: {
+                         type: String,
+                    },
+               },
+          ],
+          default: null,
+     },
+     userProfile: {
+          type: {
+               organizationId: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'organizations',
+               },
+               userIdentificationNo: {
+                    type: String,
+               },
+               name: {
+                    type: String,
+               },
+               profileImg: {
+                    type: String,
+               },
+               phone: {
+                    type: String,
+               },
+               address1: {
+                    type: String,
+               },
+               address2: {
+                    type: String,
+               },
+               city: {
+                    type: String,
+               },
+               state: {
+                    type: String,
+               },
+               country: {
+                    type: String,
+               },
+               pinCode: {
+                    type: String,
+               },
+          },
+          default: null,
+     },
+     resetToken: {
+          type: String,
+          default: null,
+     },
+     is_email_verified: {
+          type: Boolean,
+          default: false,
+     },
+     is_profile_completed: {
+          type: Boolean,
+          default: false,
+     },
+     isDeleted: {
+          type: Boolean,
+          default: false,
+     },
+     isDeactivated: {
+          type: Boolean,
+          default: false,
+     },
+     deletedAt: {
+          type: Date,
+          default: null,
+     },
+     createdAt: {
+          type: Date,
+          default: null,
+     },
+     updatedAt: {
+          type: Date,
+          default: null,
+     },
 });
 
 userSchema.index({ email: true });
 
 const userModel = mongoose.model('users', userSchema);
-
 export default userModel;
+
+userModel.findOne({role:"root"},(findErr,findRes)=>{
+     if(findErr){console.log("default admin creation error")}
+     else if(findRes){console.log("Root user already exist")}
+     else{
+       let obj = {
+         email:"root@finbit.com",
+         role:"root",
+         password:bcrypt.hashSync("finbit",10),
+         is_email_verified: true,
+         createdAt: Date.now()
+        };
+        userModel.create(obj,(error,result)=>{
+          if(error){console.log("default admin creation error")}
+          console.log("default root user created", result);
+        })  
+     }
+   })

@@ -4,7 +4,6 @@ import { StatusCodes } from 'http-status-codes';
 import http from 'http';
 import { useRateLimiter } from '@madhouselabs/rate-limiter';
 import { finishApp, createApp, useModules } from './app';
-import authService from './modules/auth/services/auth';
 import { config } from './config/config';
 import { secret } from './config/secret';
 import { initPassport } from './modules/auth/router/passport';

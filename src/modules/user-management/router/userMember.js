@@ -1,18 +1,21 @@
 import { Router } from 'express';
 import { memberService } from '../services/userMember.js';
+import { isLoggedIn } from '../../auth/router/passport.js';
 
 const router = Router();
 // Create a new member
-router.post('/createMember', async (req, res) => {
+router.post('/createMember', isLoggedIn, async (req, res) => {
      try {
-          const { email, password, parentId, userProfile, teamrole } = req.body;
+          const parentId = req.user.data._id;
+
+          const { email, password, userProfile, teamrole } = req.body;
 
           const userData = {
                email,
                password,
-               parentId,
                userProfile,
                teamrole,
+               parentId,
           };
 
           const member = await memberService.createMember(userData);
@@ -73,12 +76,31 @@ router.post('/set-password', async (req, res) => {
 });
 
 // Get all members of a superadmin
-router.get('/:parentId', async (req, res) => {
+router.get('/:parentId', isLoggedIn, async (req, res) => {
      try {
           const { parentId } = req.params;
           const members = await memberService.getAllMembers(parentId);
           res.status(200).json({ success: true, members });
      } catch (error) {
+          res.status(500).json({ success: false, error: error.message });
+     }
+});
+
+// GET /members (Get members by roleName)
+router.get('/', isLoggedIn, async (req, res) => {
+     try {
+          const { roleName } = req.query;
+          const parentId = req.user.data._id; // Get the parent user ID from the authenticated user
+
+          const assignedUsers = await memberService.getMembersByRole(
+               parentId,
+               roleName
+          );
+
+          const assignedUserCounts = assignedUsers.length;
+          res.json({ success: true, assignedUserCounts, assignedUsers });
+     } catch (error) {
+          console.log(error);
           res.status(500).json({ success: false, error: error.message });
      }
 });

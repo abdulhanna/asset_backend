@@ -1,73 +1,51 @@
 import { permissionModel } from '../models';
 
-const createPermission = async (moduleName, allAccess) => {
+const createPermission = async (permissionData) => {
      try {
-          const permission = new permissionModel({
-               moduleName,
-               read: allAccess,
-               readWrite: allAccess,
-               actions: allAccess,
-               createdAt: new Date(),
-          });
+          const permission = await permissionModel.create(permissionData);
 
-          return await permission.save();
+          return permission;
      } catch (error) {
           throw new Error(error.message);
      }
 };
 
-const updatePermission = async (
-     id,
-     read,
-     readWrite,
-     actions,
-     allAccess,
-     removeAccess,
-     restoreDefaults
-) => {
+const updatePermission = async (id, updateData) => {
      try {
           const existingPermission = await permissionModel.findById(id);
 
           if (!existingPermission) {
-               throw new Error('Permission not found');
+               const error = new Error('Permission not found');
+               error.statusCode = 404;
           }
 
-          const updateData = {
+          const updatedData = {
                updatedAt: new Date(),
+               ...updateData,
           };
 
-          if (allAccess) {
-               updateData.allAccess = true;
-               updateData.removeAccess = false;
-               updateData.restoreDefaults = false;
-               updateData.read = true;
-               updateData.readWrite = true;
-               updateData.actions = true;
-          } else if (removeAccess) {
-               updateData.allAccess = false;
-               updateData.removeAccess = true;
-               updateData.restoreDefaults = false;
-               updateData.read = false;
-               updateData.readWrite = false;
-               updateData.actions = false;
-          } else if (restoreDefaults) {
-               updateData.allAccess = false;
-               updateData.removeAccess = false;
-               updateData.restoreDefaults = true;
-          } else {
-               // Update individual fields if not using allAccess, removeAccess, or restoreDefaults
-               if (typeof read === 'boolean') {
-                    updateData.read = read;
-               }
-               if (typeof readWrite === 'boolean') {
-                    updateData.readWrite = readWrite;
-               }
-               if (typeof actions === 'boolean') {
-                    updateData.actions = actions;
-               }
+          // Handle access flags
+          if (updateData.allAccess) {
+               updatedData.allAccess = true;
+               updatedData.removeAccess = false;
+               updatedData.restoreDefaults = false;
+               updatedData.read = true;
+               updatedData.readWrite = true;
+               updatedData.actions = true;
+          } else if (updateData.removeAccess) {
+               updatedData.allAccess = false;
+               updatedData.removeAccess = true;
+               updatedData.restoreDefaults = false;
+               updatedData.read = false;
+               updatedData.readWrite = false;
+               updatedData.actions = false;
+          } else if (updateData.restoreDefaults) {
+               updatedData.allAccess = false;
+               updatedData.removeAccess = false;
+               updatedData.restoreDefaults = true;
           }
 
-          return await permissionModel.findByIdAndUpdate(id, updateData, {
+          return await permissionModel.findByIdAndUpdate(id, updatedData, {
                new: true,
           });
      } catch (error) {
@@ -77,9 +55,33 @@ const updatePermission = async (
 
 const getAllPermissions = async () => {
      try {
-          return await permissionModel.find();
+          const permissions = await permissionModel
+               .find({ isDeleted: false, isDeactivated: false })
+               .select('moduleName read readWrite actions allAccess _id');
+          return permissions;
      } catch (error) {
           throw new Error(error.message);
+     }
+};
+
+const softDeletePermissions = async (id) => {
+     try {
+          const softDeleteResult = await permissionModel.updateOne(
+               { _id: id },
+               { isDeactivated: true }
+          );
+          return softDeleteResult;
+     } catch (error) {
+          throw new Error('Error in soft deleting resource');
+     }
+};
+
+const hardDeletePermissions = async (id) => {
+     try {
+          const hardDeleteResult = await permissionModel.deleteOne({ _id: id });
+          return hardDeleteResult;
+     } catch (error) {
+          throw new Error('Error in hard deleting resource');
      }
 };
 
@@ -87,4 +89,6 @@ export const permissionService = {
      createPermission,
      updatePermission,
      getAllPermissions,
+     softDeletePermissions,
+     hardDeletePermissions,
 };

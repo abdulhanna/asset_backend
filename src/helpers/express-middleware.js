@@ -14,5 +14,7 @@ export const errorHandler = (err, req, res, _next) => {
      res.status(err.statusCode || 500).send({
           msg: 'something unwanted occured....',
           error: err.message,
+          errorStatus: err.errorstatus,
+          redirectUrl: err.redirectUrl
      });
 };
