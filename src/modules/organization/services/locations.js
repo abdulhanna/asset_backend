@@ -60,7 +60,11 @@ const getLocationsByOrganizationIdV2 = async (
                query['address.country'] = country;
           }
 
-          const locations = await locationModel.find(query).exec();
+          const locations = await locationModel
+               .find(query)
+               .select('-address -organizationId  -__v')
+               .populate('assignedUserId', 'email userProfile.name')
+               .exec();
 
           // Function to convert the locations into a hierarchical structure
           const convertToHierarchy = (nodes) => {
@@ -95,6 +99,7 @@ const getLocationsByOrganizationIdV2 = async (
 
           return hierarchicalLocations;
      } catch (error) {
+          console.log(error);
           throw new Error(
                'Unable to get locations by organizationId and address criteria'
           );
