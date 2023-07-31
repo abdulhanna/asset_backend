@@ -3,7 +3,7 @@ import { locationModel } from '../models';
 const createLocation = async (
      name,
      organizationId,
-     assignedUser,
+     assignedUserId,
      address,
      parentId,
      isParent
@@ -19,7 +19,7 @@ const createLocation = async (
           const newLocation = new locationModel({
                name,
                organizationId,
-               assignedUser,
+               assignedUserId,
                address,
                parentId: isParent ? null : parentId,
                isParent,
@@ -38,6 +38,7 @@ const getLocationById = async (locationId) => {
           throw new Error('Unable to get location');
      }
 };
+
 const getLocationsByOrganizationIdV2 = async (
      organizationId,
      city,
@@ -59,7 +60,11 @@ const getLocationsByOrganizationIdV2 = async (
                query['address.country'] = country;
           }
 
-          const locations = await locationModel.find(query).exec();
+          const locations = await locationModel
+               .find(query)
+               .select('-address -organizationId  -__v')
+               .populate('assignedUserId', 'email userProfile.name')
+               .exec();
 
           // Function to convert the locations into a hierarchical structure
           const convertToHierarchy = (nodes) => {
@@ -94,6 +99,7 @@ const getLocationsByOrganizationIdV2 = async (
 
           return hierarchicalLocations;
      } catch (error) {
+          console.log(error);
           throw new Error(
                'Unable to get locations by organizationId and address criteria'
           );
@@ -132,7 +138,11 @@ const getLocationsByOrganizationId = async (
 
 const getAllLocations = async () => {
      try {
-          return await locationModel.find().exec();
+          return await locationModel
+               .find()
+               .populate('assignedUserId', 'email userProfile.name')
+               .select('-address -organizationId  -__v')
+               .exec();
      } catch (error) {
           throw new Error('Unable to get locations');
      }
@@ -142,7 +152,7 @@ const updateLocation = async (
      locationId,
      name,
      organizationId,
-     assignedUser,
+     assignedUserId,
      address,
      parentId,
      isParent
@@ -158,7 +168,7 @@ const updateLocation = async (
 
           location.name = name;
           location.organizationId = organizationId;
-          location.assignedUser = assignedUser;
+          location.assignedUserId = assignedUserId;
           location.address = address;
           location.parentId = parent;
           location.isParent = isParent;

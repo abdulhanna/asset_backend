@@ -1,15 +1,16 @@
 import express from 'express';
 import { locationService } from '../services/locations.js';
+import { isLoggedIn } from '../../auth/router/passport.js';
 
 const router = express.Router();
 
 // Create a new location
-router.post('/', async (req, res) => {
+router.post('/', isLoggedIn, async (req, res) => {
      try {
           const {
                name,
                organizationId,
-               assignedUser,
+               assignedUserId,
                address,
                parentId,
                isParent,
@@ -18,7 +19,7 @@ router.post('/', async (req, res) => {
           const newLocation = await locationService.createLocation(
                name,
                organizationId,
-               assignedUser,
+               assignedUserId,
                address,
                parentId,
                isParent
@@ -31,7 +32,7 @@ router.post('/', async (req, res) => {
 });
 
 // Get a location by ID
-router.get('/:locationId', async (req, res) => {
+router.get('/:locationId', isLoggedIn, async (req, res) => {
      try {
           const locationId = req.params.locationId;
           const location = await locationService.getLocationById(locationId);
@@ -46,7 +47,7 @@ router.get('/:locationId', async (req, res) => {
      }
 });
 
-router.get('/organization/:organizationId', async (req, res) => {
+router.get('/organization/:organizationId', isLoggedIn, async (req, res) => {
      try {
           const { organizationId } = req.params;
           const { city, state, country } = req.query;
@@ -67,7 +68,7 @@ router.get('/organization/:organizationId', async (req, res) => {
 });
 
 // Get all locations
-router.get('/', async (req, res) => {
+router.get('/', isLoggedIn, async (req, res) => {
      try {
           const locations = await locationService.getAllLocations();
           res.json(locations);
@@ -77,13 +78,13 @@ router.get('/', async (req, res) => {
 });
 
 // Update a location by ID
-router.put('/:locationId', async (req, res) => {
+router.put('/:locationId', isLoggedIn, async (req, res) => {
      try {
           const locationId = req.params.locationId;
           const {
                name,
                organizationId,
-               assignedUser,
+               assignedUserId,
                address,
                parentId,
                isParent,
@@ -93,7 +94,7 @@ router.put('/:locationId', async (req, res) => {
                locationId,
                name,
                organizationId,
-               assignedUser,
+               assignedUserId,
                address,
                parentId,
                isParent
@@ -106,7 +107,7 @@ router.put('/:locationId', async (req, res) => {
 });
 
 // Delete a location by ID
-router.delete('/:locationId', async (req, res) => {
+router.delete('/:locationId', isLoggedIn, async (req, res) => {
      try {
           const locationId = req.params.locationId;
           await locationService.deleteLocation(locationId);
