@@ -38,6 +38,7 @@ const getLocationById = async (locationId) => {
           throw new Error('Unable to get location');
      }
 };
+
 const getLocationsByOrganizationIdV2 = async (
      organizationId,
      city,
