@@ -1,9 +1,10 @@
 import express from 'express';
 import { fieldManagementService } from '../services/fieldManagement.js';
+import { isLoggedIn } from '../../auth/router/passport.js';
 
 const router = express.Router();
 
-router.post('/add-groups', async (req, res) => {
+router.post('/add-groups', isLoggedIn, async (req, res) => {
      try {
           const { name } = req.body;
 
@@ -20,7 +21,7 @@ router.post('/add-groups', async (req, res) => {
      }
 });
 
-router.put('/:groupId/add-fields', async (req, res) => {
+router.put('/:groupId/add-fields', isLoggedIn, async (req, res) => {
      try {
           const { groupId } = req.params;
           const { fields } = req.body;
@@ -34,13 +35,13 @@ router.put('/:groupId/add-fields', async (req, res) => {
      }
 });
 
-router.get('/list', async (req, res) => {
+router.get('/list', isLoggedIn, async (req, res) => {
      const fieldGroups = await fieldManagementService.getFieldGroups();
 
      res.status(200).json(fieldGroups);
 });
 
-router.put('/:groupId', async (req, res) => {
+router.put('/:groupId', isLoggedIn, async (req, res) => {
      const { groupId } = req.params;
      const data = req.body;
 
