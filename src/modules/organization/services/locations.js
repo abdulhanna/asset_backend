@@ -157,6 +157,7 @@ export const locationService = {
      createLocation,
      getLocationById,
      getLocationsByOrganizationId,
+     // getLocationsByOrganizationIdV2,
      getAllLocations,
      updateLocation,
      deleteLocation,
