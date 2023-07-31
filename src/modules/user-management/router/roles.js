@@ -15,7 +15,7 @@ router.post('/', isLoggedIn, async (req, res) => {
           if (!roleName || roleName.trim() === '') {
                return res.status(400).json({
                     success: false,
-                    errors: 'roleName is required and should not be empty.',
+                    error: 'roleName is required and should not be empty.',
                });
           }
           // Convert the roleName to lowercase for case-insensitive comparison
@@ -84,11 +84,11 @@ router.put('/:roleId', isLoggedIn, async (req, res) => {
                }
           }
 
-          // Custom validation for the update permission request
+          // Custom validation for the update role request
           if (!isValidObjectId(roleId)) {
                return res.status(400).json({
                     success: false,
-                    errors: 'Invalid permission ID',
+                    error: 'Invalid role ID',
                });
           }
 
@@ -120,6 +120,26 @@ router.put('/:roleId', isLoggedIn, async (req, res) => {
      }
 });
 
+router.put('/:roleId/restoreDefaults', isLoggedIn, async (req, res) => {
+     try {
+          const roleId = req.params.roleId;
+
+          if (!mongoose.Types.ObjectId.isValid(roleId)) {
+               return res.status(400).json({
+                    success: false,
+                    error: 'Invalid role ID',
+               });
+          }
+
+          const updatedRole = await rolesService.restoreDefaultPermissions(
+               roleId
+          );
+          res.json(updatedRole);
+     } catch (err) {
+          res.status(500).json({ error: 'Unable to update role' });
+     }
+});
+
 // Route to retrieve all roles
 router.get('/', isLoggedIn, async (req, res) => {
      try {
@@ -129,6 +149,35 @@ router.get('/', isLoggedIn, async (req, res) => {
      } catch (err) {
           res.status(500).json({ error: 'Unable to fetch roles' });
      }
+});
+
+router.delete('/:id', async (req, res) => {
+     const { id } = req.params;
+
+     if (!isValidObjectId(id)) {
+          res.status(400).json({
+               success: false,
+               error: 'Invalid roles ID',
+          });
+     }
+
+     const existingRole = await roleDefineModel.findById(id);
+     if (!existingRole) {
+          res.status(404).json({
+               success: false,
+               error: 'roleName not found',
+          });
+     }
+
+     const deleteRoles = await rolesService.deleteRoles(id);
+
+     res.status(200).json({
+          success: true,
+          msg: 'Roles deleted successfully',
+          deleteRoles,
+     });
+
+     //
 });
 
 export default router;
