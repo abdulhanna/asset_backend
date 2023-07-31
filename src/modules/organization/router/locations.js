@@ -10,7 +10,7 @@ router.post('/', isLoggedIn, async (req, res) => {
           const {
                name,
                organizationId,
-               assignedUser,
+               assignedUserId,
                address,
                parentId,
                isParent,
@@ -19,7 +19,7 @@ router.post('/', isLoggedIn, async (req, res) => {
           const newLocation = await locationService.createLocation(
                name,
                organizationId,
-               assignedUser,
+               assignedUserId,
                address,
                parentId,
                isParent
@@ -84,7 +84,7 @@ router.put('/:locationId', isLoggedIn, async (req, res) => {
           const {
                name,
                organizationId,
-               assignedUser,
+               assignedUserId,
                address,
                parentId,
                isParent,
@@ -94,7 +94,7 @@ router.put('/:locationId', isLoggedIn, async (req, res) => {
                locationId,
                name,
                organizationId,
-               assignedUser,
+               assignedUserId,
                address,
                parentId,
                isParent

@@ -3,7 +3,7 @@ import { locationModel } from '../models';
 const createLocation = async (
      name,
      organizationId,
-     assignedUser,
+     assignedUserId,
      address,
      parentId,
      isParent
@@ -19,7 +19,7 @@ const createLocation = async (
           const newLocation = new locationModel({
                name,
                organizationId,
-               assignedUser,
+               assignedUserId,
                address,
                parentId: isParent ? null : parentId,
                isParent,
@@ -133,7 +133,7 @@ const getLocationsByOrganizationId = async (
 
 const getAllLocations = async () => {
      try {
-          return await locationModel.find().exec();
+          return await locationModel.find().populate('assignedUserId').exec();
      } catch (error) {
           throw new Error('Unable to get locations');
      }
@@ -143,7 +143,7 @@ const updateLocation = async (
      locationId,
      name,
      organizationId,
-     assignedUser,
+     assignedUserId,
      address,
      parentId,
      isParent
@@ -159,7 +159,7 @@ const updateLocation = async (
 
           location.name = name;
           location.organizationId = organizationId;
-          location.assignedUser = assignedUser;
+          location.assignedUser = assignedUserId;
           location.address = address;
           location.parentId = parent;
           location.isParent = isParent;

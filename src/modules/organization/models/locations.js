@@ -15,7 +15,7 @@ const locationSchema = new mongoose.Schema(
                type: mongoose.Schema.Types.ObjectId,
                ref: 'organizations',
           },
-          assignedUser: [
+          assignedUserId: [
                {
                     type: mongoose.Schema.Types.ObjectId,
                     ref: 'users',
