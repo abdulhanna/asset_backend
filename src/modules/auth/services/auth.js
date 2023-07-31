@@ -215,25 +215,31 @@ authService.doLogin = async ({ email, password }) => {
       .select('email role teamrole token')
       .populate({
        path: 'teamrole',
-       select: 'permissions',
+       select: 'roleName permissions',
        populate: {
          path: 'permissions',
          select: 'moduleName read read_write actions',
        },
      })
 
+
+
     let permissions;
+    let role;
     if (getUserData.role === 'superadmin' || getUserData.role === 'root') {
          permissions = {}; // Empty key for superadmin and root roles
+        role = getUserData.role;
     } else if (getUserData.teamrole && getUserData.teamrole.permissions) {
          permissions = getUserData.teamrole.permissions; // Use teamrole's permissions if available
+         role = getUserData.teamrole.roleName;
     } else {
          permissions = []; // Default to empty array if no permissions found
+         role = "";
     }
 
       const userData = {
         email: getUserData.email,
-        role: getUserData.role,
+        role,
         permissions,
         access_token: getUserData.token
       }
