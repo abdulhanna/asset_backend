@@ -159,7 +159,7 @@ const updateLocation = async (
 
           location.name = name;
           location.organizationId = organizationId;
-          location.assignedUser = assignedUserId;
+          location.assignedUserId = assignedUserId;
           location.address = address;
           location.parentId = parent;
           location.isParent = isParent;
