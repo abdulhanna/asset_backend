@@ -21,7 +21,7 @@ const createLocation = async (
                organizationId,
                assignedUser,
                address,
-               parentId: isParent ? null : parentId, // Set parentId to null if isParent is true
+               parentId: isParent ? null : parentId,
                isParent,
           });
 
