@@ -15,10 +15,12 @@ const locationSchema = new mongoose.Schema(
                type: mongoose.Schema.Types.ObjectId,
                ref: 'organizations',
           },
-          assignedUser: {
-               type: mongoose.Schema.Types.ObjectId,
-               ref: 'users',
-          },
+          assignedUser: [
+               {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'users',
+               },
+          ],
           parentId: {
                type: mongoose.Schema.Types.ObjectId,
                ref: 'locations',
