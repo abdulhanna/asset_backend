@@ -51,12 +51,13 @@ router.get('/organization/:organizationId', async (req, res) => {
           const { organizationId } = req.params;
           const { city, state, country } = req.query;
 
-          const locations = await locationService.getLocationsByOrganizationId(
-               organizationId,
-               city,
-               state,
-               country
-          );
+          const locations =
+               await locationService.getLocationsByOrganizationIdV2(
+                    organizationId,
+                    city,
+                    state,
+                    country
+               );
           res.json(locations);
      } catch (error) {
           res.status(500).json({

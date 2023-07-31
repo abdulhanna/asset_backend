@@ -33,6 +33,67 @@ const getLocationById = async (locationId) => {
           throw new Error('Unable to get location');
      }
 };
+const getLocationsByOrganizationIdV2 = async (
+     organizationId,
+     city,
+     state,
+     country
+) => {
+     try {
+          const query = { organizationId };
+
+          if (city) {
+               query['address.city'] = city;
+          }
+
+          if (state) {
+               query['address.state'] = state;
+          }
+
+          if (country) {
+               query['address.country'] = country;
+          }
+
+          const locations = await locationModel.find(query).exec();
+
+          // Function to convert the locations into a hierarchical structure
+          const convertToHierarchy = (nodes) => {
+               const hierarchy = [];
+               const map = new Map();
+
+               nodes.forEach((node) => {
+                    map.set(node._id.toString(), {
+                         ...node.toObject(),
+                         children: [],
+                    });
+               });
+
+               nodes.forEach((node) => {
+                    const parent = map.get(node._id.toString());
+
+                    if (node.parentId) {
+                         const parentLocation = map.get(
+                              node.parentId.toString()
+                         );
+                         if (parentLocation) {
+                              parentLocation.children.push(parent);
+                         }
+                    } else {
+                         hierarchy.push(parent);
+                    }
+               });
+
+               return hierarchy;
+          };
+          const hierarchicalLocations = convertToHierarchy(locations);
+
+          return hierarchicalLocations;
+     } catch (error) {
+          throw new Error(
+               'Unable to get locations by organizationId and address criteria'
+          );
+     }
+};
 
 const getLocationsByOrganizationId = async (
      organizationId,
@@ -157,7 +218,7 @@ export const locationService = {
      createLocation,
      getLocationById,
      getLocationsByOrganizationId,
-     // getLocationsByOrganizationIdV2,
+     getLocationsByOrganizationIdV2,
      getAllLocations,
      updateLocation,
      deleteLocation,
