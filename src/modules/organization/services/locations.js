@@ -138,7 +138,11 @@ const getLocationsByOrganizationId = async (
 
 const getAllLocations = async () => {
      try {
-          return await locationModel.find().populate('assignedUserId').exec();
+          return await locationModel
+               .find()
+               .populate('assignedUserId', 'email userProfile.name')
+               .select('-address -organizationId  -__v')
+               .exec();
      } catch (error) {
           throw new Error('Unable to get locations');
      }
