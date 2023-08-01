@@ -7,15 +7,41 @@ const router = express.Router();
 
 router.post('/', isLoggedIn, async (req, res) => {
      try {
-          const { departmentId, name, chargingType, status } = req.body;
+          let { departmentId, name, chargingType, status } = req.body;
+
+          // Trim leading and trailing spaces from departmentId and name
+          departmentId = departmentId.trim();
+          name = name.trim();
+
+          if (!name) {
+               return res.status(400).json({
+                    success: false,
+                    error: 'Department name cannot be empty. Please provide a valid name.',
+               });
+          }
+
           const existingDepartmentId = await departmentModel.findOne({
-               departmentId,
+               departmentId: { $regex: new RegExp(`^${departmentId}$`, 'i') }, // Case-insensitive match
                isDeleted: false,
           });
+
           if (existingDepartmentId) {
                return res.status(400).json({
                     success: false,
                     error: `Department '${departmentId}' already exists.`,
+               });
+          }
+
+          // Check if name is duplicate (case-insensitive match)
+          const existingName = await departmentModel.findOne({
+               name: { $regex: new RegExp(`^${name}$`, 'i') },
+               isDeleted: false,
+          });
+
+          if (existingName) {
+               return res.status(400).json({
+                    success: false,
+                    error: `Department with name '${name}' already exists.`,
                });
           }
 
@@ -33,14 +59,14 @@ router.post('/', isLoggedIn, async (req, res) => {
 
           res.status(201).json({
                success: true,
-               msg: 'Departments added successfully',
+               msg: 'Department added successfully',
                department: addDepartment,
           });
      } catch (error) {
           console.log(error);
           res.status(500).json({
                success: false,
-               error: 'Unable to add departments',
+               error: 'Unable to add department',
           });
      }
 });
@@ -49,10 +75,33 @@ router.put('/:id', isLoggedIn, async (req, res) => {
      try {
           const id = req.params.id;
           const data = req.body;
+
+          // Trim leading and trailing spaces from the name if it exists
+          if (data.name) {
+               data.name = data.name.trim();
+          }
+
+          // Check if the updated name is duplicate (case-insensitive match)
+          if (data.name) {
+               const existingName = await departmentModel.findOne({
+                    _id: { $ne: id }, // Exclude the current department from the check
+                    name: { $regex: new RegExp(`^${data.name}$`, 'i') },
+                    isDeleted: false,
+               });
+
+               if (existingName) {
+                    return res.status(400).json({
+                         success: false,
+                         error: `Department with name '${data.name}' already exists.`,
+                    });
+               }
+          }
+
           const updatedDepartment = await departmentService.updateDepartment(
                id,
                data
           );
+
           res.status(200).json({
                success: true,
                msg: 'Department updated successfully',
