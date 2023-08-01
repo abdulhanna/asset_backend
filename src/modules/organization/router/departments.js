@@ -205,6 +205,23 @@ router.get('/', isLoggedIn, async (req, res) => {
 router.delete('/:id', isLoggedIn, async (req, res) => {
      try {
           const id = req.params.id;
+
+          // Custom validation for the update permission request
+          if (!isValidObjectId(id)) {
+               return res.status(400).json({
+                    success: false,
+                    error: 'Invalid department ID',
+               });
+          }
+
+          const existingDepartmentId = await departmentModel.findById(id);
+          if (!existingDepartmentId) {
+               return res.status(404).json({
+                    success: false,
+                    error: 'Department not found',
+               });
+          }
+
           await departmentService.deleteDepartment(id);
           return res.status(200).json({
                success: true,
