@@ -25,9 +25,9 @@ router.post('/', isLoggedIn, async (req, res) => {
                isParent
           );
 
-          res.status(201).json(newLocation);
+          return res.status(201).json(newLocation);
      } catch (error) {
-          res.status(500).json({ error: 'Unable to create location' });
+          return res.status(500).json({ error: 'Unable to create location' });
      }
 });
 
@@ -41,9 +41,9 @@ router.get('/:locationId', isLoggedIn, async (req, res) => {
                return res.status(404).json({ error: 'Location not found' });
           }
 
-          res.json(location);
+          return res.json(location);
      } catch (error) {
-          res.status(500).json({ error: 'Unable to get location' });
+          return res.status(500).json({ error: 'Unable to get location' });
      }
 });
 
@@ -59,9 +59,9 @@ router.get('/organization/:organizationId', isLoggedIn, async (req, res) => {
                     state,
                     country
                );
-          res.json(locations);
+          return res.json(locations);
      } catch (error) {
-          res.status(500).json({
+          return res.status(500).json({
                error: 'Unable to get locations by organizationId and address criteria',
           });
      }
@@ -71,9 +71,9 @@ router.get('/organization/:organizationId', isLoggedIn, async (req, res) => {
 router.get('/', isLoggedIn, async (req, res) => {
      try {
           const locations = await locationService.getAllLocations();
-          res.json(locations);
+          return res.json(locations);
      } catch (error) {
-          res.status(500).json({ error: 'Unable to get locations' });
+          return res.status(500).json({ error: 'Unable to get locations' });
      }
 });
 
@@ -100,9 +100,9 @@ router.put('/:locationId', isLoggedIn, async (req, res) => {
                isParent
           );
 
-          res.json(updatedLocation);
+          return res.json(updatedLocation);
      } catch (error) {
-          res.status(500).json({ error: 'Unable to update location' });
+          return res.status(500).json({ error: 'Unable to update location' });
      }
 });
 
@@ -112,9 +112,9 @@ router.delete('/:locationId', isLoggedIn, async (req, res) => {
           const locationId = req.params.locationId;
           await locationService.deleteLocation(locationId);
 
-          res.json({ message: 'Location deleted successfully' });
+          return res.json({ message: 'Location deleted successfully' });
      } catch (error) {
-          res.status(500).json({ error: 'Unable to delete location' });
+          return res.status(500).json({ error: 'Unable to delete location' });
      }
 });
 
