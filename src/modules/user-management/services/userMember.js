@@ -1,6 +1,7 @@
 import jwtService from '../../auth/services/jwt-services';
 import emailtemplate from '../../../helpers/send-email';
 import userModel from '../../auth/models/index.js';
+import bcrypt from 'bcryptjs';
 
 const createMember = async (userData) => {
      try {
@@ -8,7 +9,7 @@ const createMember = async (userData) => {
           const verificationTokenPayload = await jwtService.generatePair(
                userData.email
           );
-          const verificationToken = verificationTokenPayload.access_token;
+          const verificationToken = verificationTokenPayload;
 
           // Send the invitation email to the member
           await emailtemplate.sendInvitationEmail(
@@ -79,7 +80,8 @@ const setPassword = async (verificationToken, password) => {
           }
 
           // Set the new password
-          member.password = password;
+          // member.password = password;
+          member.password = bcrypt.hashSync(password, 8);
           member.verificationToken = null;
           await member.save();
 
