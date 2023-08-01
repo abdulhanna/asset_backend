@@ -6,6 +6,7 @@ const addDepartment = async (data) => {
 
           return addDepartment;
      } catch (error) {
+          console.log(error);
           throw new Error('Unable to add departments');
      }
 };
@@ -37,7 +38,9 @@ const getDepartmentById = async (id) => {
 
 const getDepartments = async () => {
      try {
-          const data = await departmentModel.find().select('-__v');
+          const data = await departmentModel
+               .find({ isDeleted: false })
+               .select('-__v');
           return data;
      } catch (error) {
           throw new Error('Unable to fetch departments');
@@ -46,7 +49,16 @@ const getDepartments = async () => {
 
 const deleteDepartment = async (id) => {
      try {
-          await departmentModel.findByIdAndDelete(id);
+          const deleteDepartment = await departmentModel.updateOne(
+               {
+                    _id: id,
+               },
+               {
+                    isDeleted: true,
+                    deletedAt: new Date(),
+               }
+          );
+          return deleteDepartment;
      } catch (error) {
           throw new Error('Unable to delete department');
      }

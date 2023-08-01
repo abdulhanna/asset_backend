@@ -1,16 +1,40 @@
 import express from 'express';
 import { departmentService } from '../services/departments';
+import { isLoggedIn } from '../../auth/router/passport.js';
+import departmentModel from '../models/departments.js';
 
 const router = express.Router();
 
-router.post('/', async (req, res) => {
+router.post('/', isLoggedIn, async (req, res) => {
      try {
-          const data = req.body;
-          const addedDepartment = await departmentService.addDepartment(data);
+          const { departmentId, name, chargingType, status } = req.body;
+          const existingDepartmentId = await departmentModel.findOne({
+               departmentId,
+               isDeleted: false,
+          });
+          if (existingDepartmentId) {
+               return res.status(400).json({
+                    success: false,
+                    error: `Department '${departmentId}' already exists.`,
+               });
+          }
+
+          const departmentData = {
+               departmentId,
+               name,
+               chargingType,
+               status,
+               createdAt: new Date(),
+          };
+
+          const addDepartment = await departmentService.addDepartment(
+               departmentData
+          );
+
           res.status(201).json({
                success: true,
                msg: 'Departments added successfully',
-               department: addedDepartment,
+               department: addDepartment,
           });
      } catch (error) {
           console.log(error);
@@ -21,7 +45,7 @@ router.post('/', async (req, res) => {
      }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', isLoggedIn, async (req, res) => {
      try {
           const id = req.params.id;
           const data = req.body;
@@ -43,7 +67,7 @@ router.put('/:id', async (req, res) => {
      }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', isLoggedIn, async (req, res) => {
      try {
           const id = req.params.id;
           const department = await departmentService.getDepartmentById(id);
@@ -56,10 +80,10 @@ router.get('/:id', async (req, res) => {
                success: false,
                error: 'Unable to fetch department',
           });
-     }g
+     }
 });
 
-router.get('/', async (req, res) => {
+router.get('/', isLoggedIn, async (req, res) => {
      try {
           const departments = await departmentService.getDepartments();
 
@@ -75,7 +99,7 @@ router.get('/', async (req, res) => {
      }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', isLoggedIn, async (req, res) => {
      try {
           const id = req.params.id;
           await departmentService.deleteDepartment(id);
