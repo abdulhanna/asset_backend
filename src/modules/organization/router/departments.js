@@ -2,6 +2,7 @@ import express from 'express';
 import { departmentService } from '../services/departments';
 import { isLoggedIn } from '../../auth/router/passport.js';
 import departmentModel from '../models/departments.js';
+import mongoose from 'mongoose';
 
 const router = express.Router();
 
@@ -57,24 +58,44 @@ router.post('/', isLoggedIn, async (req, res) => {
                departmentData
           );
 
-          res.status(201).json({
+          return res.status(201).json({
                success: true,
                msg: 'Department added successfully',
                department: addDepartment,
           });
      } catch (error) {
           console.log(error);
-          res.status(500).json({
+          return res.status(500).json({
                success: false,
                error: 'Unable to add department',
           });
      }
 });
 
+const isValidObjectId = (id) => {
+     return mongoose.Types.ObjectId.isValid(id);
+};
+
 router.put('/:id', isLoggedIn, async (req, res) => {
      try {
           const id = req.params.id;
           const data = req.body;
+
+          // Custom validation for the update permission request
+          if (!isValidObjectId(id)) {
+               return res.status(400).json({
+                    success: false,
+                    error: 'Invalid Department ID',
+               });
+          }
+
+          const existingDepartmentId = await departmentModel.findById(id);
+          if (!existingDepartmentId) {
+               res.status(404).json({
+                    success: false,
+                    error: 'existingDepartmentId not found',
+               });
+          }
 
           // Check if the departmentName is provided and is empty during update
           if (
@@ -117,14 +138,14 @@ router.put('/:id', isLoggedIn, async (req, res) => {
                data
           );
 
-          res.status(200).json({
+          return res.status(200).json({
                success: true,
                msg: 'Department updated successfully',
                department: updatedDepartment,
           });
      } catch (error) {
           console.log(error);
-          res.status(500).json({
+          return res.status(500).json({
                success: false,
                error: 'Unable to update department',
           });
@@ -134,13 +155,31 @@ router.put('/:id', isLoggedIn, async (req, res) => {
 router.get('/:id', isLoggedIn, async (req, res) => {
      try {
           const id = req.params.id;
+
+          // Custom validation for the update permission request
+          if (!isValidObjectId(id)) {
+               return res.status(400).json({
+                    success: false,
+                    error: 'Invalid Department ID',
+               });
+          }
+
+          const existingDepartmentId = await departmentModel.findById(id);
+          if (!existingDepartmentId) {
+               return res.status(404).json({
+                    success: false,
+                    error: 'Department not found',
+               });
+          }
+
           const department = await departmentService.getDepartmentById(id);
-          res.status(200).json({
+          return res.status(200).json({
                success: true,
                department,
           });
      } catch (error) {
-          res.status(500).json({
+          console.log(error);
+          return res.status(500).json({
                success: false,
                error: 'Unable to fetch department',
           });
@@ -151,12 +190,12 @@ router.get('/', isLoggedIn, async (req, res) => {
      try {
           const departments = await departmentService.getDepartments();
 
-          res.status(200).json({
+          return res.status(200).json({
                success: true,
                departments,
           });
      } catch (error) {
-          res.status(500).json({
+          return res.status(500).json({
                success: false,
                error: 'Unable to fetch departments',
           });
@@ -167,12 +206,12 @@ router.delete('/:id', isLoggedIn, async (req, res) => {
      try {
           const id = req.params.id;
           await departmentService.deleteDepartment(id);
-          res.status(200).json({
+          return res.status(200).json({
                success: true,
                msg: 'Department deleted successfully',
           });
      } catch (error) {
-          res.status(500).json({
+          return res.status(500).json({
                success: false,
                error: 'Unable to delete department',
           });
