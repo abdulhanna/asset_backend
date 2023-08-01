@@ -76,6 +76,18 @@ router.put('/:id', isLoggedIn, async (req, res) => {
           const id = req.params.id;
           const data = req.body;
 
+          // Check if the departmentName is provided and is empty during update
+          if (
+               'name' in data &&
+               typeof data.name === 'string' &&
+               data.name.trim() === ''
+          ) {
+               return res.status(400).json({
+                    success: false,
+                    error: 'departmentName should not be empty.',
+               });
+          }
+
           // Trim leading and trailing spaces from the name if it exists
           if (data.name) {
                data.name = data.name.trim();
@@ -95,6 +107,9 @@ router.put('/:id', isLoggedIn, async (req, res) => {
                          error: `Department with name '${data.name}' already exists.`,
                     });
                }
+          } else {
+               // If the name field is empty or contains only spaces, prevent the update
+               delete data.name;
           }
 
           const updatedDepartment = await departmentService.updateDepartment(
