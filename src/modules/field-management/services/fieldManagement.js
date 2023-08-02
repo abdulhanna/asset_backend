@@ -36,6 +36,7 @@ const addFieldToGroupV2 = async (groupId, fields) => {
 
      // Separate the operations: add, update, and delete
      const newFields = fields.filter((f) => !f._id); // Fields to be added
+     console.log(newFields);
      const updatedFields = fields.filter((f) => f._id && !f.deleted); // Fields to be updated
      const deletedFieldIds = fields
           .filter((f) => f._id && f.deleted)
@@ -60,7 +61,10 @@ const addFieldToGroupV2 = async (groupId, fields) => {
                               $set: {
                                    'fields.$.name': field.name,
                                    'fields.$.dataType': field.dataType,
-                                   // Add more fields to update if needed (e.g., fieldLength, listOptions, etc.)
+                                   'fields.$.fieldLength': field.fieldLength,
+                                   'fields.$.listOptions': field.listOptions,
+                                   'fields.$.errorTitle': field.errorTitle,
+                                   'fields.$.isMandatory': field.isMandatory,
                               },
                          },
                     },
