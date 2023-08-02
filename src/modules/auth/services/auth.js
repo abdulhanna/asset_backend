@@ -180,7 +180,6 @@ authService.doLogin = async ({ email, password }) => {
    // user does not exist
    assert(existingUser,  createError(StatusCodes.BAD_REQUEST,"User does not exist",{"errorstatus":"1","redirectUrl":""}))
    const isValid = bcrypt.compareSync(password, existingUser.password);
-   console.log(existingUser);
 // invalid password
   assert(isValid, createError(StatusCodes.UNAUTHORIZED, "Invalid password", {"errorstatus":"2","redirectUrl":""}));
 
