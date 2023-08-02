@@ -6,12 +6,12 @@ const router = express.Router();
 
 router.post('/add-groups', isLoggedIn, async (req, res) => {
      try {
-          const { name } = req.body;
+          const { groupName } = req.body;
 
-          if (Array.isArray(name)) {
+          if (Array.isArray(groupName)) {
                const newFieldGroups =
                     await fieldManagementService.createMultipleFieldGroups(
-                         name
+                         groupName
                     );
                res.status(201).json(newFieldGroups);
           }

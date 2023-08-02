@@ -1,11 +1,11 @@
 import { fieldManagementModel } from '../models';
 import mongoose from 'mongoose';
 
-const createMultipleFieldGroups = async (names) => {
+const createMultipleFieldGroups = async (groupNames) => {
      const newFieldGroups = await Promise.all(
-          names.map(async (groupName) => {
+          groupNames.map(async (groupName) => {
                return await fieldManagementModel.create({
-                    name: groupName,
+                    groupName: groupName,
                     fields: [],
                });
           })

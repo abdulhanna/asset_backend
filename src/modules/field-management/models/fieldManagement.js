@@ -34,7 +34,7 @@ const fieldSchema = new mongoose.Schema(
 );
 
 const fieldManagementSchema = new mongoose.Schema({
-     name: {
+     groupName: {
           type: String,
           required: true,
           unique: true,
@@ -52,7 +52,7 @@ const fieldManagementSchema = new mongoose.Schema({
 });
 
 const fieldManagementModel = mongoose.model(
-     'field_management',
+     'fieldmanagements',
      fieldManagementSchema
 );
 
