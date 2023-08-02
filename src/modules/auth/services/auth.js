@@ -13,6 +13,7 @@ const authService = {};
 // user registration
 authService.doRegister = async (data) => {
      const role = 'superadmin'; // on comapany onboard default role will be superadmin
+     const dashboardPermission = 'superadmin_dashboard';
 
      assertEvery(
           [data.email, data.password, data.confirmPassword],
@@ -57,6 +58,7 @@ authService.doRegister = async (data) => {
           ...data,
           password: hashedPassword,
           role: role,
+          dashboardPermission: dashboardPermission,
           verificationToken: token,
           createdAt : Date.now()
      });
@@ -212,7 +214,7 @@ authService.doLogin = async ({ email, password }) => {
       assert(updateToken, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"));
 
       const getUserData = await userModel.findOne({ email})
-      .select('email role teamrole token')
+      .select('email role teamrole dashboardPermission token')
       .populate({
        path: 'teamrole',
        select: 'roleName permissions',
@@ -240,6 +242,7 @@ authService.doLogin = async ({ email, password }) => {
       const userData = {
         email: getUserData.email,
         role,
+        dashboardPermission: getUserData.dashboardPermission,
         permissions,
         access_token: getUserData.token
       }
