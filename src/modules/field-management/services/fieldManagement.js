@@ -31,7 +31,7 @@ const getFieldGroups = async () => {
      }
 };
 
-const addFieldToGroupV2 = async (groupId, fields) => {
+const addFieldToGroupV2 = async (groupId, fields, groupName) => {
      const bulkOps = [];
 
      // Separate the operations: add, update, and delete
@@ -79,6 +79,16 @@ const addFieldToGroupV2 = async (groupId, fields) => {
                     update: {
                          $pull: { fields: { _id: { $in: deletedFieldIds } } },
                     },
+               },
+          });
+     }
+
+     // Check if groupName is provided and update the groupName field of fieldManagementSchema
+     if (groupName) {
+          bulkOps.push({
+               updateOne: {
+                    filter: { _id: groupId },
+                    update: { $set: { groupName } },
                },
           });
      }
