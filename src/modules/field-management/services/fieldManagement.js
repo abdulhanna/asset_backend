@@ -37,7 +37,6 @@ const addFieldToGroupV2 = async (groupId, fields, groupName) => {
      if (fields) {
           // Separate the operations: add, update, and delete
           const newFields = fields.filter((f) => !f._id); // Fields to be added
-          console.log(newFields);
           const updatedFields = fields.filter((f) => f._id && !f.deleted); // Fields to be updated
           const deletedFieldIds = fields
                .filter((f) => f._id && f.deleted)
