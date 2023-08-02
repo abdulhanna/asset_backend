@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 // Define the dynamic field schema
-const fieldSchema = new mongoose.Schema(
+const fieldSchema = new mongoose.Schema(g
      {
           name: {
                type: String,
@@ -50,6 +50,15 @@ const fieldManagementSchema = new mongoose.Schema({
           // },
      },
 });
+
+// const fieldManagementSchema = new mongoose.Schema({
+//      groupName: {
+//           type: String,
+//           required: true,
+//           unique: true,
+//      },
+//      fields: [fieldSchema], // Directly include the fieldSchema as an array
+// });
 
 const fieldManagementModel = mongoose.model(
      'fieldmanagements',
