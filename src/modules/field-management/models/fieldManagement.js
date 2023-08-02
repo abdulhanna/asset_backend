@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 // Define the dynamic field schema
-const fieldSchema = new mongoose.Schema(g
+const fieldSchema = new mongoose.Schema(
      {
           name: {
                type: String,
