@@ -46,9 +46,9 @@ router.post('/create', isLoggedIn, async (req, res) => {
                permissionData
           );
 
-          res.status(201).json({ success: true, permission });
+          return res.status(201).json({ success: true, permission });
      } catch (error) {
-          res.status(500).json({ success: false, error: error.message });
+          return res.status(500).json({ success: false, error: error.message });
      }
 });
 
@@ -92,18 +92,18 @@ router.put('/update/:id', async (req, res) => {
                     .json({ success: false, error: 'Permission not found' });
           }
 
-          res.json({ success: true, permission });
+          return res.json({ success: true, permission });
      } catch (error) {
-          res.status(500).json({ success: false, error: error.message });
+          return res.status(500).json({ success: false, error: error.message });
      }
 });
 
 router.get('/all', async (req, res) => {
      try {
           const permissions = await permissionService.getAllPermissions();
-          res.status(200).json({ success: true, permissions });
+          return res.status(200).json({ success: true, permissions });
      } catch (error) {
-          res.status(500).json({ success: false, error: error.message });
+          return res.status(500).json({ success: false, error: error.message });
      }
 });
 
@@ -129,13 +129,13 @@ router.delete('/v1/:id', async (req, res) => {
 
           const deletePermissions =
                await permissionService.hardDeletePermissions(id);
-          res.status(200).json({
+          return res.status(200).json({
                success: true,
                msg: 'Deleted successfully',
                deletePermissions,
           });
      } catch (error) {
-          res.status(500).json({
+          return res.status(500).json({
                success: false,
                error: error.message,
           });
@@ -165,13 +165,13 @@ router.delete('/v2/:id', async (req, res) => {
           const deletePermissions =
                await permissionService.softDeletePermissions(id);
 
-          res.status(200).json({
+          return res.status(200).json({
                success: true,
                msg: 'Soft deleted successfully',
                deletePermissions,
           });
      } catch (error) {
-          res.status(500).json({
+          return res.status(500).json({
                success: false,
                error: error.message,
           });

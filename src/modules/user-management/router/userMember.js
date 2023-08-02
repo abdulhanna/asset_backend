@@ -7,21 +7,26 @@ const router = Router();
 router.post('/createMember', isLoggedIn, async (req, res) => {
      try {
           const parentId = req.user.data._id;
+          const organizationId = req.user.data.organizationId;
+          const dashboardPermission = req.user.data.dashboardPermission;
+          console.log(req.user.data);
 
-          const { email, password, userProfile, teamrole } = req.body;
+          const { email, password, userProfile, teamRoleId } = req.body;
 
           const userData = {
                email,
                password,
                userProfile,
-               teamrole,
+               teamRoleId,
                parentId,
+               organizationId,
+               dashboardPermission,
           };
 
           const member = await memberService.createMember(userData);
-          res.status(201).json({ success: true, member });
+          return res.status(201).json({ success: true, member });
      } catch (error) {
-          res.status(500).json({ success: false, error: error.message });
+          return res.status(500).json({ success: false, error: error.message });
      }
 });
 
@@ -32,12 +37,12 @@ router.put('/updateMember/:id', async (req, res) => {
           const data = req.body;
 
           const updateMember = await memberService.updateMember(id, data);
-          res.status(201).json({
+          return res.status(201).json({
                success: true,
                updateMember,
           });
      } catch (error) {
-          res.status(500).json({
+          return res.status(500).json({
                success: false,
                error: error.message,
           });
@@ -57,18 +62,18 @@ router.post('/set-password', async (req, res) => {
           );
 
           if (result.success) {
-               res.status(200).json({
+               return res.status(200).json({
                     success: true,
                     message: 'Password set successfully',
                });
           } else {
-               res.status(404).json({
+               return res.status(404).json({
                     success: false,
                     message: 'Invalid verification token',
                });
           }
      } catch (error) {
-          res.status(500).json({
+          return res.status(500).json({
                success: false,
                error: 'Failed to set password',
           });
@@ -80,9 +85,9 @@ router.get('/:parentId', isLoggedIn, async (req, res) => {
      try {
           const { parentId } = req.params;
           const members = await memberService.getAllMembers(parentId);
-          res.status(200).json({ success: true, members });
+          return res.status(200).json({ success: true, members });
      } catch (error) {
-          res.status(500).json({ success: false, error: error.message });
+          return res.status(500).json({ success: false, error: error.message });
      }
 });
 
@@ -98,10 +103,10 @@ router.get('/', isLoggedIn, async (req, res) => {
           );
 
           const assignedUserCounts = assignedUsers.length;
-          res.json({ success: true, assignedUserCounts, assignedUsers });
+          return res.json({ success: true, assignedUserCounts, assignedUsers });
      } catch (error) {
           console.log(error);
-          res.status(500).json({ success: false, error: error.message });
+          return res.status(500).json({ success: false, error: error.message });
      }
 });
 

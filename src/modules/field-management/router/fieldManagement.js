@@ -6,18 +6,20 @@ const router = express.Router();
 
 router.post('/add-groups', isLoggedIn, async (req, res) => {
      try {
-          const { name } = req.body;
+          const { groupName } = req.body;
 
-          if (Array.isArray(name)) {
+          if (Array.isArray(groupName)) {
                const newFieldGroups =
                     await fieldManagementService.createMultipleFieldGroups(
-                         name
+                         groupName
                     );
-               res.status(201).json(newFieldGroups);
+               return res.status(201).json(newFieldGroups);
           }
      } catch (error) {
           console.log(error);
-          res.status(500).json({ error: 'Unable to create field group' });
+          return res
+               .status(500)
+               .json({ error: 'Unable to create field group' });
      }
 });
 
@@ -28,29 +30,58 @@ router.put('/:groupId/add-fields', isLoggedIn, async (req, res) => {
 
           const updatedFieldGroup =
                await fieldManagementService.addFieldToGroup(groupId, fields);
-          res.status(200).json(updatedFieldGroup);
+          return res.status(200).json(updatedFieldGroup);
      } catch (error) {
           console.log(error);
-          res.status(500).json({ error: 'Unable to update field group' });
+          return res
+               .status(500)
+               .json({ error: 'Unable to update field group' });
      }
 });
 
 router.get('/list', isLoggedIn, async (req, res) => {
-     const fieldGroups = await fieldManagementService.getFieldGroups();
+     try {
+          const fieldGroups = await fieldManagementService.getFieldGroups();
 
-     res.status(200).json(fieldGroups);
+          return res.status(200).json(fieldGroups);
+     } catch (error) {
+          return res.status(500).json({ error: 'Unable to get field groups' });
+     }
 });
 
-router.put('/:groupId', isLoggedIn, async (req, res) => {
-     const { groupId } = req.params;
-     const data = req.body;
+router.get('/:groupId', isLoggedIn, async (req, res) => {
+     try {
+          const { groupId } = req.params;
+          const fieldGroup = await fieldManagementService.getFieldGroupsById(
+               groupId
+          );
 
-     const updatedFieldGroup = await fieldManagementService.updateFieldGroup(
-          groupId,
-          data
-     );
+          return res.status(200).json(fieldGroup);
+     } catch (error) {
+          return res
+               .status(500)
+               .json({ error: 'Unable to get field group by Id' });
+     }
+});
 
-     res.status(200).json(updatedFieldGroup);
+router.put('/:groupId/update-fields', async (req, res) => {
+     try {
+          const { groupId } = req.params;
+          const { fields, groupName } = req.body;
+
+          const updatedFieldGroup =
+               await fieldManagementService.addFieldToGroupV2(
+                    groupId,
+                    fields,
+                    groupName
+               );
+          return res.status(200).json(updatedFieldGroup);
+     } catch (error) {
+          console.log(error);
+          return res
+               .status(500)
+               .json({ error: 'Unable to update field group' });
+     }
 });
 
 export default router;
