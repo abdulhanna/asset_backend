@@ -9,7 +9,7 @@ const fieldSchema = new mongoose.Schema(
           },
           dataType: {
                type: String,
-               //enum: ['number', 'string', 'list', 'date'],
+               enum: ['number', 'string', 'list', 'date'],
                required: true,
           },
           fieldLength: {
