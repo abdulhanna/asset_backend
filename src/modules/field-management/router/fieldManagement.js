@@ -45,9 +45,22 @@ router.get('/list', isLoggedIn, async (req, res) => {
 
           return res.status(200).json(fieldGroups);
      } catch (error) {
+          return res.status(500).json({ error: 'Unable to get field groups' });
+     }
+});
+
+router.get('/:groupId', isLoggedIn, async (req, res) => {
+     try {
+          const { groupId } = req.params;
+          const fieldGroup = await fieldManagementService.getFieldGroupsById(
+               groupId
+          );
+
+          return res.status(200).json(fieldGroup);
+     } catch (error) {
           return res
                .status(500)
-               .json({ error: 'Unable to update field group' });
+               .json({ error: 'Unable to get field group by Id' });
      }
 });
 

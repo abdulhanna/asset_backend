@@ -31,6 +31,18 @@ const getFieldGroups = async () => {
      }
 };
 
+const getFieldGroupsById = async (groupId) => {
+     try {
+          const filedGroups = await fieldManagementModel.findById({
+               _id: groupId,
+          });
+
+          return filedGroups;
+     } catch (error) {
+          throw new Error('Unable to get field group by Id');
+     }
+};
+
 const addFieldToGroupV2 = async (groupId, fields, groupName) => {
      const bulkOps = [];
 
@@ -107,6 +119,7 @@ const addFieldToGroupV2 = async (groupId, fields, groupName) => {
 export const fieldManagementService = {
      createMultipleFieldGroups,
      addFieldToGroup,
+     getFieldGroupsById,
      getFieldGroups,
      addFieldToGroupV2,
 };
