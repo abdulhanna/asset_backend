@@ -180,7 +180,7 @@ authService.doLogin = async ({ email, password }) => {
    // user does not exist
    assert(existingUser,  createError(StatusCodes.BAD_REQUEST,"User does not exist",{"errorstatus":"1","redirectUrl":""}))
    const isValid = bcrypt.compareSync(password, existingUser.password);
-
+   console.log(existingUser);
 // invalid password
   assert(isValid, createError(StatusCodes.UNAUTHORIZED, "Invalid password", {"errorstatus":"2","redirectUrl":""}));
 
@@ -210,11 +210,20 @@ authService.doLogin = async ({ email, password }) => {
       userId:existingUser._id
     })
 
+   
      getToken = await jwtService.generatePair({
       _id:existingUser._id,
       dashboardPermission:existingUser.dashboardPermission,
       organizationId:getOrganization._id,
       assignedLocation:existingUser.assignedLocation
+    });
+  }
+  else if(existingUser.role == 'root'){
+    getToken = await jwtService.generatePair({
+      _id:existingUser._id,
+      dashboardPermission:existingUser.dashboardPermission,
+      organizationId:null,
+      assignedLocation:null
     });
   }
   else
