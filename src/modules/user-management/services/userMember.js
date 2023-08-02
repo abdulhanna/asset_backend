@@ -21,10 +21,13 @@ const createMember = async (userData) => {
           const member = new userModel({
                email: userData.email,
                password: userData.password,
-               userProfile: userData.userProfile,
+               userProfile: {
+                    ...userData.userProfile,
+                    organizationId: userData.organizationId,
+               },
                teamRoleId: userData.teamRoleId,
                parentId: userData.parentId,
-               organizationId: userData.organizationId,
+
                dashboardPermission: userData.dashboardPermission,
                verificationToken: verificationToken,
           });
@@ -62,7 +65,7 @@ const getAllMembers = async (parentId) => {
      try {
           const members = await userModel
                .find({ parentId, isDeleted: false, isDeactivated: false })
-               .populate('teamrole', 'roleName')
+               .populate('teamRoleId', 'roleName')
                .select('-deletedAt');
 
           return members;
