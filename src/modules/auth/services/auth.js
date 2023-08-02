@@ -203,8 +203,32 @@ authService.doLogin = async ({ email, password }) => {
     const redirectURLcompany = `${secret.frontend_baseURL}/company-profile?confirmation_token=${companyToken}`;
     assert(existingUser.role != 'superadmin' && existingUser.is_profile_completed == true, createError(StatusCodes.UNAUTHORIZED,"Company Profile is not completed, please complete your company profile", {"errorstatus":"5","redirectUrl":redirectURLcompany}));
   }
+      let getToken;
+  if(existingUser.role == 'superadmin')
+  {
+    const getOrganization = await organizationModel.findOne({
+      userId:existingUser._id
+    })
+
+     getToken = await jwtService.generatePair({
+      _id:existingUser._id,
+      dashboardPermission:existingUser.dashboardPermission,
+      organizationId:getOrganization._id,
+      assignedLocation:existingUser.assignedLocation
+    });
+  }
+  else
+  {
+    getToken = await jwtService.generatePair({
+      _id:existingUser._id,
+      dashboardPermission:existingUser.dashboardPermission,
+      organizationId:existingUser.userProfile.organizationId,
+      assignedLocation:existingUser.assignedLocation
+    });
+     
+  }
+ 
       
-      const getToken = await jwtService.generatePair({_id:existingUser._id});
       const updateToken = await userModel.findByIdAndUpdate(
         { _id:existingUser._id},
         { token: getToken, updatedAt : Date.now()},
@@ -214,9 +238,9 @@ authService.doLogin = async ({ email, password }) => {
       assert(updateToken, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"));
 
       const getUserData = await userModel.findOne({ email})
-      .select('email role teamrole dashboardPermission token')
+      .select('email role teamRoleId dashboardPermission token')
       .populate({
-       path: 'teamrole',
+       path: 'teamRoleId',
        select: 'roleName permissions',
        populate: {
          path: 'permissions',
@@ -231,9 +255,9 @@ authService.doLogin = async ({ email, password }) => {
     if (getUserData.role === 'superadmin' || getUserData.role === 'root') {
          permissions = {}; // Empty key for superadmin and root roles
         role = getUserData.role;
-    } else if (getUserData.teamrole && getUserData.teamrole.permissions) {
-         permissions = getUserData.teamrole.permissions; // Use teamrole's permissions if available
-         role = getUserData.teamrole.roleName;
+    } else if (getUserData.teamRoleId && getUserData.teamRoleId.permissions) {
+         permissions = getUserData.teamRoleId.permissions; // Use teamrole's permissions if available
+         role = getUserData.teamRoleId.roleName;
     } else {
          permissions = []; // Default to empty array if no permissions found
          role = "";

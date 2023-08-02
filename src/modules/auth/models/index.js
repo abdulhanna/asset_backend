@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema({
           type: String,
           enum: ['root', 'superadmin'],
      },
-     teamrole: {
+     teamRoleId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: 'roles',
           default: null,
