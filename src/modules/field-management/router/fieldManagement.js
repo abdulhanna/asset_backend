@@ -41,16 +41,18 @@ router.get('/list', isLoggedIn, async (req, res) => {
      res.status(200).json(fieldGroups);
 });
 
-router.put('/:groupId', isLoggedIn, async (req, res) => {
-     const { groupId } = req.params;
-     const data = req.body;
+router.put('/:groupId/update-fields', async (req, res) => {
+     try {
+          const { groupId } = req.params;
+          const { fields } = req.body;
 
-     const updatedFieldGroup = await fieldManagementService.updateFieldGroup(
-          groupId,
-          data
-     );
-
-     res.status(200).json(updatedFieldGroup);
+          const updatedFieldGroup =
+               await fieldManagementService.addFieldToGroupV2(groupId, fields);
+          res.status(200).json(updatedFieldGroup);
+     } catch (error) {
+          console.log(error);
+          res.status(500).json({ error: 'Unable to update field group' });
+     }
 });
 
 export default router;
