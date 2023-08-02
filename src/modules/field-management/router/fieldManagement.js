@@ -13,11 +13,13 @@ router.post('/add-groups', isLoggedIn, async (req, res) => {
                     await fieldManagementService.createMultipleFieldGroups(
                          groupName
                     );
-               res.status(201).json(newFieldGroups);
+               return res.status(201).json(newFieldGroups);
           }
      } catch (error) {
           console.log(error);
-          res.status(500).json({ error: 'Unable to create field group' });
+          return res
+               .status(500)
+               .json({ error: 'Unable to create field group' });
      }
 });
 
@@ -28,17 +30,25 @@ router.put('/:groupId/add-fields', isLoggedIn, async (req, res) => {
 
           const updatedFieldGroup =
                await fieldManagementService.addFieldToGroup(groupId, fields);
-          res.status(200).json(updatedFieldGroup);
+          return res.status(200).json(updatedFieldGroup);
      } catch (error) {
           console.log(error);
-          res.status(500).json({ error: 'Unable to update field group' });
+          return res
+               .status(500)
+               .json({ error: 'Unable to update field group' });
      }
 });
 
 router.get('/list', isLoggedIn, async (req, res) => {
-     const fieldGroups = await fieldManagementService.getFieldGroups();
+     try {
+          const fieldGroups = await fieldManagementService.getFieldGroups();
 
-     return res.status(200).json(fieldGroups);
+          return res.status(200).json(fieldGroups);
+     } catch (error) {
+          return res
+               .status(500)
+               .json({ error: 'Unable to update field group' });
+     }
 });
 
 router.put('/:groupId/update-fields', async (req, res) => {
