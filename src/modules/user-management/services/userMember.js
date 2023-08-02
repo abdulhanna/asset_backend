@@ -32,6 +32,11 @@ const createMember = async (userData) => {
                verificationToken: verificationToken,
           });
 
+          if (userData.assignedLocationId) {
+               member.dashboardPermission = 'admin_dashboard';
+               member.assignedLocationId = userData.assignedLocationId;
+          }
+
           const savedMember = await member.save();
 
           return savedMember;

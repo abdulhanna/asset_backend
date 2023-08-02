@@ -9,9 +9,14 @@ router.post('/createMember', isLoggedIn, async (req, res) => {
           const parentId = req.user.data._id;
           const organizationId = req.user.data.organizationId;
           const dashboardPermission = req.user.data.dashboardPermission;
-          console.log(req.user.data);
 
-          const { email, password, userProfile, teamRoleId } = req.body;
+          const {
+               email,
+               password,
+               userProfile,
+               teamRoleId,
+               assignedLocationId,
+          } = req.body;
 
           const userData = {
                email,
@@ -21,6 +26,7 @@ router.post('/createMember', isLoggedIn, async (req, res) => {
                parentId,
                dashboardPermission,
                organizationId,
+               assignedLocationId,
           };
 
           const member = await memberService.createMember(userData);
