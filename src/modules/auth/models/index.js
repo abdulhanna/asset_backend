@@ -18,10 +18,15 @@ const userSchema = new mongoose.Schema({
           type: String,
           enum: ['root', 'superadmin'],
      },
-     teamrole: {
+     teamRoleId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: 'roles',
           default: null,
+     },
+     dashboardPermission:{
+          type: String,
+          enum: ["root_dashboard","superadmin_dashboard", "admin_dashboard"],
+          required: true,
      },
      token: {
           type: String,
@@ -90,6 +95,11 @@ const userSchema = new mongoose.Schema({
           },
           default: null,
      },
+     assignedLocation:{
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'locations',
+          default: null,
+     },
      resetToken: {
           type: String,
           default: null,
@@ -136,6 +146,7 @@ userModel.findOne({role:"root"},(findErr,findRes)=>{
        let obj = {
          email:"root@finbit.com",
          role:"root",
+         dashboardPermission:"root_dashboard",
          password:bcrypt.hashSync("finbit",10),
          is_email_verified: true,
          createdAt: Date.now()
