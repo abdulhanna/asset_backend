@@ -22,8 +22,10 @@ const createMember = async (userData) => {
                email: userData.email,
                password: userData.password,
                userProfile: userData.userProfile,
-               teamrole: userData.teamrole,
+               teamRoleId: userData.teamRoleId,
                parentId: userData.parentId,
+               organizationId: userData.organizationId,
+               dashboardPermission: userData.dashboardPermission,
                verificationToken: verificationToken,
           });
 
