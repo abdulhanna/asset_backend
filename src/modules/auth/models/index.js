@@ -95,7 +95,7 @@ const userSchema = new mongoose.Schema({
           },
           default: null,
      },
-     assignedLocation:{
+     assignedLocationId:{
           type: mongoose.Schema.Types.ObjectId,
           ref: 'locations',
           default: null,
