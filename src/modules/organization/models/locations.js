@@ -86,7 +86,7 @@ const locationSchema = new mongoose.Schema(
                          },
                     },
                     moreInformation: {
-                         departmentIncharge: {
+                         departmentInchargeId: {
                               type: mongoose.Schema.Types.ObjectId,
                               ref: 'users',
                               default: null,
