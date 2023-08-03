@@ -147,9 +147,9 @@ const assetSchema = new mongoose.Schema(
      { timestamps: true }
 );
 
-const Asset = mongoose.model('Asset', assetSchema);
+const assetModel = mongoose.model('assets', assetSchema);
 
-module.exports = Asset;
+export default assetModel;
 
 /* 
 
