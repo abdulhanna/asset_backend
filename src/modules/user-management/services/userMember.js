@@ -3,6 +3,16 @@ import emailtemplate from '../../../helpers/send-email';
 import userModel from '../../auth/models/index.js';
 import bcrypt from 'bcryptjs';
 
+const getMemberByEmail = async (email) => {
+     try {
+          const member = await userModel.findOne({ email });
+          return member;
+     } catch (error) {
+          console.log(error);
+          throw new Error('Failed to get member by email');
+     }
+};
+
 const createMember = async (userData) => {
      try {
           // Generate a verification token
@@ -136,4 +146,5 @@ export const memberService = {
      getAllMembers,
      setPassword,
      getMembersByRole,
+     getMemberByEmail,
 };

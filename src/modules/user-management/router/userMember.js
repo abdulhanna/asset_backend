@@ -18,6 +18,14 @@ router.post('/createMember', isLoggedIn, async (req, res) => {
                assignedLocationId,
           } = req.body;
 
+          // Check if the email already exists in the database
+          const existingMember = await memberService.getMemberByEmail(email);
+          if (existingMember) {
+               return res
+                    .status(400)
+                    .json({ success: false, error: 'Email already exists' });
+          }
+
           const userData = {
                email,
                password,
