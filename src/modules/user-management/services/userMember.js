@@ -119,7 +119,7 @@ const getMembersByRole = async (parentId, roleName) => {
                .find({
                     parentId,
                })
-               .populate('teamrole', '-_id -permissions ')
+               .populate('teamRoleId', '-_id -permissions ')
                .select('-password')
                .exec();
 
@@ -127,8 +127,8 @@ const getMembersByRole = async (parentId, roleName) => {
           if (roleName) {
                const filteredMembers = members.filter(
                     (member) =>
-                         member.teamrole &&
-                         member.teamrole.roleName === roleName
+                         member.teamRoleId &&
+                         member.teamRoleId.roleName === roleName
                );
 
                return filteredMembers;
