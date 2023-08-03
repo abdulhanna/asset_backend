@@ -79,18 +79,6 @@ const getDepartmentsByOrganizationId = async (organizationId) => {
      }
 };
 
-const getDepartmentsByIds = async (departmentIds) => {
-     try {
-          const departments = await departmentModel.find({
-               _id: { $in: departmentIds },
-          });
-          return departments;
-     } catch (error) {
-          console.log(error);
-          throw new Error('Unable to fetch departments');
-     }
-};
-
 const isValidDepartments = async (departmentIds) => {
      try {
           // Check if all departmentIds are valid (exists in the departments collection)
@@ -111,6 +99,5 @@ export const departmentService = {
      getDepartments,
      deleteDepartment,
      getDepartmentsByOrganizationId,
-     getDepartmentsByIds,
      isValidDepartments,
 };
