@@ -8,6 +8,7 @@ const router = express.Router();
 
 router.post('/', isLoggedIn, async (req, res) => {
      try {
+          const organizationId = req.user.data.organizationId;
           let { departmentId, name, chargingType, status } = req.body;
 
           // Trim leading and trailing spaces from departmentId and name
@@ -47,6 +48,7 @@ router.post('/', isLoggedIn, async (req, res) => {
           }
 
           const departmentData = {
+               organizationId,
                departmentId,
                name,
                chargingType,
