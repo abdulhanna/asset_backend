@@ -124,4 +124,21 @@ router.get('/', isLoggedIn, async (req, res) => {
      }
 });
 
+router.get('/member/:id', async (req, res) => {
+     try {
+          const memberId = req.params.id;
+          const member = await memberService.getMemberById(memberId);
+
+          if (!member) {
+               return res
+                    .status(404)
+                    .json({ success: false, message: 'Member not found' });
+          }
+
+          return res.status(200).json({ success: true, member });
+     } catch (error) {
+          return res.status(500).json({ success: false, error: error.message });
+     }
+});
+
 export default router;
