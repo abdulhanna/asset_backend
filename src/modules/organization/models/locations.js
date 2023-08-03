@@ -60,6 +60,43 @@ const locationSchema = new mongoose.Schema(
                     },
                },
           },
+          departments: [
+               {
+                    departmentId: {
+                         type: mongoose.Schema.Types.ObjectId,
+                         ref: 'departments',
+                    },
+                    departmentAddress: {
+                         address1: {
+                              type: String,
+                         },
+                         address2: {
+                              type: String,
+                         },
+                         city: {
+                              type: String,
+                         },
+                    },
+                    contactAddress: {
+                         emailAddress: {
+                              type: String,
+                         },
+                         contactNumber: {
+                              type: String,
+                         },
+                    },
+                    moreInformation: {
+                         departmentIncharge: {
+                              type: mongoose.Schema.Types.ObjectId,
+                              ref: 'users',
+                              default: null,
+                         },
+                         chargingType: {
+                              type: String,
+                         },
+                    },
+               },
+          ],
      },
      { new: true }
 );
