@@ -18,6 +18,12 @@ const userSchema = new mongoose.Schema({
           type: String,
           enum: ['root', 'superadmin'],
      },
+     userType:{
+          // for handling user Management module
+          type:String,
+          enum:['root', 'superadmin','admin', 'team'],
+          default: 'superadmin'
+     },
      teamRoleId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: 'roles',
@@ -95,11 +101,6 @@ const userSchema = new mongoose.Schema({
           },
           default: null,
      },
-     assignedLocationId:{
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'locations',
-          default: null,
-     },
      resetToken: {
           type: String,
           default: null,
@@ -146,6 +147,7 @@ userModel.findOne({role:"root"},(findErr,findRes)=>{
        let obj = {
          email:"root@finbit.com",
          role:"root",
+         userType:"root",
          dashboardPermission:"root_dashboard",
          password:bcrypt.hashSync("finbit",10),
          is_email_verified: true,

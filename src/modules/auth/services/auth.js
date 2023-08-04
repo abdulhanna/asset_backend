@@ -6,7 +6,7 @@ import jwtService from "./jwt-services";
 import { secret } from "../../../../src/config/secret";
 import emailtemplate from "../../../helpers/send-email"
 import userModel from "../models/"
-import { organizationModel } from "../../organization/models";
+import { organizationModel, locationModel } from "../../organization/models";
 
 const authService = {};
 
@@ -14,6 +14,7 @@ const authService = {};
 authService.doRegister = async (data) => {
      const role = 'superadmin'; // on comapany onboard default role will be superadmin
      const dashboardPermission = 'superadmin_dashboard';
+     const userType = 'superadmin'; // on comapany onboard default userType will be superadmin
 
      assertEvery(
           [data.email, data.password, data.confirmPassword],
@@ -58,6 +59,7 @@ authService.doRegister = async (data) => {
           ...data,
           password: hashedPassword,
           role: role,
+          userType: userType,
           dashboardPermission: dashboardPermission,
           verificationToken: token,
           createdAt : Date.now()
@@ -212,14 +214,16 @@ authService.doLogin = async ({ email, password }) => {
    
      getToken = await jwtService.generatePair({
       _id:existingUser._id,
+      role:existingUser.role,
       dashboardPermission:existingUser.dashboardPermission,
       organizationId:getOrganization._id,
-      assignedLocation:existingUser.assignedLocation
+      assignedLocation:null
     });
   }
   else if(existingUser.role == 'root'){
     getToken = await jwtService.generatePair({
       _id:existingUser._id,
+      role:existingUser.role,
       dashboardPermission:existingUser.dashboardPermission,
       organizationId:null,
       assignedLocation:null
@@ -227,11 +231,16 @@ authService.doLogin = async ({ email, password }) => {
   }
   else
   {
+    const locationIdToSearch = await locationModel.find({
+       assignedUserId: existingUser._id, 
+    })
+
     getToken = await jwtService.generatePair({
       _id:existingUser._id,
+      role:existingUser.role,
       dashboardPermission:existingUser.dashboardPermission,
       organizationId:existingUser.userProfile.organizationId,
-      assignedLocation:existingUser.assignedLocation
+      assignedLocation:locationIdToSearch._id
     });
      
   }
