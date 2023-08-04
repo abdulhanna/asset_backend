@@ -103,6 +103,7 @@ const setPassword = async (verificationToken, password) => {
           // member.password = password;
           member.password = bcrypt.hashSync(password, 8);
           member.verificationToken = null;
+          member.is_email_verified = true;
           await member.save();
 
           return { success: true };
