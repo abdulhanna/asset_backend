@@ -27,6 +27,7 @@ const updateDepartment = async (id, data) => {
 const getDepartmentById = async (id) => {
      try {
           const department = await departmentModel.findById(id);
+
           if (!department) {
                throw new Error('Department not found');
           }
@@ -64,10 +65,39 @@ const deleteDepartment = async (id) => {
      }
 };
 
+const getDepartmentsByOrganizationId = async (organizationId) => {
+     try {
+          const departments = await departmentModel.find({
+               organizationId,
+               isDeleted: false,
+          });
+
+          return departments;
+     } catch (error) {
+          console.log(error);
+          throw new Error('Unable to fetch departments');
+     }
+};
+
+const isValidDepartments = async (departmentIds) => {
+     try {
+          // Check if all departmentIds are valid (exists in the departments collection)
+          const validDepartments = await departmentModel.find({
+               _id: { $in: departmentIds },
+          });
+          return validDepartments.length === departmentIds.length;
+     } catch (error) {
+          console.log(error);
+          throw new Error('Unable to check validity of departments');
+     }
+};
+
 export const departmentService = {
      addDepartment,
      updateDepartment,
      getDepartmentById,
      getDepartments,
      deleteDepartment,
+     getDepartmentsByOrganizationId,
+     isValidDepartments,
 };

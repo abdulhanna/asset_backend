@@ -19,6 +19,11 @@ const departmentSchema = new mongoose.Schema(
                enum: ['active', 'inactive'],
                default: 'active',
           },
+          organizationId: {
+               type: mongoose.Schema.Types.ObjectId,
+               ref: 'organizations',
+               default: null,
+          },
           isDeleted: {
                type: Boolean,
                default: false,
@@ -42,3 +47,6 @@ const departmentSchema = new mongoose.Schema(
 const departmentModel = mongoose.model('departments', departmentSchema);
 
 export default departmentModel;
+
+//list of departemnets by organizationId
+// add departemnt by location

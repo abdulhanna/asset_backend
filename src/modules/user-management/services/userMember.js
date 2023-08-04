@@ -3,6 +3,16 @@ import emailtemplate from '../../../helpers/send-email';
 import userModel from '../../auth/models/index.js';
 import bcrypt from 'bcryptjs';
 
+const getMemberByEmail = async (email) => {
+     try {
+          const member = await userModel.findOne({ email });
+          return member;
+     } catch (error) {
+          console.log(error);
+          throw new Error('Failed to get member by email');
+     }
+};
+
 const createMember = async (userData) => {
      try {
           // Generate a verification token
@@ -10,12 +20,6 @@ const createMember = async (userData) => {
                userData.email
           );
           const verificationToken = verificationTokenPayload;
-
-          // Send the invitation email to the member
-          await emailtemplate.sendInvitationEmail(
-               userData.email,
-               verificationToken
-          );
 
           // Save the member with the verification token to the database
           const member = new userModel({
@@ -38,6 +42,12 @@ const createMember = async (userData) => {
           }
 
           const savedMember = await member.save();
+
+          // Send the invitation email to the member
+          await emailtemplate.sendInvitationEmail(
+               userData.email,
+               verificationToken
+          );
 
           return savedMember;
      } catch (error) {
@@ -109,7 +119,7 @@ const getMembersByRole = async (parentId, roleName) => {
                .find({
                     parentId,
                })
-               .populate('teamrole', '-_id -permissions ')
+               .populate('teamRoleId', '-_id -permissions ')
                .select('-password')
                .exec();
 
@@ -117,8 +127,8 @@ const getMembersByRole = async (parentId, roleName) => {
           if (roleName) {
                const filteredMembers = members.filter(
                     (member) =>
-                         member.teamrole &&
-                         member.teamrole.roleName === roleName
+                         member.teamRoleId &&
+                         member.teamRoleId.roleName === roleName
                );
 
                return filteredMembers;
@@ -130,10 +140,22 @@ const getMembersByRole = async (parentId, roleName) => {
      }
 };
 
+const getMemberById = async (memberId) => {
+     try {
+          const member = await userModel.findById(memberId);
+          return member;
+     } catch (error) {
+          console.log(error);
+          throw new Error('Failed to get member by ID');
+     }
+};
+
 export const memberService = {
      createMember,
      updateMember,
      getAllMembers,
      setPassword,
      getMembersByRole,
+     getMemberByEmail,
+     getMemberById,
 };

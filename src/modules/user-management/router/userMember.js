@@ -18,6 +18,14 @@ router.post('/createMember', isLoggedIn, async (req, res) => {
                assignedLocationId,
           } = req.body;
 
+          // Check if the email already exists in the database
+          const existingMember = await memberService.getMemberByEmail(email);
+          if (existingMember) {
+               return res
+                    .status(400)
+                    .json({ success: false, error: 'Email already exists' });
+          }
+
           const userData = {
                email,
                password,
@@ -112,6 +120,23 @@ router.get('/', isLoggedIn, async (req, res) => {
           return res.json({ success: true, assignedUserCounts, assignedUsers });
      } catch (error) {
           console.log(error);
+          return res.status(500).json({ success: false, error: error.message });
+     }
+});
+
+router.get('/member/:id', async (req, res) => {
+     try {
+          const memberId = req.params.id;
+          const member = await memberService.getMemberById(memberId);
+
+          if (!member) {
+               return res
+                    .status(404)
+                    .json({ success: false, message: 'Member not found' });
+          }
+
+          return res.status(200).json({ success: true, member });
+     } catch (error) {
           return res.status(500).json({ success: false, error: error.message });
      }
 });
