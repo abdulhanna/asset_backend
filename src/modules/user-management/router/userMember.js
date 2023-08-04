@@ -28,6 +28,9 @@ router.post('/createMember', isLoggedIn, async (req, res) => {
                     .json({ success: false, error: 'Email already exists' });
           }
 
+          const locationId =
+               assignedLocationId || req.user.data.assignedLocationId;
+
           const userData = {
                email,
                password,
@@ -36,7 +39,7 @@ router.post('/createMember', isLoggedIn, async (req, res) => {
                parentId,
                dashboardPermission,
                organizationId,
-               assignedLocationId,
+               locationId,
                userType,
                role,
           };

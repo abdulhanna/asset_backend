@@ -60,10 +60,10 @@ const createMember = async (userData) => {
           );
 
           // For assignedLocationId
-          if (userData.assignedLocationId) {
+          if (userData.locationId) {
                // Find the location by ID
                const location = await locationModel.findById(
-                    userData.assignedLocationId
+                    userData.locationId
                );
 
                if (location) {
