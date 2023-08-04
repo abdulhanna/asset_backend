@@ -95,6 +95,14 @@ const locationSchema = new mongoose.Schema(
                               type: String,
                          },
                     },
+                    createdAt: {
+                         type: Date,
+                         default: null,
+                    },
+                    updatedAt: {
+                         type: Date,
+                         default: null,
+                    },
                },
           ],
      },

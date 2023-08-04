@@ -1,6 +1,6 @@
 import departmentModel from '../models/departments';
 
-const addDepartment = async (data) => {
+const addDepartmentToDepartmentsCollection = async (data) => {
      try {
           const addDepartment = await departmentModel.create(data);
 
@@ -93,7 +93,7 @@ const isValidDepartments = async (departmentIds) => {
 };
 
 export const departmentService = {
-     addDepartment,
+     addDepartmentToDepartmentsCollection,
      updateDepartment,
      getDepartmentById,
      getDepartments,
