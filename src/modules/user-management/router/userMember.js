@@ -105,7 +105,8 @@ router.post('/set-password', async (req, res) => {
 router.get('/:parentId', isLoggedIn, async (req, res) => {
      try {
           const { parentId } = req.params;
-          const members = await memberService.getAllMembers(parentId);
+          const userType = req.query.userType;
+          const members = await memberService.getAllMembers(parentId, userType);
           return res.status(200).json({ success: true, members });
      } catch (error) {
           return res.status(500).json({ success: false, error: error.message });
