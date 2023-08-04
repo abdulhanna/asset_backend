@@ -217,7 +217,7 @@ authService.doLogin = async ({ email, password }) => {
       role:existingUser.role,
       dashboardPermission:existingUser.dashboardPermission,
       organizationId:getOrganization._id,
-      assignedLocation:null
+      assignedLocationId:null
     });
   }
   else if(existingUser.role == 'root'){
@@ -226,7 +226,7 @@ authService.doLogin = async ({ email, password }) => {
       role:existingUser.role,
       dashboardPermission:existingUser.dashboardPermission,
       organizationId:null,
-      assignedLocation:null
+      assignedLocationId:null
     });
   }
   else
@@ -240,7 +240,7 @@ authService.doLogin = async ({ email, password }) => {
       role:existingUser.role,
       dashboardPermission:existingUser.dashboardPermission,
       organizationId:existingUser.userProfile.organizationId,
-      assignedLocation:locationIdToSearch._id
+      assignedLocationId:locationIdToSearch._id
     });
      
   }
