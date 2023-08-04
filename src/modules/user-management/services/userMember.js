@@ -104,7 +104,6 @@ const getAllMembers = async (parentId, userType) => {
      try {
           let query = { parentId, isDeleted: false, isDeactivated: false };
 
-          // If userType is provided, add it to the query
           if (userType) {
                query.userType = userType;
           }
