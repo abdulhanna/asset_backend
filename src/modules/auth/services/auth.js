@@ -1,6 +1,7 @@
 import StatusCodes from "http-status-codes";
 import createError from "http-errors-lite";
 import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
 import { assert, assertEvery } from "../../../helpers/mad-assert";
 import jwtService from "./jwt-services";
 import { secret } from "../../../../src/config/secret";
@@ -192,7 +193,6 @@ authService.doLogin = async ({ email, password }) => {
   assert(existingUser.is_email_verified == true, createError(StatusCodes.UNAUTHORIZED, "Pendig account verification, please verify your email", {"errorstatus":"4","redirectUrl":""}));
 
   // profile not completed
-
   if(existingUser.role == 'superadmin' && existingUser.is_profile_completed == false)
   {
     const companyToken = await jwtService.generatePair(email);
@@ -204,6 +204,7 @@ authService.doLogin = async ({ email, password }) => {
     const redirectURLcompany = `${secret.frontend_baseURL}/company-profile?confirmation_token=${companyToken}`;
     assert(existingUser.role != 'superadmin' && existingUser.is_profile_completed == true, createError(StatusCodes.UNAUTHORIZED,"Company Profile is not completed, please complete your company profile", {"errorstatus":"5","redirectUrl":redirectURLcompany}));
   }
+
       let getToken;
   if(existingUser.role == 'superadmin')
   {
@@ -231,13 +232,10 @@ authService.doLogin = async ({ email, password }) => {
   }
   else
   {
-    const locationIdToSearch = await locationModel.find({
-       assignedUserId: existingUser._id, 
-    })
-
+    const locationIdToSearch = await locationModel.findOne({ assignedUserId: { $elemMatch: { $eq: existingUser._id } } });
     getToken = await jwtService.generatePair({
       _id:existingUser._id,
-      role:existingUser.role,
+      role:null,
       dashboardPermission:existingUser.dashboardPermission,
       organizationId:existingUser.userProfile.organizationId,
       assignedLocationId:locationIdToSearch._id
