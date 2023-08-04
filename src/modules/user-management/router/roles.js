@@ -10,6 +10,9 @@ const router = express.Router();
 router.post('/', isLoggedIn, async (req, res) => {
      try {
           const userId = req.user.data._id;
+          const organizationId = req.user.data.organizationId;
+          const locationId = req.user.data.assignedLocationId;
+
           let { roleName, description, permissions } = req.body;
 
           if (!roleName || roleName.trim() === '') {
@@ -53,6 +56,8 @@ router.post('/', isLoggedIn, async (req, res) => {
                description,
                permissions,
                addedByUserId: userId,
+               organizationId,
+               locationId,
                createdAt: new Date(), // Set createdAt to the current date/time
           };
 
@@ -147,6 +152,28 @@ router.get('/', isLoggedIn, async (req, res) => {
           const roles = await rolesService.getAllRoles();
           return res.status(200).json(roles);
      } catch (err) {
+          return res.status(500).json({ error: 'Unable to fetch roles' });
+     }
+});
+
+router.get('/v2', isLoggedIn, async (req, res) => {
+     try {
+          // Get filter parameters from query
+          const { organizationId, locationId } = req.query;
+
+          // Create the query based on provided filter parameters
+          const query = {};
+          if (organizationId) {
+               query.organizationId = organizationId;
+          }
+          if (locationId) {
+               query.locationId = locationId;
+          }
+
+          // Get all roles based on the provided filter query
+          const roles = await rolesService.getAllRolesV2(query);
+          return res.status(200).json(roles);
+     } catch (error) {
           return res.status(500).json({ error: 'Unable to fetch roles' });
      }
 });
