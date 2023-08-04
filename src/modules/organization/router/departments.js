@@ -393,7 +393,7 @@ router.get('/departments', isLoggedIn, async (req, res) => {
 //           }));
 
 //           // Update the location with the chosen departments and their details
-//           location.departments = departmentsData;
+//           location.departments.push(...departmentsData) ;
 
 //           // Save the updated location
 //           const updatedLocation = await location.save();
