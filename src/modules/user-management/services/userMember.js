@@ -1,6 +1,7 @@
 import jwtService from '../../auth/services/jwt-services';
 import emailtemplate from '../../../helpers/send-email';
 import userModel from '../../auth/models/index.js';
+import locationModel from '../../organization/models/locations';
 import bcrypt from 'bcryptjs';
 
 const getMemberByEmail = async (email) => {
@@ -15,6 +16,20 @@ const getMemberByEmail = async (email) => {
 
 const createMember = async (userData) => {
      try {
+          let dashboardPermission = null;
+
+          if (userData.role === 'superadmin') {
+               if (userData.userType === 'team') {
+                    dashboardPermission = 'superadmin_dashboard';
+               } else if (userData.userType === 'admin') {
+                    dashboardPermission = 'admin_dashboard';
+               }
+          } else if (userData.role === 'root') {
+               dashboardPermission = 'root_dashboard';
+          } else {
+               dashboardPermission = 'admin_dashboard';
+          }
+
           // Generate a verification token
           const verificationTokenPayload = await jwtService.generatePair(
                userData.email
@@ -31,15 +46,10 @@ const createMember = async (userData) => {
                },
                teamRoleId: userData.teamRoleId,
                parentId: userData.parentId,
-
-               dashboardPermission: userData.dashboardPermission,
+               dashboardPermission: dashboardPermission,
                verificationToken: verificationToken,
+               userType: userData.userType,
           });
-
-          if (userData.assignedLocationId) {
-               member.dashboardPermission = 'admin_dashboard';
-               member.assignedLocationId = userData.assignedLocationId;
-          }
 
           const savedMember = await member.save();
 
@@ -48,6 +58,20 @@ const createMember = async (userData) => {
                userData.email,
                verificationToken
           );
+
+          // For assignedLocationId
+          if (userData.assignedLocationId) {
+               // Find the location by ID
+               const location = await locationModel.findById(
+                    userData.assignedLocationId
+               );
+
+               if (location) {
+                    // Push the current member's ID into the assignedUserId array of the location
+                    location.assignedUserId.push(savedMember._id);
+                    await location.save();
+               }
+          }
 
           return savedMember;
      } catch (error) {
@@ -103,6 +127,7 @@ const setPassword = async (verificationToken, password) => {
           // member.password = password;
           member.password = bcrypt.hashSync(password, 8);
           member.verificationToken = null;
+          member.is_email_verified = true;
           await member.save();
 
           return { success: true };
