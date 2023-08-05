@@ -148,6 +148,7 @@ const getDepartmentsByOrganizationId = async (organizationId) => {
           throw new Error('Unable to fetch departments');
      }
 };
+
 const getDepartmentsByLocationAndOrganization = async (
      locationId,
      organizationId
@@ -156,24 +157,29 @@ const getDepartmentsByLocationAndOrganization = async (
           // Validate if the location exists and is accessible to the admin
           const location = await locationModel
                .findOne({ _id: locationId, organizationId })
+               .populate({
+                    path: 'departments.departmentId',
+                    model: 'departments',
+               })
                .lean();
 
           if (!location) {
                return null; // Or you can throw an error here if you prefer.
           }
 
-          // Create an array of promises to populate departmentInchargeId for each department
-          const populatePromises = location.departments.map(
-               async (department) => {
-                    await departmentModel.populate(department, {
-                         path: 'moreInformation.departmentInchargeId',
-                         model: 'users',
-                    });
-               }
-          );
+          // Create separate population conditions for each field
+          const departmentInchargePopulateOptions = {
+               path: 'moreInformation.departmentInchargeId',
+               model: 'users',
+          };
 
-          // Wait for all promises to complete
-          await Promise.all(populatePromises);
+          // Populate the departmentInchargeId for each department using a loop
+          for (const department of location.departments) {
+               await departmentModel.populate(
+                    department,
+                    departmentInchargePopulateOptions
+               );
+          }
 
           return location;
      } catch (error) {
