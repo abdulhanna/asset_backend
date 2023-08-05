@@ -143,14 +143,19 @@ const getDepartmentsByLocationAndOrganization = async (
      try {
           // Validate if the location exists and is accessible to the admin
           const location = await locationModel
-               .findOne({
-                    _id: locationId,
-                    organizationId,
-               })
-               .populate('departments.departmentInchargeId'); // Populate departmentInchargeId with user data
+               .findOne({ _id: locationId, organizationId })
+               .lean(); // Using lean() to get plain JS object instead of Mongoose document
 
           if (!location) {
                return null; // Or you can throw an error here if you prefer.
+          }
+
+          // Populate the `departmentInchargeId` for each department using a loop
+          for (const department of location.departments) {
+               await departmentModel.populate(department, {
+                    path: 'departmentInchargeId',
+                    model: 'users',
+               });
           }
 
           return location;

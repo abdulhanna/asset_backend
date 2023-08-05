@@ -288,7 +288,7 @@ router.delete('/:id', isLoggedIn, async (req, res) => {
      }
 });
 
-router.get('/departments', isLoggedIn, async (req, res) => {
+router.get('/department', isLoggedIn, async (req, res) => {
      try {
           const organizationId = req.user.data.organizationId;
 
