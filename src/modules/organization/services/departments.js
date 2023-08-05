@@ -50,7 +50,8 @@ const addDepartmentsToLocation = async (
                     contactNumber: dept.contactAddress.contactNumber,
                },
                moreInformation: {
-                    departmentIncharge: dept.moreInformation.departmentIncharge,
+                    departmentInchargeId:
+                         dept.moreInformation.departmentInchargeId,
                     chargingType: dept.moreInformation.chargingType,
                },
           }));
