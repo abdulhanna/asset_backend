@@ -307,6 +307,33 @@ router.get('/departments', isLoggedIn, async (req, res) => {
      }
 });
 
+router.get('/all', async (req, res) => {
+     try {
+          const locationId = req.query.locationId; // Get the locationId from the query parameters
+          const organizationId = req.user.data.organizationId; // Get the organizationId from the authenticated user
+
+          const departments =
+               await departmentService.getDepartmentsByLocationAndOrganization(
+                    locationId,
+                    organizationId
+               );
+
+          if (!departments) {
+               return res.status(404).json({
+                    success: false,
+                    error: 'Departments not found for the given location and organization.',
+               });
+          }
+
+          return res.status(200).json({ success: true, departments });
+     } catch (error) {
+          console.log(error);
+          return res
+               .status(500)
+               .json({ success: false, error: 'Unable to fetch departments.' });
+     }
+});
+
 // API to assign departments to a location
 // router.post('/assign-departments/:locationId', isLoggedIn, async (req, res) => {
 //      try {

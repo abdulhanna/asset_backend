@@ -136,16 +136,29 @@ const getDepartmentsByOrganizationId = async (organizationId) => {
      }
 };
 
-const isValidDepartments = async (departmentIds) => {
+const getDepartmentsByLocationAndOrganization = async (
+     locationId,
+     organizationId
+) => {
      try {
-          // Check if all departmentIds are valid (exists in the departments collection)
-          const validDepartments = await departmentModel.find({
-               _id: { $in: departmentIds },
-          });
-          return validDepartments.length === departmentIds.length;
+          // Validate if the location exists and is accessible to the admin
+          const location = await locationModel
+               .findOne({
+                    _id: locationId,
+                    organizationId,
+               })
+               .populate('departments.departmentInchargeId'); // Populate departmentInchargeId with user data
+
+          if (!location) {
+               return null; // Or you can throw an error here if you prefer.
+          }
+
+          return location;
      } catch (error) {
           console.log(error);
-          throw new Error('Unable to check validity of departments');
+          throw new Error(
+               'Unable to get departments by location and organization'
+          );
      }
 };
 
@@ -157,5 +170,5 @@ export const departmentService = {
      getDepartments,
      deleteDepartment,
      getDepartmentsByOrganizationId,
-     isValidDepartments,
+     getDepartmentsByLocationAndOrganization,
 };
