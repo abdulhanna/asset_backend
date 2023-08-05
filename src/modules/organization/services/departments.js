@@ -154,31 +154,20 @@ const getDepartmentsByLocationAndOrganization = async (
      organizationId
 ) => {
      try {
-          // Validate if the location exists and is accessible to the admin
           const location = await locationModel
                .findOne({ _id: locationId, organizationId })
                .populate({
                     path: 'departments.departmentId',
                     model: 'departments',
                })
+               .populate({
+                    path: 'departments.moreInformation.departmentInchargeId',
+                    model: 'users',
+               })
                .lean();
 
           if (!location) {
-               return null; // Or you can throw an error here if you prefer.
-          }
-
-          // Create separate population conditions for each field
-          const departmentInchargePopulateOptions = {
-               path: 'moreInformation.departmentInchargeId',
-               model: 'users',
-          };
-
-          // Populate the departmentInchargeId for each department using a loop
-          for (const department of location.departments) {
-               await departmentModel.populate(
-                    department,
-                    departmentInchargePopulateOptions
-               );
+               return null;
           }
 
           return location;
