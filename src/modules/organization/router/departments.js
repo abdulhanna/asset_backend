@@ -84,65 +84,31 @@ router.post('/', isLoggedIn, async (req, res) => {
                });
           } else if (locationId && departments) {
                // If both locationId and departments are present, it means we are assigning departments to a location
-
-               // Validate if the location exists and is accessible to the admin
-               const location = await locationModel.findOne({
-                    _id: locationId,
-                    organizationId,
-               });
-
-               if (!location) {
-                    return res.status(404).json({
+               try {
+                    const updatedLocation =
+                         await departmentService.addDepartmentsToLocation(
+                              locationId,
+                              departments,
+                              organizationId
+                         );
+                    if (!updatedLocation) {
+                         return res.status(404).json({
+                              success: false,
+                              error: 'Location not found or not accessible.',
+                         });
+                    }
+                    return res.status(200).json({
+                         success: true,
+                         msg: 'Departments assigned to location successfully',
+                         location: updatedLocation,
+                    });
+               } catch (error) {
+                    console.log(error);
+                    return res.status(500).json({
                          success: false,
-                         error: 'Location not found or not accessible.',
+                         error: 'Unable to assign departments to location',
                     });
                }
-
-               // Fetch the departmentIds based on the department objects provided in the request body
-               const departmentIds = departments.map(
-                    (dept) => dept.departmentId
-               );
-
-               // Check if all departmentIds are valid
-               const validDepartments =
-                    await departmentService.isValidDepartments(departmentIds);
-
-               if (!validDepartments) {
-                    return res.status(400).json({
-                         success: false,
-                         error: 'Invalid departmentIds provided.',
-                    });
-               }
-
-               // Create the array of embedded documents for departments
-               const departmentsData = departments.map((dept) => ({
-                    departmentId: dept.departmentId,
-                    departmentAddress: {
-                         address1: dept.departmentAddress.address1,
-                         city: dept.departmentAddress.city,
-                    },
-                    contactAddress: {
-                         emailAddress: dept.contactAddress.emailAddress,
-                         contactNumber: dept.contactAddress.contactNumber,
-                    },
-                    moreInformation: {
-                         departmentIncharge:
-                              dept.moreInformation.departmentIncharge,
-                         chargingType: dept.moreInformation.chargingType,
-                    },
-               }));
-
-               // Add the new departments to the existing array using $push operator
-               location.departments.push(...departmentsData);
-
-               // Save the updated location
-               const updatedLocation = await location.save();
-
-               return res.status(200).json({
-                    success: true,
-                    msg: 'Departments assigned to location successfully',
-                    location: updatedLocation,
-               });
           } else {
                // Handle the case where either locationId or departments is missing
                return res.status(400).json({
