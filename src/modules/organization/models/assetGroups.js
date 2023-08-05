@@ -11,6 +11,10 @@ const assetGroupSchema = new mongoose.Schema(
                type: String,
                required: false,
           },
+          description: {
+               type: String,
+               required: false,
+          },
           groupNestingId: {
                type: mongoose.Schema.Types.ObjectId,
                ref: 'assetgroups',
@@ -19,10 +23,6 @@ const assetGroupSchema = new mongoose.Schema(
           isGroupNesting: {
                type: Boolean,
                default: false,
-          },
-          description: {
-               type: String,
-               required: false,
           },
      },
      { new: true }

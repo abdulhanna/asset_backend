@@ -6,13 +6,19 @@ const router = express.Router();
 // Create a new asset group
 router.post('/', isLoggedIn, async (req, res) => {
      try {
-          const { name, groupNestingId, description, isGroupNesting } =
-               req.body;
+          const {
+               name,
+               assetCodeId,
+               description,
+               groupNestingId,
+               isGroupNesting,
+          } = req.body;
 
           const newAssetGroup = await assetGroupService.createAssetGroup(
                name,
-               groupNestingId,
+               assetCodeId,
                description,
+               groupNestingId,
                isGroupNesting
           );
 

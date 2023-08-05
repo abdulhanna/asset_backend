@@ -2,8 +2,9 @@ import assetGroupModel from '../models/assetGroups.js';
 
 const createAssetGroup = async (
      name,
-     groupNestingId,
+     assetCodeId,
      description,
+     groupNestingId,
      isGroupNesting
 ) => {
      try {
@@ -16,9 +17,10 @@ const createAssetGroup = async (
 
           const newAssetGroup = new assetGroupModel({
                name,
+               assetCodeId,
+               description,
                groupNestingId: isGroupNesting ? null : groupNestingId,
                isGroupNesting,
-               description,
           });
 
           return await newAssetGroup.save();
@@ -36,10 +38,7 @@ const getAssetGroupsByOrganizationId = async (
 
           // Add any additional criteria to the query as needed
 
-          const assetGroups = await assetGroupModel
-               .find(query)
-               .select('-groupNestingId -__v')
-               .exec();
+          const assetGroups = await assetGroupModel.find(query).exec();
 
           // Function to convert the asset groups into a hierarchical structure
           const convertToHierarchy = (nodes) => {
