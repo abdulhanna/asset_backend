@@ -6,7 +6,7 @@ const assetGroupSchema = new mongoose.Schema(
                type: String,
                required: true,
           },
-          assetGroupId: {
+          assetCodeId: {
                // Auto-Generate or input text
                type: String,
                required: false,

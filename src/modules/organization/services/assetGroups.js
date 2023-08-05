@@ -27,9 +27,14 @@ const createAssetGroup = async (
      }
 };
 
-const getAssetGroupsByOrganizationId = async (organizationId) => {
+const getAssetGroupsByOrganizationId = async (
+     organizationId
+     /* Add any additional criteria here if required */
+) => {
      try {
           const query = { organizationId };
+
+          // Add any additional criteria to the query as needed
 
           const assetGroups = await assetGroupModel
                .find(query)
@@ -56,7 +61,7 @@ const getAssetGroupsByOrganizationId = async (organizationId) => {
                               node.groupNestingId.toString()
                          );
                          if (parentGroup) {
-                              parentGroup.children.push(parent);
+                              parentGroup.children.push(parent); // Push the node into the parentGroup's children array
                          }
                     } else {
                          hierarchy.push(parent);

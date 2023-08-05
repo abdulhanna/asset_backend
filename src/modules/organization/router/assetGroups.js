@@ -27,7 +27,7 @@ router.post('/', isLoggedIn, async (req, res) => {
 router.get('/organization/:organizationId', isLoggedIn, async (req, res) => {
      try {
           const { organizationId } = req.params;
-          // You can also add additional query parameters here if needed
+
           const assetGroups =
                await assetGroupService.getAssetGroupsByOrganizationId(
                     organizationId
