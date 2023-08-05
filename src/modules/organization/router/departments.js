@@ -205,7 +205,7 @@ router.put('/:id', isLoggedIn, async (req, res) => {
      }
 });
 
-router.get('/:id', isLoggedIn, async (req, res) => {
+router.get('/department/:id', isLoggedIn, async (req, res) => {
      try {
           const id = req.params.id;
 
