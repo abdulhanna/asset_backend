@@ -307,7 +307,7 @@ router.get('/departments', isLoggedIn, async (req, res) => {
      }
 });
 
-router.get('/all', async (req, res) => {
+router.get('/all', isLoggedIn, async (req, res) => {
      try {
           const locationId = req.query.locationId; // Get the locationId from the query parameters
           const organizationId = req.user.data.organizationId; // Get the organizationId from the authenticated user
