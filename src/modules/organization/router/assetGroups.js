@@ -1,20 +1,19 @@
 import express from 'express';
 import { assetGroupService } from '../services/assetGroups.js';
-
 import { isLoggedIn } from '../../auth/router/passport.js';
-
-import createAssetGroup from './createAssetGroup.js';
 
 const router = express.Router();
 // Create a new asset group
 router.post('/', isLoggedIn, async (req, res) => {
      try {
-          const { name, groupNestingId, description } = req.body;
+          const { name, groupNestingId, description, isGroupNesting } =
+               req.body;
 
           const newAssetGroup = await assetGroupService.createAssetGroup(
                name,
                groupNestingId,
-               description
+               description,
+               isGroupNesting
           );
 
           return res.status(201).json(newAssetGroup);

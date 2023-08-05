@@ -1,6 +1,11 @@
 import assetGroupModel from '../models/assetGroups.js';
 
-const createAssetGroup = async (name, groupNestingId, description) => {
+const createAssetGroup = async (
+     name,
+     groupNestingId,
+     description,
+     isGroupNesting
+) => {
      try {
           if (groupNestingId) {
                // If groupNestingId is provided, update the isGroupNesting field of the parent asset group
