@@ -68,6 +68,19 @@ const addDepartmentsToLocation = async (
      }
 };
 
+const isValidDepartments = async (departmentIds) => {
+     try {
+          // Check if all departmentIds are valid (exists in the departments collection)
+          const validDepartments = await departmentModel.find({
+               _id: { $in: departmentIds },
+          });
+          return validDepartments.length === departmentIds.length;
+     } catch (error) {
+          console.log(error);
+          throw new Error('Unable to check validity of departments');
+     }
+};
+
 const updateDepartment = async (id, data) => {
      try {
           const updatedDepartment = await departmentModel.findByIdAndUpdate(
@@ -176,4 +189,5 @@ export const departmentService = {
      deleteDepartment,
      getDepartmentsByOrganizationId,
      getDepartmentsByLocationAndOrganization,
+     isValidDepartments,
 };
