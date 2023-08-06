@@ -9,7 +9,7 @@ const router = Router();
 router.use('/organization/locations', locationRouter);
 router.use('/organization/departments', departementRouter);
 router.use('/organization/assetgroup', assetGroupRouter);
-router.use('/organization/organize', organizationRouter);
+router.use('/organization', organizationRouter);
 
 const organizationModule = {
      init: (app) => {
