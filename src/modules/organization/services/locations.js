@@ -139,7 +139,7 @@ const getLocationsByOrganizationId = async (
 const getAllLocations = async () => {
      try {
           return await locationModel
-               .find()
+               .find({ isDeleted: false })
                .populate('assignedUserId', 'email userProfile.name')
                .select('-address -organizationId  -__v')
                .exec();
@@ -179,11 +179,28 @@ const updateLocation = async (
      }
 };
 
-const deleteLocation = async (locationId) => {
+const deleteLocation = async (locationId, organizationId) => {
      try {
-          await locationModel.findByIdAndDelete(locationId).exec();
+          // Validate if the location exists and is accessible to the admin
+          const location = await locationModel.findOne({
+               _id: locationId,
+               organizationId,
+          });
+
+          if (!location) {
+               return null;
+          }
+
+          // Perform the soft delete
+          location.isDeleted = true;
+          location.deletedAt = new Date();
+
+          // Save the updated location
+          const deletedLocation = await location.save();
+          return deletedLocation;
      } catch (error) {
-          throw new Error('Unable to delete location');
+          console.log(error);
+          throw new Error('Unable to soft delete location');
      }
 };
 
