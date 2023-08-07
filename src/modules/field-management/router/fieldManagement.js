@@ -110,7 +110,7 @@ router.delete('/field-groups/:groupId', async (req, res) => {
           );
           if (result) {
                res.status(200).json({
-                    success:true
+                    success: true,
                     message: 'Group and related fields deleted successfully',
                });
           } else {
