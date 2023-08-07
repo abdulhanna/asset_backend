@@ -181,6 +181,28 @@ const getMemberById = async (memberId) => {
      }
 };
 
+const deleteUser = async (userId) => {
+     try {
+          // Find the user by ID
+          const user = await userModel.findById(userId);
+
+          if (!user) {
+               return null;
+          }
+
+          // Update the isDeleted field to true and set deletedAt to the current date
+          user.isDeleted = true;
+          user.deletedAt = new Date();
+
+          // Save the updated user
+          const updatedUser = await user.save();
+          return updatedUser;
+     } catch (error) {
+          console.log(error);
+          throw new Error('Unable to delete user');
+     }
+};
+
 export const memberService = {
      createMember,
      updateMember,
@@ -189,4 +211,5 @@ export const memberService = {
      getMembersByRole,
      getMemberByEmail,
      getMemberById,
+     deleteUser,
 };

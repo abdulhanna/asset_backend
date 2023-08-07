@@ -149,4 +149,32 @@ router.get('/member/:id', async (req, res) => {
      }
 });
 
+router.delete('/:userId', async (req, res) => {
+     try {
+          const { userId } = req.params;
+
+          // Call the service function to update the user's isDeleted field and set deletedAt to the current date
+          const updatedUser = await memberService.deleteUser(userId);
+
+          if (!updatedUser) {
+               return res.status(404).json({
+                    success: false,
+                    error: 'User not found or not accessible.',
+               });
+          }
+
+          return res.status(200).json({
+               success: true,
+               msg: 'User deleted successfully',
+               user: updatedUser,
+          });
+     } catch (error) {
+          console.log(error);
+          return res.status(500).json({
+               success: false,
+               error: 'Unable to delete user',
+          });
+     }
+});
+
 export default router;
