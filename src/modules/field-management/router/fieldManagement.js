@@ -64,7 +64,7 @@ router.get('/:groupId', isLoggedIn, async (req, res) => {
      }
 });
 
-router.put('/:groupId/update-fields', async (req, res) => {
+router.put('/:groupId/update-fields', isLoggedIn, async (req, res) => {
      try {
           const { groupId } = req.params;
           const { fields, groupName } = req.body;
@@ -81,6 +81,44 @@ router.put('/:groupId/update-fields', async (req, res) => {
           return res
                .status(500)
                .json({ error: 'Unable to update field group' });
+     }
+});
+
+router.delete('/fields/:fieldId', isLoggedIn, async (req, res) => {
+     const { fieldId } = req.params;
+
+     try {
+          const result = await fieldManagementService.deleteFieldById(fieldId);
+          if (result) {
+               return res.status(200).json({
+                    success: true,
+                    message: 'Field deleted successfully',
+               });
+          } else {
+               return res.status(404).json({ message: 'Field not found' });
+          }
+     } catch (error) {
+          return res.status(500).json({ message: 'Internal server error' });
+     }
+});
+
+router.delete('/groups/:groupId', isLoggedIn, async (req, res) => {
+     const { groupId } = req.params;
+     try {
+          const result = await fieldManagementService.deleteGroupAndFieldsById(
+               groupId
+          );
+          if (result) {
+               return res.status(200).json({
+                    success: true,
+                    message: 'Group and related fields deleted successfully',
+               });
+          } else {
+               return res.status(404).json({ message: 'Group not found' });
+          }
+     } catch (error) {
+          console.log(error);
+          return res.status(500).json({ message: 'Internal server error' });
      }
 });
 

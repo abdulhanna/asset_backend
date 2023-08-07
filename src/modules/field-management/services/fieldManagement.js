@@ -115,6 +115,39 @@ const addFieldToGroupV2 = async (groupId, fields, groupName) => {
           return await fieldManagementModel.bulkWrite(bulkOps);
      }
 };
+const deleteFieldById = async (fieldId) => {
+     try {
+          const result = await fieldManagementModel.updateOne(
+               { 'fields._id': fieldId },
+               { $pull: { fields: { _id: fieldId } } }
+          );
+          return result;
+     } catch (error) {
+          throw error;
+     }
+};
+
+const deleteGroupAndFieldsById = async (groupId) => {
+     try {
+          const group = await fieldManagementModel.findById(groupId);
+          if (!group) {
+               return false;
+          }
+
+          // Collect all field IDs in the group
+          const fieldIds = group.fields.map((field) => field._id);
+
+          // Delete the group and all associated fields
+          await Promise.all([
+               fieldManagementModel.deleteMany({ _id: { $in: fieldIds } }),
+               fieldManagementModel.deleteOne({ _id: groupId }),
+          ]);
+
+          return true;
+     } catch (error) {
+          throw error;
+     }
+};
 
 export const fieldManagementService = {
      createMultipleFieldGroups,
@@ -122,4 +155,6 @@ export const fieldManagementService = {
      getFieldGroupsById,
      getFieldGroups,
      addFieldToGroupV2,
+     deleteFieldById,
+     deleteGroupAndFieldsById,
 };
