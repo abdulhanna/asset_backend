@@ -100,10 +100,16 @@ const updateMember = async (id, data) => {
      }
 };
 
-const getAllMembers = async (parentId) => {
+const getAllMembers = async (parentId, userType) => {
      try {
+          let query = { parentId, isDeleted: false, isDeactivated: false };
+
+          if (userType) {
+               query.userType = userType;
+          }
+
           const members = await userModel
-               .find({ parentId, isDeleted: false, isDeactivated: false })
+               .find(query)
                .populate('teamRoleId', 'roleName')
                .select('-deletedAt');
 

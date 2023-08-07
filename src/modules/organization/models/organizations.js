@@ -73,4 +73,6 @@ const organizationSchema = new mongoose.Schema(
      { new: true }
 );
 
-export default mongoose.model('organizations', organizationSchema);
+const organizationModel = mongoose.model('organizations', organizationSchema);
+
+export default organizationModel;
