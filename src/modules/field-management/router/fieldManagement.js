@@ -97,8 +97,8 @@ router.delete('/fields/:fieldId', async (req, res) => {
           } else {
                return res.status(404).json({ message: 'Field not found' });
           }
-     } catch (err) {
-          res.status(500).json({ message: 'Internal server error' });
+     } catch (error) {
+          return res.status(500).json({ message: 'Internal server error' });
      }
 });
 
@@ -109,15 +109,16 @@ router.delete('/groups/:groupId', async (req, res) => {
                groupId
           );
           if (result) {
-               res.status(200).json({
+               return res.status(200).json({
+                    success: true,
                     message: 'Group and related fields deleted successfully',
                });
           } else {
-               res.status(404).json({ message: 'Group not found' });
+               return res.status(404).json({ message: 'Group not found' });
           }
      } catch (error) {
           console.log(error);
-          res.status(500).json({ message: 'Internal server error' });
+          return res.status(500).json({ message: 'Internal server error' });
      }
 });
 
