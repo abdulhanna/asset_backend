@@ -102,21 +102,21 @@ router.delete('/fields/:fieldId', async (req, res) => {
      }
 });
 
-router.delete('/field-groups/:groupId', async (req, res) => {
+router.delete('/groups/:groupId', async (req, res) => {
      const { groupId } = req.params;
      try {
-          const result = await fieldManagementService.deleteGroupAndFields(
+          const result = await fieldManagementService.deleteGroupAndFieldsById(
                groupId
           );
           if (result) {
                res.status(200).json({
-                    success: true,
                     message: 'Group and related fields deleted successfully',
                });
           } else {
                res.status(404).json({ message: 'Group not found' });
           }
-     } catch (err) {
+     } catch (error) {
+          console.log(error);
           res.status(500).json({ message: 'Internal server error' });
      }
 });
