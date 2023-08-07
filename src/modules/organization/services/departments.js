@@ -199,14 +199,14 @@ const updateDepartment = async (id, name, chargingType, isDeactivated) => {
 };
 
 const updateLocationWithDepartments = async (
-     locationId,
+     id,
      departments,
      organizationId
 ) => {
      try {
           // Validate if the location exists and is accessible to the admin
           const location = await locationModel.findOne({
-               _id: locationId,
+               _id: id,
                organizationId,
           });
 
@@ -224,8 +224,8 @@ const updateLocationWithDepartments = async (
                return null; // Or you can throw an error here if you prefer.
           }
 
-          // Create the array of embedded documents for departments
-          const departmentsData = departments.map((dept) => ({
+          // Filter out departments that are not being updated
+          const updatedDepartmentsData = departments.map((dept) => ({
                departmentId: dept.departmentId,
                departmentAddress: {
                     address1: dept.departmentAddress.address1,
@@ -243,7 +243,7 @@ const updateLocationWithDepartments = async (
           }));
 
           // Update the departments array in the location schema with the new data
-          location.departments = departmentsData;
+          location.departments = updatedDepartmentsData;
 
           // Save the updated location
           const updatedLocation = await location.save();

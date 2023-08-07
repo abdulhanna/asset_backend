@@ -128,19 +128,18 @@ const isValidObjectId = (id) => {
      return mongoose.Types.ObjectId.isValid(id);
 };
 
-router.put('/:id', isLoggedIn, async (req, res) => {
+// Update Location or Department
+router.put('/:departmentId', isLoggedIn, async (req, res) => {
      try {
-          const { id } = req.params;
+          const { departmentId } = req.params;
           const organizationId = req.user.data.organizationId;
 
-          const { name, chargingType, isDeactivated, locationId, departments } =
-               req.body;
+          const { locationId, departments } = req.body;
 
           if (locationId && departments) {
                // Update location and its departments
                const updatedLocation =
                     await departmentService.updateLocationWithDepartments(
-                         id,
                          locationId,
                          departments,
                          organizationId
@@ -159,10 +158,12 @@ router.put('/:id', isLoggedIn, async (req, res) => {
                     location: updatedLocation,
                });
           } else if (!locationId && !departments) {
+               const { name, chargingType, isDeactivated } = req.body;
+
                // Update department
                const updatedDepartment =
                     await departmentService.updateDepartment(
-                         id,
+                         departmentId,
                          name,
                          chargingType,
                          isDeactivated
