@@ -64,7 +64,7 @@ router.get('/:groupId', isLoggedIn, async (req, res) => {
      }
 });
 
-router.put('/:groupId/update-fields', async (req, res) => {
+router.put('/:groupId/update-fields', isLoggedIn, async (req, res) => {
      try {
           const { groupId } = req.params;
           const { fields, groupName } = req.body;
@@ -84,7 +84,7 @@ router.put('/:groupId/update-fields', async (req, res) => {
      }
 });
 
-router.delete('/fields/:fieldId', async (req, res) => {
+router.delete('/fields/:fieldId', isLoggedIn, async (req, res) => {
      const { fieldId } = req.params;
 
      try {
@@ -102,7 +102,7 @@ router.delete('/fields/:fieldId', async (req, res) => {
      }
 });
 
-router.delete('/groups/:groupId', async (req, res) => {
+router.delete('/groups/:groupId', isLoggedIn, async (req, res) => {
      const { groupId } = req.params;
      try {
           const result = await fieldManagementService.deleteGroupAndFieldsById(
