@@ -15,14 +15,34 @@ const assetGroupSchema = new mongoose.Schema(
                type: String,
                required: false,
           },
-          groupNestingId: {
+          parentId: {
                type: mongoose.Schema.Types.ObjectId,
                ref: 'assetgroups',
                default: null,
           },
-          isGroupNesting: {
+          isParent: {
                type: Boolean,
                default: false,
+          },
+          isDeactivated: {
+               type: Boolean,
+               default: false,
+          },
+          isDeleted: {
+               type: Boolean,
+               default: false,
+          },
+          deletedAt: {
+               type: Date,
+               default: null,
+          },
+          createdAt: {
+               type: Date,
+               default: null,
+          },
+          updatedAt: {
+               type: Date,
+               default: null,
           },
      },
      { new: true }

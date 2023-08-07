@@ -6,7 +6,7 @@ const locationSchema = new mongoose.Schema(
                type: String,
                required: true,
           },
-          locationId: {
+          locationCodeId: {
                // Auto- Generate
                type: String,
                required: false,
@@ -103,8 +103,40 @@ const locationSchema = new mongoose.Schema(
                          type: Date,
                          default: null,
                     },
+                    isDeleted: {
+                         type: Boolean,
+                         default: false,
+                    },
+                    isDeactivated: {
+                         type: Boolean,
+                         default: false,
+                    },
+                    deletedAt: {
+                         type: Date,
+                         default: null,
+                    },
                },
           ],
+          createdAt: {
+               type: Date,
+               default: null,
+          },
+          updatedAt: {
+               type: Date,
+               default: null,
+          },
+          isDeleted: {
+               type: Boolean,
+               default: false,
+          },
+          isDeactivated: {
+               type: Boolean,
+               default: false,
+          },
+          deletedAt: {
+               type: Date,
+               default: null,
+          },
      },
      { new: true }
 );
