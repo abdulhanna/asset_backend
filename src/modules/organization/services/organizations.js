@@ -11,6 +11,18 @@ const getOrganizations = async () => {
      }
 };
 
+const getOrganiztionById = async (id) => {
+     try {
+          const organization = await organizationModel.findById(id);
+
+          return organization;
+     } catch (error) {
+          console.log(error);
+          throw new Error('Unable to get  organization by Id');
+     }
+};
+
 export const organizationService = {
      getOrganizations,
+     getOrganiztionById,
 };

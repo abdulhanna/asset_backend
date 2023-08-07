@@ -16,4 +16,20 @@ router.get('/', isLoggedIn, async (req, res) => {
      }
 });
 
+router.get('/:id', isLoggedIn, async (req, res) => {
+     try {
+          const { id } = req.params;
+          const organization = await organizationService.getOrganiztionById(id);
+
+          return res.status(200).json({
+               success: true,
+               organization,
+          });
+     } catch (error) {
+          return res.status(500).json({
+               error: 'Unable to get organization by Id',
+          });
+     }
+});
+
 export default router;
