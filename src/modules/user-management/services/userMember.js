@@ -102,7 +102,7 @@ const updateMember = async (id, data) => {
 
 const getAllMembers = async (parentId, userType) => {
      try {
-          let query = { parentId, isDeleted: false, isDeactivated: false };
+          let query = { parentId, isDeleted: false };
 
           if (userType) {
                query.userType = userType;
