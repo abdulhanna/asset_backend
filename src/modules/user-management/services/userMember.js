@@ -144,26 +144,19 @@ const setPassword = async (verificationToken, password) => {
 };
 
 // Function to get members by roleName and parentId
-const getMembersByRole = async (parentId, roleName) => {
+const getMembersByRole = async (teamRoleId) => {
      try {
+          const query = {};
+
+          if (teamRoleId) {
+               query.teamRoleId = teamRoleId;
+          }
+
           const members = await userModel
-               .find({
-                    parentId,
-               })
-               .populate('teamRoleId', '-_id -permissions ')
+               .find(query)
+               .populate('teamRoleId', '-permissions')
                .select('-password')
                .exec();
-
-          // Filter the members based on the 'roleName' if provided
-          if (roleName) {
-               const filteredMembers = members.filter(
-                    (member) =>
-                         member.teamRoleId &&
-                         member.teamRoleId.roleName === roleName
-               );
-
-               return filteredMembers;
-          }
 
           return members;
      } catch (error) {

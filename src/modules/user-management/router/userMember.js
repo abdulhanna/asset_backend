@@ -211,12 +211,10 @@ router.get('/:parentId', isLoggedIn, async (req, res) => {
 // GET /members (Get members by roleName)
 router.get('/', isLoggedIn, async (req, res) => {
      try {
-          const { roleName } = req.query;
-          const parentId = req.user.data._id; // Get the parent user ID from the authenticated user
+          const { teamRoleId } = req.query;
 
           const assignedUsers = await memberService.getMembersByRole(
-               parentId,
-               roleName
+               teamRoleId
           );
 
           const assignedUserCounts = assignedUsers.length;
