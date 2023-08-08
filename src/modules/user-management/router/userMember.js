@@ -70,6 +70,7 @@ router.post(
                }
                // Upload the profile image to Cloudinary
                let profileImgUrl = null;
+               let profileImgPublicId = null;
                if (profileImgFile) {
                     const result = await cloudinary.uploader.upload(
                          profileImgFile.path, // Use the file path
@@ -78,6 +79,7 @@ router.post(
                          }
                     );
                     profileImgUrl = result.secure_url;
+                    profileImgPublicId = result.public_id;
                }
                const locationId =
                     assignedLocationId || req.user.data.assignedLocationId;
@@ -89,6 +91,7 @@ router.post(
                          ...userProfile,
                          organizationId,
                          profileImg: profileImgUrl,
+                         profileImgPublicId: profileImgPublicId, // Store the public_id
                     },
                     teamRoleId,
                     parentId,
@@ -122,6 +125,17 @@ router.put('/updateMember/:id', upload.single('image'), async (req, res) => {
           const existingMember = await memberService.getMemberById(id);
 
           if (profileImgFile) {
+               // If an existing profile image exists, delete it from Cloudinary using the stored public_id
+               if (
+                    existingMember &&
+                    existingMember.userProfile &&
+                    existingMember.userProfile.profileImgPublicId
+               ) {
+                    await cloudinary.uploader.destroy(
+                         existingMember.userProfile.profileImgPublicId
+                    );
+               }
+
                // Upload the new profile image
                const result = await cloudinary.uploader.upload(
                     profileImgFile.path,
@@ -130,24 +144,11 @@ router.put('/updateMember/:id', upload.single('image'), async (req, res) => {
                     }
                );
 
-               // If an existing profile image exists, delete it from Cloudinary
-               if (
-                    existingMember &&
-                    existingMember.userProfile &&
-                    existingMember.userProfile.profileImg
-               ) {
-                    const existingPublicId =
-                         existingMember.userProfile.profileImg
-                              .split('/')
-                              .slice(-1)[0]
-                              .split('.')[0];
-                    await cloudinary.uploader.destroy(existingPublicId);
-               }
-
-               // Update profileImgUrl
+               // Update profileImgUrl and save the new public_id in the database
                data.userProfile = {
                     ...data.userProfile,
                     profileImg: result.secure_url,
+                    profileImgPublicId: result.public_id,
                };
           }
 
