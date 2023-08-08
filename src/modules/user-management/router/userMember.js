@@ -110,10 +110,46 @@ router.post(
 );
 
 // Update member
-router.put('/updateMember/:id', async (req, res) => {
+router.put('/updateMember/:id', upload.single('image'), async (req, res) => {
      try {
           const { id } = req.params;
           const data = req.body;
+
+          // Retrieve the uploaded file using req.file
+          const profileImgFile = req.file;
+
+          // Retrieve the existing member to check if an image exists
+          const existingMember = await memberService.getMemberById(id);
+
+          if (profileImgFile) {
+               // Upload the new profile image
+               const result = await cloudinary.uploader.upload(
+                    profileImgFile.path,
+                    {
+                         folder: 'profile-images',
+                    }
+               );
+
+               // If an existing profile image exists, delete it from Cloudinary
+               if (
+                    existingMember &&
+                    existingMember.userProfile &&
+                    existingMember.userProfile.profileImg
+               ) {
+                    const existingPublicId =
+                         existingMember.userProfile.profileImg
+                              .split('/')
+                              .slice(-1)[0]
+                              .split('.')[0];
+                    await cloudinary.uploader.destroy(existingPublicId);
+               }
+
+               // Update profileImgUrl
+               data.userProfile = {
+                    ...data.userProfile,
+                    profileImg: result.secure_url,
+               };
+          }
 
           const updateMember = await memberService.updateMember(id, data);
           return res.status(201).json({
