@@ -163,10 +163,16 @@ router.get('/v2', isLoggedIn, async (req, res) => {
 
           // Create the query based on provided filter parameters
           const query = {};
+
           if (organizationId) {
                query.organizationId = organizationId;
           }
-          if (locationId) {
+
+          // Handle locationId filter
+
+          if (locationId === 'null') {
+               query.locationId = null;
+          } else if (locationId) {
                query.locationId = locationId;
           }
 
@@ -174,6 +180,7 @@ router.get('/v2', isLoggedIn, async (req, res) => {
           const roles = await rolesService.getAllRolesV2(query);
           return res.status(200).json(roles);
      } catch (error) {
+          console.log(error);
           return res.status(500).json({ error: 'Unable to fetch roles' });
      }
 });
