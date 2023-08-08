@@ -146,7 +146,9 @@ const setPassword = async (verificationToken, password) => {
 // Function to get members by roleName and parentId
 const getMembersByRole = async (teamRoleId) => {
      try {
-          const query = {};
+          const query = {
+               isDeleted: false,
+          };
 
           if (teamRoleId) {
                query.teamRoleId = teamRoleId;
