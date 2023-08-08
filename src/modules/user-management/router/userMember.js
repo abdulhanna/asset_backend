@@ -517,17 +517,21 @@ const generatePDFWithDynamicTable = async (members) => {
           await page.setContent(htmlContent);
 
           // Set the PDF options (e.g., format, margin, etc.)
-          const pdfOptions = {
-               format: 'A4',
-               margin: {
-                    top: '20px',
-                    right: '20px',
-                    bottom: '20px',
-                    left: '20px',
-               },
-          };
+          // const pdfOptions = {
+          //      format: 'A4',
+          //      margin: {
+          //           top: '20px',
+          //           right: '20px',
+          //           bottom: '20px',
+          //           left: '20px',
+          //      },
+          // };
 
-          const pdfBuffer = await page.pdf(pdfOptions);
+          const pdfBuffer = await page.pdf({
+               format: 'A4',
+               printBackground: true,
+               scale: 0.75, // Adjust the scale factor to fit more content onto a single page
+          });
 
           await browser.close();
 
