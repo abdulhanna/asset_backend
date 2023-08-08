@@ -433,82 +433,151 @@ const generateXLSX = async (members) => {
      });
 };
 
-const generateDynamicTable = (membersData) => {
-     let tableRows = '';
+// const generateDynamicTable = (membersData) => {
+//      let tableRows = '';
 
-     membersData.forEach((member) => {
-          tableRows += `
-         <tr>
-           <td>${member.index}</td>
-           <td>${member.roleName}</td>
-           <td>${member.name}</td>
-           <td>${member.email}</td>
-           <td>${member.phone}</td>
-           <!-- Add more table data cells if needed -->
-         </tr>
-       `;
-     });
+//      membersData.forEach((member) => {
+//           tableRows += `
+//          <tr>
+//            <td>${member.index}</td>
+//            <td>${member.roleName}</td>
+//            <td>${member.name}</td>
+//            <td>${member.email}</td>
+//            <td>${member.phone}</td>
+//            <!-- Add more table data cells if needed -->
+//          </tr>
+//        `;
+//      });
 
-     return tableRows;
-};
+//      return tableRows;
+// };
 
 const generatePDFWithDynamicTable = async (members) => {
      const membersData = extractMembersData(members);
-     const dynamicTable = generateDynamicTable(membersData);
 
      const htmlContent = `
-       <!DOCTYPE html>
-       <html>
-       <head>
-       <style>
-             table {
-               width: 100%;
-               border-collapse: collapse;
-             }
-       
-             table,
-             td,
-             th {
-               border: 2px solid #ddd;
-             }
-       
-             h1 {
-               text-align: center;
-             }
-       
-             th,
-             td {
-               padding: 15px;
-             }
-             th {
-               font-size: 24px;
-               font-weight: 600;
-             }
-             .main-div {
-               border: 1px solid gray;
-               padding: 50px;
-             }
-           </style>
-       </head>
-       <body>
-         <h1>List of Members</h1>
-         <table>
-           <thead>
-             <tr>
-               <th>Index</th>
-               <th>Role Name</th>
-               <th>Name</th>
-               <th>Email</th>
-               <th>Phone</th>
-               <!-- Add more table headers if needed -->
-             </tr>
-           </thead>
-           <tbody>
-             ${dynamicTable}
-           </tbody>
-         </table>
-       </body>
-       </html>
+     <html>
+          <head>
+                     
+     </head>
+          
+     <body>
+                   
+          <h1 class="head">List of Members</h1>
+                   
+          <table
+               style="
+                    width: 100%;
+                    border-collapse: collapse;
+                    border: 2px solid #ddd;
+                     font-family: Arial, Helvetica, sans-serif;
+               "
+          >
+                            
+               <thead>
+                                     
+                    <tr>
+                                              
+                         <th
+                              style="
+                                   border: 2px solid #ddd;
+                                   font-size: 24px;
+                                   font-weight: 600;
+                                   padding: 15px;
+                              "
+                         >
+                              Index
+                         </th>
+                                              
+                         <th
+                              style="
+                                   border: 2px solid #ddd;
+                                   font-size: 24px;
+                                   font-weight: 600;
+                                   padding: 15px;
+                              "
+                         >
+                              Role Name
+                         </th>
+                                              
+                         <th
+                              style="
+                                   border: 2px solid #ddd;
+                                   font-size: 24px;
+                                   font-weight: 600;
+                                   padding: 15px;
+                              "
+                         >
+                              Name
+                         </th>
+                                              
+                         <th
+                              style="
+                                   border: 2px solid #ddd;
+                                   font-size: 24px;
+                                   font-weight: 600;
+                                   padding: 15px;
+                              "
+                         >
+                              Email
+                         </th>
+                                              
+                         <th
+                              style="
+                                   border: 2px solid #ddd;
+                                   font-size: 24px;
+                                   font-weight: 600;
+                                   padding: 15px;
+                              "
+                         >
+                              Phone
+                         </th>
+                                              <!-- Add more table headers if needed -->
+                                          
+                    </tr>
+                                 
+               </thead>
+                            
+               <tbody>
+                                     ${membersData
+                         .map(
+                              (member) => `          
+                                   
+                    <tr>
+                                                      
+                         <td style="border: 2px solid #ddd;  padding: 15px">
+                              ${member.index}
+                         </td>
+                                                      
+                         <td style="border: 2px solid #ddd;  padding: 15px">
+                              ${member.roleName}
+                         </td>
+                                                      
+                         <td style="border: 2px solid #ddd;  padding: 15px">
+                              ${member.name}
+                         </td>
+                                                      
+                         <td style="border: 2px solid #ddd;  padding: 15px">
+                              ${member.email}
+                         </td>
+                                                      
+                         <td style="border: 2px solid #ddd;  padding: 15px">
+                              ${member.phone}
+                         </td>
+                                                      <!-- Add more table data cells if needed -->
+                                                  
+                    </tr>
+                                         `
+                         )
+                         .join('')}              
+               </tbody>
+                        
+          </table>
+               
+     </body>
+          
+</html>
+
      `;
 
      try {
