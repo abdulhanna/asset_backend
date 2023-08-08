@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import bcrypt from "bcryptjs";
+import bcrypt from 'bcryptjs';
 const userSchema = new mongoose.Schema({
      email: {
           type: String,
@@ -18,20 +18,20 @@ const userSchema = new mongoose.Schema({
           type: String,
           enum: ['root', 'superadmin'],
      },
-     userType:{
+     userType: {
           // for handling user Management module
-          type:String,
-          enum:['root', 'superadmin','admin', 'team'],
-          default: 'superadmin'
+          type: String,
+          enum: ['root', 'superadmin', 'admin', 'team'],
+          default: 'superadmin',
      },
      teamRoleId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: 'roles',
           default: null,
      },
-     dashboardPermission:{
+     dashboardPermission: {
           type: String,
-          enum: ["root_dashboard","superadmin_dashboard", "admin_dashboard"],
+          enum: ['root_dashboard', 'superadmin_dashboard', 'admin_dashboard'],
           required: true,
      },
      token: {
@@ -75,6 +75,9 @@ const userSchema = new mongoose.Schema({
                     type: String,
                },
                profileImg: {
+                    type: String,
+               },
+               profileImgPublicId: {
                     type: String,
                },
                phone: {
@@ -140,22 +143,26 @@ userSchema.index({ email: true });
 const userModel = mongoose.model('users', userSchema);
 export default userModel;
 
-userModel.findOne({role:"root"},(findErr,findRes)=>{
-     if(findErr){console.log("default admin creation error")}
-     else if(findRes){console.log("Root user already exist")}
-     else{
-       let obj = {
-         email:"root@finbit.com",
-         role:"root",
-         userType:"root",
-         dashboardPermission:"root_dashboard",
-         password:bcrypt.hashSync("finbit",10),
-         is_email_verified: true,
-         createdAt: Date.now()
-        };
-        userModel.create(obj,(error,result)=>{
-          if(error){console.log("default admin creation error")}
-          console.log("default root user created", result);
-        })  
+userModel.findOne({ role: 'root' }, (findErr, findRes) => {
+     if (findErr) {
+          console.log('default admin creation error');
+     } else if (findRes) {
+          console.log('Root user already exist');
+     } else {
+          let obj = {
+               email: 'root@finbit.com',
+               role: 'root',
+               userType: 'root',
+               dashboardPermission: 'root_dashboard',
+               password: bcrypt.hashSync('finbit', 10),
+               is_email_verified: true,
+               createdAt: Date.now(),
+          };
+          userModel.create(obj, (error, result) => {
+               if (error) {
+                    console.log('default admin creation error');
+               }
+               console.log('default root user created', result);
+          });
      }
-   })
+});

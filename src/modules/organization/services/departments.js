@@ -81,18 +81,18 @@ const isValidDepartments = async (departmentIds) => {
      }
 };
 
-const updateDepartment = async (id, data) => {
-     try {
-          const updatedDepartment = await departmentModel.findByIdAndUpdate(
-               id,
-               data,
-               { new: true } // This option returns the updated document
-          );
-          return updatedDepartment;
-     } catch (error) {
-          throw new Error('Unable to update department');
-     }
-};
+// const updateDepartment = async (id, data) => {
+//      try {
+//           const updatedDepartment = await departmentModel.findByIdAndUpdate(
+//                id,
+//                data,
+//                { new: true } // This option returns the updated document
+//           );
+//           return updatedDepartment;
+//      } catch (error) {
+//           throw new Error('Unable to update department');
+//      }
+// };
 
 const getDepartmentById = async (id) => {
      try {
@@ -179,10 +179,83 @@ const getDepartmentsByLocationAndOrganization = async (
      }
 };
 
+const updateDepartment = async (id, name, chargingType, isDeactivated) => {
+     try {
+          const updatedDepartment = await departmentModel.findByIdAndUpdate(
+               id,
+               {
+                    name,
+                    chargingType,
+                    isDeactivated,
+               },
+               { new: true }
+          );
+
+          return updatedDepartment;
+     } catch (error) {
+          console.log(error);
+          throw new Error('Unable to update department');
+     }
+};
+
+const updateLocationWithDepartments = async (
+     locationId,
+     departments,
+     organizationId
+) => {
+     try {
+          // Validate if the location exists and is accessible to the admin
+          const location = await locationModel.findOne({
+               _id: locationId,
+               organizationId,
+          });
+
+          if (!location) {
+               return null;
+          }
+
+          const departmentIds = departments.map((dept) => dept.departmentId);
+
+          const validDepartments = await isValidDepartments(departmentIds);
+
+          if (!validDepartments) {
+               return null;
+          }
+
+          const updatedDepartmentsData = departments.map((dept) => ({
+               departmentId: dept.departmentId,
+               departmentAddress: {
+                    address1: dept.departmentAddress.address1,
+                    city: dept.departmentAddress.city,
+               },
+               contactAddress: {
+                    emailAddress: dept.contactAddress.emailAddress,
+                    contactNumber: dept.contactAddress.contactNumber,
+               },
+               moreInformation: {
+                    departmentInchargeId:
+                         dept.moreInformation.departmentInchargeId,
+                    chargingType: dept.moreInformation.chargingType,
+               },
+          }));
+
+          // Update the departments array in the location schema with the new data
+          location.departments = updatedDepartmentsData;
+
+          // Save the updated location
+          const updatedLocation = await location.save();
+          return updatedLocation;
+     } catch (error) {
+          console.log(error);
+          throw new Error('Unable to update location with departments');
+     }
+};
+
 export const departmentService = {
      addDepartmentToDepartmentsCollection,
      addDepartmentsToLocation,
      updateDepartment,
+     updateLocationWithDepartments,
      getDepartmentById,
      getDepartments,
      deleteDepartment,

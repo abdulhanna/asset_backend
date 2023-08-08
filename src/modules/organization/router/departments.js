@@ -2,7 +2,6 @@ import express from 'express';
 import { departmentService } from '../services/departments';
 import { isLoggedIn } from '../../auth/router/passport.js';
 import departmentModel from '../models/departments.js';
-import locationModel from '../models/locations';
 import mongoose from 'mongoose';
 
 const router = express.Router();
@@ -14,7 +13,7 @@ router.post('/', isLoggedIn, async (req, res) => {
                departmentId,
                name,
                chargingType,
-               status,
+               isDeactivated,
                locationId,
                departments,
           } = req.body;
@@ -68,7 +67,7 @@ router.post('/', isLoggedIn, async (req, res) => {
                     departmentId: trimmedDepartmentId,
                     name: trimmedName,
                     chargingType,
-                    status,
+                    isDeactivated,
                     createdAt: new Date(),
                };
 
@@ -129,78 +128,70 @@ const isValidObjectId = (id) => {
      return mongoose.Types.ObjectId.isValid(id);
 };
 
-router.put('/:id', isLoggedIn, async (req, res) => {
+// Update Location or Department
+router.put('/:departmentId', isLoggedIn, async (req, res) => {
      try {
-          const id = req.params.id;
-          const data = req.body;
+          const { departmentId } = req.params;
+          const organizationId = req.user.data.organizationId;
 
-          // Custom validation for the update permission request
-          if (!isValidObjectId(id)) {
-               return res.status(400).json({
-                    success: false,
-                    error: 'Invalid Department ID',
-               });
-          }
+          const { locationId, departments } = req.body;
 
-          const existingDepartmentId = await departmentModel.findById(id);
-          if (!existingDepartmentId) {
-               res.status(404).json({
-                    success: false,
-                    error: 'existingDepartmentId not found',
-               });
-          }
+          if (locationId && departments) {
+               // Update location and its departments
+               const updatedLocation =
+                    await departmentService.updateLocationWithDepartments(
+                         locationId,
+                         departments,
+                         organizationId
+                    );
 
-          // Check if the departmentName is provided and is empty during update
-          if (
-               'name' in data &&
-               typeof data.name === 'string' &&
-               data.name.trim() === ''
-          ) {
-               return res.status(400).json({
-                    success: false,
-                    error: 'departmentName should not be empty.',
-               });
-          }
-
-          // Trim leading and trailing spaces from the name if it exists
-          if (data.name) {
-               data.name = data.name.trim();
-          }
-
-          // Check if the updated name is duplicate (case-insensitive match)
-          if (data.name) {
-               const existingName = await departmentModel.findOne({
-                    _id: { $ne: id }, // Exclude the current department from the check
-                    name: { $regex: new RegExp(`^${data.name}$`, 'i') },
-                    isDeleted: false,
-               });
-
-               if (existingName) {
-                    return res.status(400).json({
+               if (!updatedLocation) {
+                    return res.status(404).json({
                          success: false,
-                         error: `Department with name '${data.name}' already exists.`,
+                         error: 'Location not found or not accessible.',
                     });
                }
+
+               return res.status(200).json({
+                    success: true,
+                    msg: 'Location and departments updated successfully',
+                    location: updatedLocation,
+               });
+          } else if (!locationId && !departments) {
+               const { name, chargingType, isDeactivated } = req.body;
+
+               // Update department
+               const updatedDepartment =
+                    await departmentService.updateDepartment(
+                         departmentId,
+                         name,
+                         chargingType,
+                         isDeactivated
+                    );
+
+               if (!updatedDepartment) {
+                    return res.status(404).json({
+                         success: false,
+                         error: 'Department not found or not accessible.',
+                    });
+               }
+
+               return res.status(200).json({
+                    success: true,
+                    msg: 'Department updated successfully',
+                    department: updatedDepartment,
+               });
           } else {
-               // If the name field is empty or contains only spaces, prevent the update
-               delete data.name;
+               return res.status(400).json({
+                    success: false,
+                    error: 'Invalid request. Either provide both locationId and departments or none.',
+               });
           }
-
-          const updatedDepartment = await departmentService.updateDepartment(
-               id,
-               data
-          );
-
-          return res.status(200).json({
-               success: true,
-               msg: 'Department updated successfully',
-               department: updatedDepartment,
-          });
      } catch (error) {
           console.log(error);
           return res.status(500).json({
                success: false,
-               error: 'Unable to update department',
+               error: 'Unable to update department or location with departments',
           });
      }
 });
@@ -469,6 +460,82 @@ router.get('/all', isLoggedIn, async (req, res) => {
 //           return res.status(500).json({
 //                success: false,
 //                error: 'Unable to add department',
+//           });
+//      }
+// });
+
+// router.put('/:id', isLoggedIn, async (req, res) => {
+//      try {
+//           const id = req.params.id;
+//           const data = req.body;
+
+//           // Custom validation for the update permission request
+//           if (!isValidObjectId(id)) {
+//                return res.status(400).json({
+//                     success: false,
+//                     error: 'Invalid Department ID',
+//                });
+//           }
+
+//           const existingDepartmentId = await departmentModel.findById(id);
+//           if (!existingDepartmentId) {
+//                res.status(404).json({
+//                     success: false,
+//                     error: 'existingDepartmentId not found',
+//                });
+//           }
+
+//           // Check if the departmentName is provided and is empty during update
+//           if (
+//                'name' in data &&
+//                typeof data.name === 'string' &&
+//                data.name.trim() === ''
+//           ) {
+//                return res.status(400).json({
+//                     success: false,
+//                     error: 'departmentName should not be empty.',
+//                });
+//           }
+
+//           // Trim leading and trailing spaces from the name if it exists
+//           if (data.name) {
+//                data.name = data.name.trim();
+//           }
+
+//           // Check if the updated name is duplicate (case-insensitive match)
+//           if (data.name) {
+//                const existingName = await departmentModel.findOne({
+//                     _id: { $ne: id }, // Exclude the current department from the check
+//                     name: { $regex: new RegExp(`^${data.name}$`, 'i') },
+//                     isDeleted: false,
+//                });
+
+//                if (existingName) {
+//                     return res.status(400).json({
+//                          success: false,
+//                          error: `Department with name '${data.name}' already exists.`,
+//                     });
+//                }
+//           } else {
+//                // If the name field is empty or contains only spaces, prevent the update
+//                delete data.name;
+//           }
+
+//           const updatedDepartment = await departmentService.updateDepartment(
+//                id,
+//                data
+//           );
+
+//           return res.status(200).json({
+//                success: true,
+//                msg: 'Department updated successfully',
+//                department: updatedDepartment,
+//           });
+//      } catch (error) {
+//           console.log(error);
+//           return res.status(500).json({
+//                success: false,
+//                error: 'Unable to update department',
 //           });
 //      }
 // });
