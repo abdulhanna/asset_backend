@@ -460,10 +460,35 @@ const generatePDFWithDynamicTable = async (members) => {
        <!DOCTYPE html>
        <html>
        <head>
-         <style>
-           /* Add your CSS styling for the table here */
-           /* ... */
-         </style>
+       <style>
+             table {
+               width: 100%;
+               border-collapse: collapse;
+             }
+       
+             table,
+             td,
+             th {
+               border: 2px solid #ddd;
+             }
+       
+             h1 {
+               text-align: center;
+             }
+       
+             th,
+             td {
+               padding: 15px;
+             }
+             th {
+               font-size: 24px;
+               font-weight: 600;
+             }
+             .main-div {
+               border: 1px solid gray;
+               padding: 50px;
+             }
+           </style>
        </head>
        <body>
          <h1>List of Members</h1>
