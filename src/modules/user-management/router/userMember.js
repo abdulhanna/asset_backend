@@ -1,55 +1,113 @@
 import { Router } from 'express';
 import { memberService } from '../services/userMember.js';
 import { isLoggedIn } from '../../auth/router/passport.js';
+import { v2 as cloudinary } from 'cloudinary';
+import { secret } from '../../../config/secret.js';
+import multer from 'multer';
+
+cloudinary.config(secret.cloudinary);
+
+const profileImg = multer.diskStorage({
+     destination: 'public/images/profileImage',
+     filename: (req, file, cb) => {
+          cb(null, file.fieldname + '_' + Date.now() + file.originalname);
+     },
+});
+
+const upload = multer({
+     storage: profileImg,
+     limits: { fileSize: 20 * 1024 * 1024 },
+     fileFilter(req, file, cb) {
+          if (!file.originalname.match(/\.(png|jpg|jpeg)$/)) {
+               cb(
+                    new Error(
+                         'Please upload an image file with .png, .jpg, or .jpeg extension.'
+                    )
+               );
+          }
+          // Only accept one file with the field name 'image'
+          if (req.files && req.files.length >= 1) {
+               cb(new Error('Only one file allowed.'));
+          }
+          cb(undefined, true);
+     },
+});
 
 const router = Router();
 // Create a new member
-router.post('/createMember', isLoggedIn, async (req, res) => {
-     try {
-          const parentId = req.user.data._id;
-          const organizationId = req.user.data.organizationId;
-          const dashboardPermission = req.user.data.dashboardPermission;
-          const role = req.user.data.role;
+router.post(
+     '/createMember',
+     isLoggedIn,
+     upload.single('image'),
+     async (req, res) => {
+          try {
+               const parentId = req.user.data._id;
+               const organizationId = req.user.data.organizationId;
+               const dashboardPermission = req.user.data.dashboardPermission;
+               const role = req.user.data.role;
 
-          const {
-               email,
-               password,
-               userProfile,
-               teamRoleId,
-               userType,
-               assignedLocationId,
-          } = req.body;
+               // Retrieve the uploaded file using req.file
+               const profileImgFile = req.file;
 
-          // Check if the email already exists in the database
-          const existingMember = await memberService.getMemberByEmail(email);
-          if (existingMember) {
+               const {
+                    email,
+                    password,
+                    userProfile,
+                    teamRoleId,
+                    userType,
+                    assignedLocationId,
+               } = req.body;
+
+               // Check if the email already exists in the database
+               const existingMember = await memberService.getMemberByEmail(
+                    email
+               );
+               if (existingMember) {
+                    return res.status(400).json({
+                         success: false,
+                         error: 'Email already exists',
+                    });
+               }
+               // Upload the profile image to Cloudinary
+               let profileImgUrl = null;
+               if (profileImgFile) {
+                    const result = await cloudinary.uploader.upload(
+                         profileImgFile.path, // Use the file path
+                         {
+                              folder: 'profile-images', // Change this to your desired folder name
+                         }
+                    );
+                    profileImgUrl = result.secure_url;
+               }
+               const locationId =
+                    assignedLocationId || req.user.data.assignedLocationId;
+
+               const userData = {
+                    email,
+                    password,
+                    userProfile: {
+                         ...userProfile,
+                         organizationId,
+                         profileImg: profileImgUrl,
+                    },
+                    teamRoleId,
+                    parentId,
+                    dashboardPermission,
+                    organizationId,
+                    locationId,
+                    userType,
+                    role,
+               };
+
+               const member = await memberService.createMember(userData);
+               return res.status(201).json({ success: true, member });
+          } catch (error) {
                return res
-                    .status(400)
-                    .json({ success: false, error: 'Email already exists' });
+                    .status(500)
+                    .json({ success: false, error: error.message });
           }
-
-          const locationId =
-               assignedLocationId || req.user.data.assignedLocationId;
-
-          const userData = {
-               email,
-               password,
-               userProfile,
-               teamRoleId,
-               parentId,
-               dashboardPermission,
-               organizationId,
-               locationId,
-               userType,
-               role,
-          };
-
-          const member = await memberService.createMember(userData);
-          return res.status(201).json({ success: true, member });
-     } catch (error) {
-          return res.status(500).json({ success: false, error: error.message });
      }
-});
+);
 
 // Update member
 router.put('/updateMember/:id', async (req, res) => {
