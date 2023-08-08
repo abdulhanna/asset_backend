@@ -99,12 +99,58 @@ const updateRole = async (roleId, updatedRoleData) => {
      }
 };
 
+// Function to restore default permissions for a role
+const restoreDefaultPermissions = async (roleId) => {
+     try {
+          const existingRole = await roleDefineModel.findById(roleId);
+          if (!existingRole) {
+               throw new Error('Role not found');
+          }
+
+          // Restore default permissions for each permission in the role
+          const updatedPermissions = await Promise.all(
+               existingRole.permissions.map(async (permission) => {
+                    // Retrieve the default permission from the permissionModel
+                    const defaultPermission = await permissionModel.findById(
+                         permission.moduleId
+                    );
+                    if (defaultPermission) {
+                         return {
+                              ...permission,
+                              read: defaultPermission.read,
+                              readWrite: defaultPermission.readWrite,
+                              actions: defaultPermission.actions,
+                              allAccess: false,
+                              removeAccess: false,
+                         };
+                    }
+                    return permission; // Keep the existing permission if the default is not found
+               })
+          );
+
+          const updatedRoleData = {
+               permissions: updatedPermissions,
+               updatedAt: new Date(),
+          };
+
+          // Update the role with the restored default permissions
+          const updatedRole = await roleDefineModel.findByIdAndUpdate(
+               roleId,
+               updatedRoleData,
+               { new: true }
+          );
+          return updatedRole;
+     } catch (error) {
+          throw new Error('Unable to update role');
+     }
+};
+
 const getAllRoles = async () => {
      try {
           // Fetch all roles from the database, excluding isDeleted and isDeactivated fields
           const roles = await roleDefineModel
                .find({ isDeleted: false, isDeactivated: false })
-               .select('-isDeleted -isDeactivated -deletedAt')
+               .select('-isDeactivated -deletedAt')
                .populate('addedByUserId', 'email') // Only populate 'email' field from addedByUserId
                .populate('permissions', 'moduleName read readWrite actions')
                .exec();
@@ -120,7 +166,50 @@ const getAllRoles = async () => {
           //      role.permissions = role.permissions.filter((permission) => {
           //           return permission.removeAccess === false;
           //      });
-          // });g
+          // });
+
+          return roles;
+     } catch (error) {
+          throw new Error('Unable to fetch roles');
+     }
+};
+
+const deleteRoles = async (id) => {
+     try {
+          const deleteRoleResult = await roleDefineModel.updateOne(
+               {
+                    _id: id,
+               },
+               {
+                    isDeleted: true,
+                    deletedAt: new Date(),
+               }
+          );
+          return deleteRoleResult;
+     } catch (error) {
+          throw new Error('Error in deleting resource');
+     }
+};
+
+const getAllRolesV2 = async (query) => {
+     try {
+          const roles = await roleDefineModel
+               .find({
+                    ...query,
+                    isDeleted: false,
+                    isDeactivated: false,
+               })
+               .select('-isDeactivated -deletedAt')
+               .populate('addedByUserId', 'email') // Only populate 'email' field from addedByUserId
+               .populate('permissions', 'moduleName read readWrite actions')
+               .exec();
+
+          // Filter out permissions with removeAccess set to true
+          roles.forEach((role) => {
+               role.permissions = role.permissions.filter(
+                    (permission) => !permission.removeAccess
+               );
+          });
 
           return roles;
      } catch (error) {
@@ -132,4 +221,7 @@ export const rolesService = {
      createRole,
      updateRole,
      getAllRoles,
+     restoreDefaultPermissions,
+     deleteRoles,
+     getAllRolesV2,
 };

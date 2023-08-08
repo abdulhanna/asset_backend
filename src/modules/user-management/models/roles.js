@@ -40,6 +40,16 @@ const roleDefineSchema = new mongoose.Schema(
                     },
                },
           ],
+          organizationId: {
+               type: mongoose.Schema.Types.ObjectId,
+               ref: 'organizations',
+               default: null,
+          },
+          locationId: {
+               type: mongoose.Schema.Types.ObjectId,
+               ref: 'locations',
+               default: null,
+          },
           addedByUserId: {
                type: mongoose.Schema.Types.ObjectId,
                ref: 'users',

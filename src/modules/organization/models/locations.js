@@ -2,34 +2,34 @@ import mongoose from 'mongoose';
 
 const locationSchema = new mongoose.Schema(
      {
-          locationName: {
+          name: {
                type: String,
                required: true,
           },
-          locationId: {
+          locationCodeId: {
                // Auto- Generate
                type: String,
                required: false,
           },
-          industryType: {
-               type: String,
-               required: true,
-          },
-          assignedUser: {
+          organizationId: {
                type: mongoose.Schema.Types.ObjectId,
-               ref: 'users',
+               ref: 'organizations',
           },
-          parent: {
+          assignedUserId: [
+               {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'users',
+               },
+          ],
+          parentId: {
                type: mongoose.Schema.Types.ObjectId,
                ref: 'locations',
                default: null,
           },
-          children: [
-               {
-                    type: mongoose.Schema.Types.ObjectId,
-                    ref: 'locations',
-               },
-          ],
+          isParent: {
+               type: Boolean,
+               default: false,
+          },
           address: {
                type: {
                     address1: {
@@ -50,7 +50,92 @@ const locationSchema = new mongoose.Schema(
                     pinCode: {
                          type: String,
                     },
+                    latitude: {
+                         type: Number,
+                         required: false,
+                    },
+                    longitude: {
+                         type: Number,
+                         required: false,
+                    },
                },
+          },
+          departments: [
+               {
+                    departmentId: {
+                         type: mongoose.Schema.Types.ObjectId,
+                         ref: 'departments',
+                    },
+                    departmentAddress: {
+                         address1: {
+                              type: String,
+                         },
+                         address2: {
+                              type: String,
+                         },
+                         city: {
+                              type: String,
+                         },
+                    },
+                    contactAddress: {
+                         emailAddress: {
+                              type: String,
+                         },
+                         contactNumber: {
+                              type: String,
+                         },
+                    },
+                    moreInformation: {
+                         departmentInchargeId: {
+                              type: mongoose.Schema.Types.ObjectId,
+                              ref: 'users',
+                              default: null,
+                         },
+                         chargingType: {
+                              type: String,
+                         },
+                    },
+                    createdAt: {
+                         type: Date,
+                         default: null,
+                    },
+                    updatedAt: {
+                         type: Date,
+                         default: null,
+                    },
+                    isDeleted: {
+                         type: Boolean,
+                         default: false,
+                    },
+                    isDeactivated: {
+                         type: Boolean,
+                         default: false,
+                    },
+                    deletedAt: {
+                         type: Date,
+                         default: null,
+                    },
+               },
+          ],
+          createdAt: {
+               type: Date,
+               default: null,
+          },
+          updatedAt: {
+               type: Date,
+               default: null,
+          },
+          isDeleted: {
+               type: Boolean,
+               default: false,
+          },
+          isDeactivated: {
+               type: Boolean,
+               default: false,
+          },
+          deletedAt: {
+               type: Date,
+               default: null,
           },
      },
      { new: true }

@@ -1,18 +1,21 @@
 import StatusCodes from "http-status-codes";
 import createError from "http-errors-lite";
 import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
 import { assert, assertEvery } from "../../../helpers/mad-assert";
 import jwtService from "./jwt-services";
 import { secret } from "../../../../src/config/secret";
 import emailtemplate from "../../../helpers/send-email"
 import userModel from "../models/"
-import { organizationModel } from "../../organization/models";
+import { organizationModel, locationModel } from "../../organization/models";
 
 const authService = {};
 
 // user registration
 authService.doRegister = async (data) => {
      const role = 'superadmin'; // on comapany onboard default role will be superadmin
+     const dashboardPermission = 'superadmin_dashboard';
+     const userType = 'superadmin'; // on comapany onboard default userType will be superadmin
 
      assertEvery(
           [data.email, data.password, data.confirmPassword],
@@ -57,6 +60,8 @@ authService.doRegister = async (data) => {
           ...data,
           password: hashedPassword,
           role: role,
+          userType: userType,
+          dashboardPermission: dashboardPermission,
           verificationToken: token,
           createdAt : Date.now()
      });
@@ -178,7 +183,6 @@ authService.doLogin = async ({ email, password }) => {
    // user does not exist
    assert(existingUser,  createError(StatusCodes.BAD_REQUEST,"User does not exist",{"errorstatus":"1","redirectUrl":""}))
    const isValid = bcrypt.compareSync(password, existingUser.password);
-
 // invalid password
   assert(isValid, createError(StatusCodes.UNAUTHORIZED, "Invalid password", {"errorstatus":"2","redirectUrl":""}));
 
@@ -189,7 +193,6 @@ authService.doLogin = async ({ email, password }) => {
   assert(existingUser.is_email_verified == true, createError(StatusCodes.UNAUTHORIZED, "Pendig account verification, please verify your email", {"errorstatus":"4","redirectUrl":""}));
 
   // profile not completed
-
   if(existingUser.role == 'superadmin' && existingUser.is_profile_completed == false)
   {
     const companyToken = await jwtService.generatePair(email);
@@ -201,8 +204,46 @@ authService.doLogin = async ({ email, password }) => {
     const redirectURLcompany = `${secret.frontend_baseURL}/company-profile?confirmation_token=${companyToken}`;
     assert(existingUser.role != 'superadmin' && existingUser.is_profile_completed == true, createError(StatusCodes.UNAUTHORIZED,"Company Profile is not completed, please complete your company profile", {"errorstatus":"5","redirectUrl":redirectURLcompany}));
   }
+
+      let getToken;
+  if(existingUser.role == 'superadmin')
+  {
+    const getOrganization = await organizationModel.findOne({
+      userId:existingUser._id
+    })
+
+   
+     getToken = await jwtService.generatePair({
+      _id:existingUser._id,
+      role:existingUser.role,
+      dashboardPermission:existingUser.dashboardPermission,
+      organizationId:getOrganization._id,
+      assignedLocationId:null
+    });
+  }
+  else if(existingUser.role == 'root'){
+    getToken = await jwtService.generatePair({
+      _id:existingUser._id,
+      role:existingUser.role,
+      dashboardPermission:existingUser.dashboardPermission,
+      organizationId:null,
+      assignedLocationId:null
+    });
+  }
+  else
+  {
+    const locationIdToSearch = await locationModel.findOne({ assignedUserId: { $elemMatch: { $eq: existingUser._id } } });
+    getToken = await jwtService.generatePair({
+      _id:existingUser._id,
+      role:null,
+      dashboardPermission:existingUser.dashboardPermission,
+      organizationId:existingUser.userProfile.organizationId,
+      assignedLocationId:locationIdToSearch._id
+    });
+     
+  }
+ 
       
-      const getToken = await jwtService.generatePair({_id:existingUser._id});
       const updateToken = await userModel.findByIdAndUpdate(
         { _id:existingUser._id},
         { token: getToken, updatedAt : Date.now()},
@@ -212,28 +253,35 @@ authService.doLogin = async ({ email, password }) => {
       assert(updateToken, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"));
 
       const getUserData = await userModel.findOne({ email})
-      .select('email role teamrole token')
+      .select('email role teamRoleId dashboardPermission token')
       .populate({
-       path: 'teamrole',
-       select: 'permissions',
+       path: 'teamRoleId',
+       select: 'roleName permissions',
        populate: {
          path: 'permissions',
          select: 'moduleName read read_write actions',
        },
      })
 
+
+
     let permissions;
+    let role;
     if (getUserData.role === 'superadmin' || getUserData.role === 'root') {
          permissions = {}; // Empty key for superadmin and root roles
-    } else if (getUserData.teamrole && getUserData.teamrole.permissions) {
-         permissions = getUserData.teamrole.permissions; // Use teamrole's permissions if available
+        role = getUserData.role;
+    } else if (getUserData.teamRoleId && getUserData.teamRoleId.permissions) {
+         permissions = getUserData.teamRoleId.permissions; // Use teamrole's permissions if available
+         role = getUserData.teamRoleId.roleName;
     } else {
          permissions = []; // Default to empty array if no permissions found
+         role = "";
     }
 
       const userData = {
         email: getUserData.email,
-        role: getUserData.role,
+        role,
+        dashboardPermission: getUserData.dashboardPermission,
         permissions,
         access_token: getUserData.token
       }

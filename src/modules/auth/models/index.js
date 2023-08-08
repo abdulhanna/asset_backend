@@ -18,10 +18,21 @@ const userSchema = new mongoose.Schema({
           type: String,
           enum: ['root', 'superadmin'],
      },
-     teamrole: {
+     userType:{
+          // for handling user Management module
+          type:String,
+          enum:['root', 'superadmin','admin', 'team'],
+          default: 'superadmin'
+     },
+     teamRoleId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: 'roles',
           default: null,
+     },
+     dashboardPermission:{
+          type: String,
+          enum: ["root_dashboard","superadmin_dashboard", "admin_dashboard"],
+          required: true,
      },
      token: {
           type: String,
@@ -136,6 +147,8 @@ userModel.findOne({role:"root"},(findErr,findRes)=>{
        let obj = {
          email:"root@finbit.com",
          role:"root",
+         userType:"root",
+         dashboardPermission:"root_dashboard",
          password:bcrypt.hashSync("finbit",10),
          is_email_verified: true,
          createdAt: Date.now()

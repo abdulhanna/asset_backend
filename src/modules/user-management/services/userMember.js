@@ -1,14 +1,57 @@
 import jwtService from '../../auth/services/jwt-services';
 import emailtemplate from '../../../helpers/send-email';
 import userModel from '../../auth/models/index.js';
+import locationModel from '../../organization/models/locations';
+import bcrypt from 'bcryptjs';
+
+const getMemberByEmail = async (email) => {
+     try {
+          const member = await userModel.findOne({ email });
+          return member;
+     } catch (error) {
+          console.log(error);
+          throw new Error('Failed to get member by email');
+     }
+};
 
 const createMember = async (userData) => {
      try {
+          let dashboardPermission = null;
+
+          if (userData.role === 'superadmin') {
+               if (userData.userType === 'team') {
+                    dashboardPermission = 'superadmin_dashboard';
+               } else if (userData.userType === 'admin') {
+                    dashboardPermission = 'admin_dashboard';
+               }
+          } else if (userData.role === 'root') {
+               dashboardPermission = 'root_dashboard';
+          } else {
+               dashboardPermission = 'admin_dashboard';
+          }
+
           // Generate a verification token
           const verificationTokenPayload = await jwtService.generatePair(
                userData.email
           );
-          const verificationToken = verificationTokenPayload.access_token;
+          const verificationToken = verificationTokenPayload;
+
+          // Save the member with the verification token to the database
+          const member = new userModel({
+               email: userData.email,
+               password: userData.password,
+               userProfile: {
+                    ...userData.userProfile,
+                    organizationId: userData.organizationId,
+               },
+               teamRoleId: userData.teamRoleId,
+               parentId: userData.parentId,
+               dashboardPermission: dashboardPermission,
+               verificationToken: verificationToken,
+               userType: userData.userType,
+          });
+
+          const savedMember = await member.save();
 
           // Send the invitation email to the member
           await emailtemplate.sendInvitationEmail(
@@ -16,17 +59,19 @@ const createMember = async (userData) => {
                verificationToken
           );
 
-          // Save the member with the verification token to the database
-          const member = new userModel({
-               email: userData.email,
-               password: userData.password,
-               userProfile: userData.userProfile,
-               teamrole: userData.teamrole,
-               parentId: userData.parentId,
-               verificationToken: verificationToken,
-          });
+          // For assignedLocationId
+          if (userData.locationId) {
+               // Find the location by ID
+               const location = await locationModel.findById(
+                    userData.locationId
+               );
 
-          const savedMember = await member.save();
+               if (location) {
+                    // Push the current member's ID into the assignedUserId array of the location
+                    location.assignedUserId.push(savedMember._id);
+                    await location.save();
+               }
+          }
 
           return savedMember;
      } catch (error) {
@@ -55,11 +100,17 @@ const updateMember = async (id, data) => {
      }
 };
 
-const getAllMembers = async (parentId) => {
+const getAllMembers = async (parentId, userType) => {
      try {
+          let query = { parentId, isDeleted: false, isDeactivated: false };
+
+          if (userType) {
+               query.userType = userType;
+          }
+
           const members = await userModel
-               .find({ parentId, isDeleted: false, isDeactivated: false })
-               .populate('teamrole', 'roleName')
+               .find(query)
+               .populate('teamRoleId', 'roleName')
                .select('-deletedAt');
 
           return members;
@@ -79,8 +130,10 @@ const setPassword = async (verificationToken, password) => {
           }
 
           // Set the new password
-          member.password = password;
+          // member.password = password;
+          member.password = bcrypt.hashSync(password, 8);
           member.verificationToken = null;
+          member.is_email_verified = true;
           await member.save();
 
           return { success: true };
@@ -90,9 +143,50 @@ const setPassword = async (verificationToken, password) => {
      }
 };
 
+// Function to get members by roleName and parentId
+const getMembersByRole = async (parentId, roleName) => {
+     try {
+          const members = await userModel
+               .find({
+                    parentId,
+               })
+               .populate('teamRoleId', '-_id -permissions ')
+               .select('-password')
+               .exec();
+
+          // Filter the members based on the 'roleName' if provided
+          if (roleName) {
+               const filteredMembers = members.filter(
+                    (member) =>
+                         member.teamRoleId &&
+                         member.teamRoleId.roleName === roleName
+               );
+
+               return filteredMembers;
+          }
+
+          return members;
+     } catch (error) {
+          throw new Error('Failed to get members');
+     }
+};
+
+const getMemberById = async (memberId) => {
+     try {
+          const member = await userModel.findById(memberId);
+          return member;
+     } catch (error) {
+          console.log(error);
+          throw new Error('Failed to get member by ID');
+     }
+};
+
 export const memberService = {
      createMember,
      updateMember,
      getAllMembers,
      setPassword,
+     getMembersByRole,
+     getMemberByEmail,
+     getMemberById,
 };

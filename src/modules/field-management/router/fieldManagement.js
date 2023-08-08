@@ -1,55 +1,125 @@
 import express from 'express';
 import { fieldManagementService } from '../services/fieldManagement.js';
+import { isLoggedIn } from '../../auth/router/passport.js';
 
 const router = express.Router();
 
-router.post('/add-groups', async (req, res) => {
+router.post('/add-groups', isLoggedIn, async (req, res) => {
      try {
-          const { name } = req.body;
+          const { groupName } = req.body;
 
-          if (Array.isArray(name)) {
+          if (Array.isArray(groupName)) {
                const newFieldGroups =
                     await fieldManagementService.createMultipleFieldGroups(
-                         name
+                         groupName
                     );
-               res.status(201).json(newFieldGroups);
+               return res.status(201).json(newFieldGroups);
           }
      } catch (error) {
           console.log(error);
-          res.status(500).json({ error: 'Unable to create field group' });
+          return res
+               .status(500)
+               .json({ error: 'Unable to create field group' });
      }
 });
 
-router.put('/:groupId/add-fields', async (req, res) => {
+router.put('/:groupId/add-fields', isLoggedIn, async (req, res) => {
      try {
           const { groupId } = req.params;
           const { fields } = req.body;
 
           const updatedFieldGroup =
                await fieldManagementService.addFieldToGroup(groupId, fields);
-          res.status(200).json(updatedFieldGroup);
+          return res.status(200).json(updatedFieldGroup);
      } catch (error) {
           console.log(error);
-          res.status(500).json({ error: 'Unable to update field group' });
+          return res
+               .status(500)
+               .json({ error: 'Unable to update field group' });
      }
 });
 
-router.get('/list', async (req, res) => {
-     const fieldGroups = await fieldManagementService.getFieldGroups();
+router.get('/list', isLoggedIn, async (req, res) => {
+     try {
+          const fieldGroups = await fieldManagementService.getFieldGroups();
 
-     res.status(200).json(fieldGroups);
+          return res.status(200).json(fieldGroups);
+     } catch (error) {
+          return res.status(500).json({ error: 'Unable to get field groups' });
+     }
 });
 
-router.put('/:groupId', async (req, res) => {
+router.get('/:groupId', isLoggedIn, async (req, res) => {
+     try {
+          const { groupId } = req.params;
+          const fieldGroup = await fieldManagementService.getFieldGroupsById(
+               groupId
+          );
+
+          return res.status(200).json(fieldGroup);
+     } catch (error) {
+          return res
+               .status(500)
+               .json({ error: 'Unable to get field group by Id' });
+     }
+});
+
+router.put('/:groupId/update-fields', isLoggedIn, async (req, res) => {
+     try {
+          const { groupId } = req.params;
+          const { fields, groupName } = req.body;
+
+          const updatedFieldGroup =
+               await fieldManagementService.addFieldToGroupV2(
+                    groupId,
+                    fields,
+                    groupName
+               );
+          return res.status(200).json(updatedFieldGroup);
+     } catch (error) {
+          console.log(error);
+          return res
+               .status(500)
+               .json({ error: 'Unable to update field group' });
+     }
+});
+
+router.delete('/fields/:fieldId', isLoggedIn, async (req, res) => {
+     const { fieldId } = req.params;
+
+     try {
+          const result = await fieldManagementService.deleteFieldById(fieldId);
+          if (result) {
+               return res.status(200).json({
+                    success: true,
+                    message: 'Field deleted successfully',
+               });
+          } else {
+               return res.status(404).json({ message: 'Field not found' });
+          }
+     } catch (error) {
+          return res.status(500).json({ message: 'Internal server error' });
+     }
+});
+
+router.delete('/groups/:groupId', isLoggedIn, async (req, res) => {
      const { groupId } = req.params;
-     const data = req.body;
-
-     const updatedFieldGroup = await fieldManagementService.updateFieldGroup(
-          groupId,
-          data
-     );
-
-     res.status(200).json(updatedFieldGroup);
+     try {
+          const result = await fieldManagementService.deleteGroupAndFieldsById(
+               groupId
+          );
+          if (result) {
+               return res.status(200).json({
+                    success: true,
+                    message: 'Group and related fields deleted successfully',
+               });
+          } else {
+               return res.status(404).json({ message: 'Group not found' });
+          }
+     } catch (error) {
+          console.log(error);
+          return res.status(500).json({ message: 'Internal server error' });
+     }
 });
 
 export default router;
