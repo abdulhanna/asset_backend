@@ -463,14 +463,14 @@ const generatePDFWithDynamicTable = async (members) => {
           
      <body>
                    
-          <h1 class="head">List of Members</h1>
+          <h1 class="head" style="text-align: center">List of Members</h1>
                    
           <table
                style="
                     width: 100%;
                     border-collapse: collapse;
                     border: 2px solid #ddd;
-                     font-family: Arial, Helvetica, sans-serif;
+                    font-family: Arial, Helvetica, sans-serif;
                "
           >
                             
@@ -545,23 +545,23 @@ const generatePDFWithDynamicTable = async (members) => {
                                    
                     <tr>
                                                       
-                         <td style="border: 2px solid #ddd;  padding: 15px">
+                         <td style="border: 2px solid #ddd; padding: 15px">
                               ${member.index}
                          </td>
                                                       
-                         <td style="border: 2px solid #ddd;  padding: 15px">
+                         <td style="border: 2px solid #ddd; padding: 15px">
                               ${member.roleName}
                          </td>
                                                       
-                         <td style="border: 2px solid #ddd;  padding: 15px">
+                         <td style="border: 2px solid #ddd; padding: 15px">
                               ${member.name}
                          </td>
                                                       
-                         <td style="border: 2px solid #ddd;  padding: 15px">
+                         <td style="border: 2px solid #ddd; padding: 15px">
                               ${member.email}
                          </td>
                                                       
-                         <td style="border: 2px solid #ddd;  padding: 15px">
+                         <td style="border: 2px solid #ddd; padding: 15px">
                               ${member.phone}
                          </td>
                                                       <!-- Add more table data cells if needed -->
@@ -577,6 +577,7 @@ const generatePDFWithDynamicTable = async (members) => {
      </body>
           
 </html>
+
 
      `;
 
