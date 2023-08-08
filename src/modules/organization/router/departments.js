@@ -182,7 +182,6 @@ router.put('/:departmentId', isLoggedIn, async (req, res) => {
                     department: updatedDepartment,
                });
           } else {
-               // Handle the case where either locationId or departments is missing
                return res.status(400).json({
                     success: false,
                     error: 'Invalid request. Either provide both locationId and departments or none.',

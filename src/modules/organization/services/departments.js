@@ -199,14 +199,14 @@ const updateDepartment = async (id, name, chargingType, isDeactivated) => {
 };
 
 const updateLocationWithDepartments = async (
-     id,
+     locationId,
      departments,
      organizationId
 ) => {
      try {
           // Validate if the location exists and is accessible to the admin
           const location = await locationModel.findOne({
-               _id: id,
+               _id: locationId,
                organizationId,
           });
 
@@ -214,17 +214,14 @@ const updateLocationWithDepartments = async (
                return null;
           }
 
-          // Fetch the departmentIds based on the department objects provided in the request body
           const departmentIds = departments.map((dept) => dept.departmentId);
 
-          // Check if all departmentIds are valid
           const validDepartments = await isValidDepartments(departmentIds);
 
           if (!validDepartments) {
-               return null; // Or you can throw an error here if you prefer.
+               return null;
           }
 
-          // Filter out departments that are not being updated
           const updatedDepartmentsData = departments.map((dept) => ({
                departmentId: dept.departmentId,
                departmentAddress: {
