@@ -34,6 +34,7 @@ const upload = multer({
 });
 
 const router = Router();
+
 // Create a new member
 router.post(
      '/createMember',
@@ -267,6 +268,290 @@ router.delete('/:userId', async (req, res) => {
                success: false,
                error: 'Unable to delete user',
           });
+     }
+});
+
+//------------------------
+// router.get('/:parentId/download', async (req, res) => {
+//      try {
+//           const { parentId } = req.params;
+//           const members = await memberService.getAllMembers(parentId);
+
+//           // Get the desired format from query parameter (pdf, csv, xlsx)
+//           const format = req.query.format;
+
+//           if (format === 'pdf') {
+//                // Generate and send PDF
+//                const pdfBuffer = await generatePDF(members);
+//                res.setHeader(
+//                     'Content-Disposition',
+//                     'attachment; filename=members.pdf'
+//                );
+//                res.setHeader('Content-Type', 'application/pdf');
+//                res.send(pdfBuffer);
+//           } else if (format === 'csv') {
+//                // Generate and send CSV
+//                const csvBuffer = await generateCSV(members);
+
+//                res.setHeader(
+//                     'Content-Disposition',
+//                     'attachment; filename=members.csv'
+//                );
+//                res.setHeader('Content-Type', 'text/csv');
+//                res.send(csvBuffer);
+//           } else if (format === 'xlsx') {
+//                // Generate and send XLSX
+//                const xlsxBuffer = await generateXLSX(members);
+//                res.setHeader(
+//                     'Content-Disposition',
+//                     'attachment; filename=members.xlsx'
+//                );
+//                res.setHeader(
+//                     'Content-Type',
+//                     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+//                );
+//                res.send(xlsxBuffer);
+//           } else {
+//                throw new Error('Invalid format specified.');
+//           }
+//      } catch (error) {
+//           res.status(500).json({ success: false, error: error.message });
+//      }
+// });
+
+const extractMembersData = (members) => {
+     return members.map((member, index) => ({
+          index: index + 1,
+          roleName: member.teamrole.roleName || 'N/A',
+          name: member.userProfile.name || 'N/A',
+          email: member.email || 'N/A',
+          phone: member.userProfile.phone || 'N/A',
+          createdAt: member.createdAt || 'N/A',
+     }));
+};
+
+// const generatePDF = async (members) => {
+//      const membersData = extractMembersData(members);
+//      return new Promise((resolve, reject) => {
+//           const doc = new PDFDocument();
+//           const chunks = [];
+
+//           doc.on('data', (chunk) => {
+//                chunks.push(chunk);
+//           });
+
+//           doc.on('end', () => {
+//                resolve(Buffer.concat(chunks));
+//           });
+
+//           doc.on('error', (error) => {
+//                reject(error);
+//           });
+
+//           doc.fontSize(14).text('List of Members', { align: 'center' });
+//           doc.fontSize(12).text('Parent ID: ' + members[0].parentId, {
+//                align: 'center',
+//           });
+//           doc.moveDown();
+
+//           membersData.forEach((member) => {
+//                doc.text(`${member.index}. ${member.name}`);
+//                doc.text(`${member.index}. ${member.roleName}`);
+//                doc.text(`${member.index}. ${member.email}`);
+//                doc.text(`${member.index}. ${member.phone}`);
+//           });
+
+//           doc.end();
+//      });
+// };
+
+const generateCSV = async (members) => {
+     const membersData = extractMembersData(members);
+
+     return new Promise((resolve, reject) => {
+          const chunks = [];
+          const csvStringifier = stringify({ header: true });
+
+          csvStringifier.on('readable', () => {
+               let chunk;
+               while ((chunk = csvStringifier.read())) {
+                    chunks.push(chunk);
+               }
+          });
+
+          csvStringifier.on('error', (error) => {
+               reject(error);
+          });
+
+          csvStringifier.on('end', () => {
+               // Concatenate chunks into a single Buffer
+               const csvBuffer = Buffer.concat(chunks);
+               resolve(csvBuffer);
+          });
+
+          membersData.forEach((member) => {
+               csvStringifier.write(member);
+          });
+
+          csvStringifier.end();
+     });
+};
+
+const generateXLSX = async (members) => {
+     const membersData = extractMembersData(members);
+     return new Promise((resolve) => {
+          const workbook = new ExcelJS.Workbook();
+          const worksheet = workbook.addWorksheet('Members');
+
+          worksheet.columns = [
+               { header: 'Name', key: 'name', width: 20 },
+               { header: 'RoleName', key: 'roleName', width: 20 },
+               { header: 'Email', key: 'email', width: 20 },
+               { header: 'PhoneNumber', key: 'phone', width: 20 },
+          ];
+
+          // membersData.forEach((member) => {
+          //      worksheet.addRow({ name: member.name });
+          //      worksheet.addRow({ name: member.roleName });
+          //      worksheet.addRow({ name: member.email });
+          //      worksheet.addRow({ name: member.phone });
+          // });
+
+          membersData.forEach((member) => {
+               // Add the entire member object as a single row
+               worksheet.addRow(member);
+          });
+
+          workbook.xlsx.writeBuffer().then((buffer) => {
+               resolve(buffer);
+          });
+     });
+};
+
+const generateDynamicTable = (membersData) => {
+     let tableRows = '';
+
+     membersData.forEach((member) => {
+          tableRows += `
+         <tr>
+           <td>${member.index}</td>
+           <td>${member.roleName}</td>
+           <td>${member.name}</td>
+           <td>${member.email}</td>
+           <td>${member.phone}</td>
+           <!-- Add more table data cells if needed -->
+         </tr>
+       `;
+     });
+
+     return tableRows;
+};
+
+const generatePDFWithDynamicTable = async (members) => {
+     const membersData = extractMembersData(members);
+     const dynamicTable = generateDynamicTable(membersData);
+
+     const htmlContent = `
+       <!DOCTYPE html>
+       <html>
+       <head>
+         <style>
+           /* Add your CSS styling for the table here */
+           /* ... */
+         </style>
+       </head>
+       <body>
+         <h1>List of Members</h1>
+         <table>
+           <thead>
+             <tr>
+               <th>Index</th>
+               <th>Role Name</th>
+               <th>Name</th>
+               <th>Email</th>
+               <th>Phone</th>
+               <!-- Add more table headers if needed -->
+             </tr>
+           </thead>
+           <tbody>
+             ${dynamicTable}
+           </tbody>
+         </table>
+       </body>
+       </html>
+     `;
+
+     try {
+          const browser = await puppeteer.launch();
+          const page = await browser.newPage();
+          await page.setContent(htmlContent);
+
+          // Set the PDF options (e.g., format, margin, etc.)
+          const pdfOptions = {
+               format: 'A4',
+               margin: {
+                    top: '20px',
+                    right: '20px',
+                    bottom: '20px',
+                    left: '20px',
+               },
+          };
+
+          const pdfBuffer = await page.pdf(pdfOptions);
+
+          await browser.close();
+
+          return pdfBuffer;
+     } catch (error) {
+          console.error('PDF generation error:', error);
+          throw new Error('Failed to generate PDF.');
+     }
+};
+
+router.get('/v2/:parentId/download', async (req, res) => {
+     try {
+          const { parentId } = req.params;
+          const members = await memberService.getAllMembers(parentId);
+
+          // Get the desired format from query parameter (pdf, csv, xlsx)
+          const format = req.query.format;
+
+          if (format === 'pdf') {
+               // Generate and send PDF
+               const pdfBuffer = await generatePDFWithDynamicTable(members);
+               res.setHeader(
+                    'Content-Disposition',
+                    'attachment; filename=members.pdf'
+               );
+               res.setHeader('Content-Type', 'application/pdf');
+               res.send(pdfBuffer);
+          } else if (format === 'csv') {
+               // Generate and send CSV
+               const csvBuffer = await generateCSV(members);
+
+               res.setHeader(
+                    'Content-Disposition',
+                    'attachment; filename=members.csv'
+               );
+               res.setHeader('Content-Type', 'text/csv');
+               res.send(csvBuffer);
+          } else if (format === 'xlsx') {
+               // Generate and send XLSX
+               const xlsxBuffer = await generateXLSX(members);
+               res.setHeader(
+                    'Content-Disposition',
+                    'attachment; filename=members.xlsx'
+               );
+               res.setHeader(
+                    'Content-Type',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+               );
+               res.send(xlsxBuffer);
+          } else {
+               throw new Error('Invalid format specified.');
+          }
+     } catch (error) {
+          res.status(500).json({ success: false, error: error.message });
      }
 });
 
