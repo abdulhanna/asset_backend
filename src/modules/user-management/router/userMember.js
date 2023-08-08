@@ -322,7 +322,7 @@ router.delete('/:userId', async (req, res) => {
 const extractMembersData = (members) => {
      return members.map((member, index) => ({
           index: index + 1,
-          roleName: member.teamrole.roleName || 'N/A',
+          roleName: member.teamRoleId.roleName || 'N/A',
           name: member.userProfile.name || 'N/A',
           email: member.email || 'N/A',
           phone: member.userProfile.phone || 'N/A',
