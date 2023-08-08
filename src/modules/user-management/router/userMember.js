@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { memberService } from '../services/userMember.js';
 import { isLoggedIn } from '../../auth/router/passport.js';
-import PDFDocument from 'pdfkit';
 import ExcelJS from 'exceljs';
 import { stringify } from 'csv-stringify';
 import puppeteer from 'puppeteer';
@@ -155,52 +154,52 @@ router.get('/member/:id', async (req, res) => {
 });
 
 //------------------------
-router.get('/:parentId/download', async (req, res) => {
-     try {
-          const { parentId } = req.params;
-          const members = await memberService.getAllMembers(parentId);
+// router.get('/:parentId/download', async (req, res) => {
+//      try {
+//           const { parentId } = req.params;
+//           const members = await memberService.getAllMembers(parentId);
 
-          // Get the desired format from query parameter (pdf, csv, xlsx)
-          const format = req.query.format;
+//           // Get the desired format from query parameter (pdf, csv, xlsx)
+//           const format = req.query.format;
 
-          if (format === 'pdf') {
-               // Generate and send PDF
-               const pdfBuffer = await generatePDF(members);
-               res.setHeader(
-                    'Content-Disposition',
-                    'attachment; filename=members.pdf'
-               );
-               res.setHeader('Content-Type', 'application/pdf');
-               res.send(pdfBuffer);
-          } else if (format === 'csv') {
-               // Generate and send CSV
-               const csvBuffer = await generateCSV(members);
+//           if (format === 'pdf') {
+//                // Generate and send PDF
+//                const pdfBuffer = await generatePDF(members);
+//                res.setHeader(
+//                     'Content-Disposition',
+//                     'attachment; filename=members.pdf'
+//                );
+//                res.setHeader('Content-Type', 'application/pdf');
+//                res.send(pdfBuffer);
+//           } else if (format === 'csv') {
+//                // Generate and send CSV
+//                const csvBuffer = await generateCSV(members);
 
-               res.setHeader(
-                    'Content-Disposition',
-                    'attachment; filename=members.csv'
-               );
-               res.setHeader('Content-Type', 'text/csv');
-               res.send(csvBuffer);
-          } else if (format === 'xlsx') {
-               // Generate and send XLSX
-               const xlsxBuffer = await generateXLSX(members);
-               res.setHeader(
-                    'Content-Disposition',
-                    'attachment; filename=members.xlsx'
-               );
-               res.setHeader(
-                    'Content-Type',
-                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-               );
-               res.send(xlsxBuffer);
-          } else {
-               throw new Error('Invalid format specified.');
-          }
-     } catch (error) {
-          res.status(500).json({ success: false, error: error.message });
-     }
-});
+//                res.setHeader(
+//                     'Content-Disposition',
+//                     'attachment; filename=members.csv'
+//                );
+//                res.setHeader('Content-Type', 'text/csv');
+//                res.send(csvBuffer);
+//           } else if (format === 'xlsx') {
+//                // Generate and send XLSX
+//                const xlsxBuffer = await generateXLSX(members);
+//                res.setHeader(
+//                     'Content-Disposition',
+//                     'attachment; filename=members.xlsx'
+//                );
+//                res.setHeader(
+//                     'Content-Type',
+//                     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+//                );
+//                res.send(xlsxBuffer);
+//           } else {
+//                throw new Error('Invalid format specified.');
+//           }
+//      } catch (error) {
+//           res.status(500).json({ success: false, error: error.message });
+//      }
+// });
 
 const extractMembersData = (members) => {
      return members.map((member, index) => ({
@@ -213,40 +212,40 @@ const extractMembersData = (members) => {
      }));
 };
 
-const generatePDF = async (members) => {
-     const membersData = extractMembersData(members);
-     return new Promise((resolve, reject) => {
-          const doc = new PDFDocument();
-          const chunks = [];
+// const generatePDF = async (members) => {
+//      const membersData = extractMembersData(members);
+//      return new Promise((resolve, reject) => {
+//           const doc = new PDFDocument();
+//           const chunks = [];
 
-          doc.on('data', (chunk) => {
-               chunks.push(chunk);
-          });
+//           doc.on('data', (chunk) => {
+//                chunks.push(chunk);
+//           });
 
-          doc.on('end', () => {
-               resolve(Buffer.concat(chunks));
-          });
+//           doc.on('end', () => {
+//                resolve(Buffer.concat(chunks));
+//           });
 
-          doc.on('error', (error) => {
-               reject(error);
-          });
+//           doc.on('error', (error) => {
+//                reject(error);
+//           });
 
-          doc.fontSize(14).text('List of Members', { align: 'center' });
-          doc.fontSize(12).text('Parent ID: ' + members[0].parentId, {
-               align: 'center',
-          });
-          doc.moveDown();
+//           doc.fontSize(14).text('List of Members', { align: 'center' });
+//           doc.fontSize(12).text('Parent ID: ' + members[0].parentId, {
+//                align: 'center',
+//           });
+//           doc.moveDown();
 
-          membersData.forEach((member) => {
-               doc.text(`${member.index}. ${member.name}`);
-               doc.text(`${member.index}. ${member.roleName}`);
-               doc.text(`${member.index}. ${member.email}`);
-               doc.text(`${member.index}. ${member.phone}`);
-          });
+//           membersData.forEach((member) => {
+//                doc.text(`${member.index}. ${member.name}`);
+//                doc.text(`${member.index}. ${member.roleName}`);
+//                doc.text(`${member.index}. ${member.email}`);
+//                doc.text(`${member.index}. ${member.phone}`);
+//           });
 
-          doc.end();
-     });
-};
+//           doc.end();
+//      });
+// };
 
 const generateCSV = async (members) => {
      const membersData = extractMembersData(members);
