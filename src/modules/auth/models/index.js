@@ -25,6 +25,7 @@ const userSchema = new mongoose.Schema({
           default: 'superadmin',
      },
      teamRoleId: {
+          // role for all other users except than root and superadmin
           type: mongoose.Schema.Types.ObjectId,
           ref: 'roles',
           default: null,
@@ -42,7 +43,7 @@ const userSchema = new mongoose.Schema({
           type: String,
           default: null,
      },
-     companyProfileToken: {
+     setPasswordToken: {
           type: String,
           default: null,
      },
@@ -68,7 +69,7 @@ const userSchema = new mongoose.Schema({
                     type: mongoose.Schema.Types.ObjectId,
                     ref: 'organizations',
                },
-               userIdentificationNo: {
+               userCodeId: {
                     type: String,
                },
                name: {
@@ -115,6 +116,14 @@ const userSchema = new mongoose.Schema({
      is_profile_completed: {
           type: Boolean,
           default: false,
+     },
+     acceptedTAndC:{
+          type: Boolean,
+          default: false
+     },
+     acceptedPrivacyPolicy:{
+          type: Boolean,
+          default: false
      },
      isDeleted: {
           type: Boolean,
