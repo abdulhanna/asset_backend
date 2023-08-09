@@ -199,52 +199,32 @@ const updateDepartment = async (id, name, chargingType, isDeactivated) => {
 };
 
 const updateLocationWithDepartments = async (
+     departmentId,
      locationId,
      departments,
      organizationId
 ) => {
      try {
-          // Validate if the location exists and is accessible to the admin
-          const location = await locationModel.findOne({
-               _id: locationId,
-               organizationId,
-          });
-
-          if (!location) {
-               return null;
-          }
-
-          const departmentIds = departments.map((dept) => dept.departmentId);
-
-          const validDepartments = await isValidDepartments(departmentIds);
-
-          if (!validDepartments) {
-               return null;
-          }
-
-          const updatedDepartmentsData = departments.map((dept) => ({
-               departmentId: dept.departmentId,
-               departmentAddress: {
-                    address1: dept.departmentAddress.address1,
-                    city: dept.departmentAddress.city,
+          const location = await locationModel.findOneAndUpdate(
+               {
+                    _id: locationId,
+                    organizationId,
+                    'departments.departmentId': departmentId,
                },
-               contactAddress: {
-                    emailAddress: dept.contactAddress.emailAddress,
-                    contactNumber: dept.contactAddress.contactNumber,
+               {
+                    $set: {
+                         'departments.$.departmentAddress':
+                              departments[0].departmentAddress,
+                         'departments.$.contactAddress':
+                              departments[0].contactAddress,
+                         'departments.$.moreInformation':
+                              departments[0].moreInformation,
+                    },
                },
-               moreInformation: {
-                    departmentInchargeId:
-                         dept.moreInformation.departmentInchargeId,
-                    chargingType: dept.moreInformation.chargingType,
-               },
-          }));
+               { new: true }
+          );
 
-          // Update the departments array in the location schema with the new data
-          location.departments = updatedDepartmentsData;
-
-          // Save the updated location
-          const updatedLocation = await location.save();
-          return updatedLocation;
+          return location;
      } catch (error) {
           console.log(error);
           throw new Error('Unable to update location with departments');
