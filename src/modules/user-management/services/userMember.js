@@ -178,7 +178,6 @@ export const memberService = {
      createMember,
      updateMember,
      getAllMembers,
-     setPassword,
      getMembersByRole,
      getMemberByEmail,
      getMemberById,
