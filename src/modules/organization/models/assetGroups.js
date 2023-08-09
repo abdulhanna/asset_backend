@@ -11,6 +11,10 @@ const assetGroupSchema = new mongoose.Schema(
                type: String,
                required: false,
           },
+          organizationId: {
+               type: mongoose.Schema.Types.ObjectId,
+               ref: 'organizations',
+          },
           description: {
                type: String,
                required: false,

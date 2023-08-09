@@ -26,14 +26,30 @@ router.get(
   })
 );
 
+
+// set Password
+
+router.post(
+  "/setPassword",
+  httpHandler(async (req, res) => {
+   const data = req.body;
+   const result = await authService.setPassword(data);
+   res.send(result)
+  })
+)
+
+
 // profile complete
 
 router.post(
   "/company-profile",
+  isLoggedIn,
   httpHandler(async (req, res) => {
-    const result = await authService.completeProfille(req.body);
+    const id = req.user.data._id;
+    const data = req.body;
+    const result = await authService.completeProfille(id,data);
     if(result.access_token)
-    {
+    { 
       attachCookie(res,  {access_token: result.access_token});
     }
     res.redirect(result.redirectUrl);
@@ -50,7 +66,10 @@ router.post(
       email: req.body.email,
       password: req.body.password,
     });
-    attachCookie(res, {access_token: result.access_token});
+    if(result.access_token)
+    {
+      attachCookie(res,  {access_token: result.access_token});
+    }
     res.send(result);
   })
 );
