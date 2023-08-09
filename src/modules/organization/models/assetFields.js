@@ -1,8 +1,46 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const itemSchema = new mongoose.Schema({
      unique_item_id: String,
      rate_per_piece: Number,
+});
+
+const assetAssignedToSchema = new mongoose.Schema({
+     assigned_to: String,
+});
+
+const assetComponentsSchema = new mongoose.Schema({
+     has_components: Boolean,
+     main_asset_id: String,
+     class_of_asset: String,
+     asset_group: String,
+     asset_sub_group: String,
+     industry_used: String,
+     product_used: String,
+});
+
+const assetMeasurementsQuantitySchema = new mongoose.Schema({
+     unit_of_measurements: String,
+     number_of_items: Number,
+     separate_identification_no: Boolean,
+     items: [itemSchema],
+});
+
+const assetBasicDetailsSchema = new mongoose.Schema({
+     name: String,
+     serial_number: String,
+     asset_id: {
+          type: String,
+          enum: ['Manual', 'Automatic'],
+     },
+     description: String,
+});
+
+const assetDescriptionSchema = new mongoose.Schema({
+     basic_asset_details: assetBasicDetailsSchema,
+     asset_measurements_quantity: assetMeasurementsQuantitySchema,
+     asset_components: assetComponentsSchema,
+     asset_assigned_to: assetAssignedToSchema,
 });
 
 const purchaseSchema = new mongoose.Schema({
@@ -27,14 +65,37 @@ const readyForUseSchema = new mongoose.Schema({
 
 const putToUseSchema = new mongoose.Schema({
      date: Date,
-     apply_as: String,
+     apply_as: {
+          type: String,
+          enum: ['Prospective', 'Inteprospect'],
+     },
      remark: String,
 });
 
 const futureAdditionSchema = new mongoose.Schema({
      date: Date,
-     apply_as: String,
+     apply_as: {
+          type: String,
+          enum: ['Prospective', 'Inteprospect'],
+     },
      remark: String,
+});
+
+const assetAcquisitionSchema = new mongoose.Schema({
+     purchase: purchaseSchema,
+     capitalisation: capitalisationSchema,
+     estimated_completion: estimatedCompletionSchema,
+     ready_for_use: readyForUseSchema,
+     put_to_use: putToUseSchema,
+     future_addition: futureAdditionSchema,
+     documents: [String],
+});
+
+const costDetailsSchema = new mongoose.Schema({
+     acquisition_cost: Number,
+     tax_reimbursed: Number,
+     other_cost_reimbursed: Number,
+     net_cost_of_acquisition: Number,
 });
 
 const leaseSchema = new mongoose.Schema({
@@ -46,16 +107,18 @@ const leaseSchema = new mongoose.Schema({
      special_condition: String,
 });
 
-const ownershipSchema = new mongoose.Schema({
+const ownershipDetailsSchema = new mongoose.Schema({
+     lease: leaseSchema,
      ownership_type: String,
      lessor_name: String,
      install_hire_amount: Number,
      lease_period: Number,
      due_date: Date,
      legal_restrictions: String,
+     documents: [String],
 });
 
-const warrantySchema = new mongoose.Schema({
+const warrantyDetailsSchema = new mongoose.Schema({
      has_warranty: Boolean,
      warranty_start_date: Date,
      warranty_end_date: Date,
@@ -64,7 +127,7 @@ const warrantySchema = new mongoose.Schema({
      utilization_alerts: String,
 });
 
-const insuranceSchema = new mongoose.Schema({
+const insuranceDetailsSchema = new mongoose.Schema({
      has_insurance: Boolean,
      insurance_policy_no: String,
      insurance_table: String,
@@ -82,84 +145,33 @@ const saleSchema = new mongoose.Schema({
      net_book_value: Number,
 });
 
-const statusVerificationSchema = new mongoose.Schema({
+const statusVerificationRemarksSchema = new mongoose.Schema({
      asset_status: String,
      physical_variation_period: String,
-});
-
-const remarkSchema = new mongoose.Schema({
      remark_period: String,
      remark_for_whom: String,
      remark_text: String,
 });
 
-const basicAssetDetailsSchema = new mongoose.Schema({
-     name: String,
-     serial_number: String,
-     asset_id: String,
-     description: String,
-});
-
-const assetMeasurementsQuantitySchema = new mongoose.Schema({
-     unit_of_measurements: String,
-     number_of_items: Number,
-     separate_identification_no: Boolean,
-     items: [itemSchema],
-});
-
-const assetComponentsSchema = new mongoose.Schema({
-     has_components: Boolean,
-     main_asset_id: String,
-     class_of_asset: String,
-     asset_group: String,
-     asset_sub_group: String,
-     industry_used: String,
-     product_used: String,
-});
-
-const assignedToSchema = new mongoose.Schema({
-     assigned_to: String,
-});
-
 const assetSchema = new mongoose.Schema({
-     basic_asset_details: basicAssetDetailsSchema,
-     asset_measurements_quantity: assetMeasurementsQuantitySchema,
-     asset_components: assetComponentsSchema,
-     asset_assigned_to: assignedToSchema,
-     asset_acquisition: {
-          purchase: purchaseSchema,
-          capitalisation: capitalisationSchema,
-          estimated_completion: estimatedCompletionSchema,
-          ready_for_use: readyForUseSchema,
-          put_to_use: putToUseSchema,
-          future_addition: futureAdditionSchema,
-          documents: [String],
+     asset_description: assetDescriptionSchema,
+     asset_acquisition: assetAcquisitionSchema,
+     cost_details: costDetailsSchema,
+     ownership_details: ownershipDetailsSchema,
+     insurance_warranty_details: {
+          warranty: warrantyDetailsSchema,
+          insurance: insuranceDetailsSchema,
      },
-     cost_details: {
-          acquisition_cost: Number,
-          tax_reimbursed: Number,
-          other_cost_reimbursed: Number,
-          net_cost_of_acquisition: Number,
-     },
-     ownership_details: {
-          lease: leaseSchema,
-          ownership: ownershipSchema,
-          documents: [String],
-     },
-     warranty_details: warrantySchema,
-     insurance_details: insuranceSchema,
      sale_disposal_details: {
           disposal: disposalSchema,
           sale: saleSchema,
      },
-     status_verification_details: statusVerificationSchema,
-     remarks: remarkSchema,
+     status_verification_remarks: statusVerificationRemarksSchema,
 });
 
-const Asset = mongoose.model('Asset', assetSchema);
+const assetModel = mongoose.model('assets', assetSchema);
 
-module.exports = Asset;
-
+export default assetModel;
 /* 
 
 import mongoose from 'mongoose';
@@ -412,8 +424,9 @@ const assetSchema = new mongoose.Schema(
      },
      { timestamps: true }
 );
-
 const assetModel = mongoose.model('assets', assetSchema);
 
 export default assetModel;
+
+
  */
