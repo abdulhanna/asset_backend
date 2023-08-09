@@ -140,6 +140,7 @@ router.put('/:departmentId', isLoggedIn, async (req, res) => {
                // Update location and its departments
                const updatedLocation =
                     await departmentService.updateLocationWithDepartments(
+                         departmentId,
                          locationId,
                          departments,
                          organizationId
