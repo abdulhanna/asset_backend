@@ -139,7 +139,7 @@ const getLocationsByOrganizationId = async (
 const getAllLocations = async () => {
      try {
           return await locationModel
-               .find()
+               .find({ isDeleted: false })
                .populate('assignedUserId', 'email userProfile.name')
                .select('-address -organizationId  -__v')
                .exec();
@@ -160,30 +160,68 @@ const updateLocation = async (
      try {
           const parent = isParent ? null : parentId;
 
-          const location = await locationModel.findById(locationId).exec();
+          const updateObject = {}; // Initialize an empty update object
+
+          // Check each field and add it to the updateObject if it's provided
+          if (name !== undefined) {
+               updateObject.name = name;
+          }
+          if (organizationId !== undefined) {
+               updateObject.organizationId = organizationId;
+          }
+          if (assignedUserId !== undefined) {
+               updateObject.assignedUserId = assignedUserId;
+          }
+          if (address !== undefined) {
+               updateObject.address = address;
+          }
+          if (parent !== undefined) {
+               updateObject.parentId = parent;
+          }
+          if (isParent !== undefined) {
+               updateObject.isParent = isParent;
+          }
+
+          const location = await locationModel
+               .findByIdAndUpdate(
+                    locationId,
+                    updateObject,
+                    { new: true } // To return the updated document
+               )
+               .exec();
 
           if (!location) {
                throw new Error('Location not found');
           }
 
-          location.name = name;
-          location.organizationId = organizationId;
-          location.assignedUserId = assignedUserId;
-          location.address = address;
-          location.parentId = parent;
-          location.isParent = isParent;
-
-          return await location.save();
+          return location;
      } catch (error) {
           throw new Error('Unable to update location');
      }
 };
 
-const deleteLocation = async (locationId) => {
+const deleteLocation = async (locationId, organizationId) => {
      try {
-          await locationModel.findByIdAndDelete(locationId).exec();
+          // Validate if the location exists and is accessible to the admin
+          const location = await locationModel.findOne({
+               _id: locationId,
+               organizationId,
+          });
+
+          if (!location) {
+               return null;
+          }
+
+          // Perform the soft delete
+          location.isDeleted = true;
+          location.deletedAt = new Date();
+
+          // Save the updated location
+          const deletedLocation = await location.save();
+          return deletedLocation;
      } catch (error) {
-          throw new Error('Unable to delete location');
+          console.log(error);
+          throw new Error('Unable to soft delete location');
      }
 };
 

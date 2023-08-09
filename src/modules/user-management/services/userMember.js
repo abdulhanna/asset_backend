@@ -2,7 +2,6 @@ import jwtService from '../../auth/services/jwt-services';
 import emailtemplate from '../../../helpers/send-email';
 import userModel from '../../auth/models/index.js';
 import locationModel from '../../organization/models/locations';
-import bcrypt from 'bcryptjs';
 
 const getMemberByEmail = async (email) => {
      try {
@@ -102,7 +101,7 @@ const updateMember = async (id, data) => {
 
 const getAllMembers = async (parentId, userType) => {
      try {
-          let query = { parentId, isDeleted: false, isDeactivated: false };
+          let query = { parentId, isDeleted: false };
 
           if (userType) {
                query.userType = userType;
@@ -120,50 +119,22 @@ const getAllMembers = async (parentId, userType) => {
      }
 };
 
-const setPassword = async (verificationToken, password) => {
+// Function to get members by roleName and parentId
+const getMembersByRole = async (teamRoleId) => {
      try {
-          // Find the member using the verification token
-          const member = await userModel.findOne({ verificationToken });
+          const query = {
+               isDeleted: false,
+          };
 
-          if (!member) {
-               return { success: false };
+          if (teamRoleId) {
+               query.teamRoleId = teamRoleId;
           }
 
-          // Set the new password
-          // member.password = password;
-          member.password = bcrypt.hashSync(password, 8);
-          member.verificationToken = null;
-          member.is_email_verified = true;
-          await member.save();
-
-          return { success: true };
-     } catch (error) {
-          console.log(error);
-          throw new Error('Failed to set password');
-     }
-};
-
-// Function to get members by roleName and parentId
-const getMembersByRole = async (parentId, roleName) => {
-     try {
           const members = await userModel
-               .find({
-                    parentId,
-               })
-               .populate('teamRoleId', '-_id -permissions ')
+               .find(query)
+               .populate('teamRoleId', '-permissions')
                .select('-password')
                .exec();
-
-          // Filter the members based on the 'roleName' if provided
-          if (roleName) {
-               const filteredMembers = members.filter(
-                    (member) =>
-                         member.teamRoleId &&
-                         member.teamRoleId.roleName === roleName
-               );
-
-               return filteredMembers;
-          }
 
           return members;
      } catch (error) {
@@ -181,12 +152,34 @@ const getMemberById = async (memberId) => {
      }
 };
 
+const deleteUser = async (userId) => {
+     try {
+          // Find the user by ID
+          const user = await userModel.findById(userId);
+
+          if (!user) {
+               return null;
+          }
+
+          // Update the isDeleted field to true and set deletedAt to the current date
+          user.isDeleted = true;
+          user.deletedAt = new Date();
+
+          // Save the updated user
+          const updatedUser = await user.save();
+          return updatedUser;
+     } catch (error) {
+          console.log(error);
+          throw new Error('Unable to delete user');
+     }
+};
+
 export const memberService = {
      createMember,
      updateMember,
      getAllMembers,
-     setPassword,
      getMembersByRole,
      getMemberByEmail,
      getMemberById,
+     deleteUser,
 };

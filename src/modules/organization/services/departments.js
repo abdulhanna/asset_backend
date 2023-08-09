@@ -81,18 +81,18 @@ const isValidDepartments = async (departmentIds) => {
      }
 };
 
-const updateDepartment = async (id, data) => {
-     try {
-          const updatedDepartment = await departmentModel.findByIdAndUpdate(
-               id,
-               data,
-               { new: true } // This option returns the updated document
-          );
-          return updatedDepartment;
-     } catch (error) {
-          throw new Error('Unable to update department');
-     }
-};
+// const updateDepartment = async (id, data) => {
+//      try {
+//           const updatedDepartment = await departmentModel.findByIdAndUpdate(
+//                id,
+//                data,
+//                { new: true } // This option returns the updated document
+//           );
+//           return updatedDepartment;
+//      } catch (error) {
+//           throw new Error('Unable to update department');
+//      }
+// };
 
 const getDepartmentById = async (id) => {
      try {
@@ -179,10 +179,63 @@ const getDepartmentsByLocationAndOrganization = async (
      }
 };
 
+const updateDepartment = async (id, name, chargingType, isDeactivated) => {
+     try {
+          const updatedDepartment = await departmentModel.findByIdAndUpdate(
+               id,
+               {
+                    name,
+                    chargingType,
+                    isDeactivated,
+               },
+               { new: true }
+          );
+
+          return updatedDepartment;
+     } catch (error) {
+          console.log(error);
+          throw new Error('Unable to update department');
+     }
+};
+
+const updateLocationWithDepartments = async (
+     departmentId,
+     locationId,
+     departments,
+     organizationId
+) => {
+     try {
+          const location = await locationModel.findOneAndUpdate(
+               {
+                    _id: locationId,
+                    organizationId,
+                    'departments.departmentId': departmentId,
+               },
+               {
+                    $set: {
+                         'departments.$.departmentAddress':
+                              departments[0].departmentAddress,
+                         'departments.$.contactAddress':
+                              departments[0].contactAddress,
+                         'departments.$.moreInformation':
+                              departments[0].moreInformation,
+                    },
+               },
+               { new: true }
+          );
+
+          return location;
+     } catch (error) {
+          console.log(error);
+          throw new Error('Unable to update location with departments');
+     }
+};
+
 export const departmentService = {
      addDepartmentToDepartmentsCollection,
      addDepartmentsToLocation,
      updateDepartment,
+     updateLocationWithDepartments,
      getDepartmentById,
      getDepartments,
      deleteDepartment,

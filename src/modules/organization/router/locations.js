@@ -7,14 +7,9 @@ const router = express.Router();
 // Create a new location
 router.post('/', isLoggedIn, async (req, res) => {
      try {
-          const {
-               name,
-               organizationId,
-               assignedUserId,
-               address,
-               parentId,
-               isParent,
-          } = req.body;
+          const organizationId = req.user.data.organizationId;
+          const { name, assignedUserId, address, parentId, isParent } =
+               req.body;
 
           const newLocation = await locationService.createLocation(
                name,
@@ -106,15 +101,34 @@ router.put('/:locationId', isLoggedIn, async (req, res) => {
      }
 });
 
-// Delete a location by ID
-router.delete('/:locationId', isLoggedIn, async (req, res) => {
+router.delete('/:id', isLoggedIn, async (req, res) => {
      try {
-          const locationId = req.params.locationId;
-          await locationService.deleteLocation(locationId);
+          const { id } = req.params;
+          const organizationId = req.user.data.organizationId;
 
-          return res.json({ message: 'Location deleted successfully' });
+          const deletedLocation = await locationService.deleteLocation(
+               id,
+               organizationId
+          );
+
+          if (!deletedLocation) {
+               return res.status(404).json({
+                    success: false,
+                    error: 'Location not found or not accessible.',
+               });
+          }
+
+          return res.status(200).json({
+               success: true,
+               msg: 'Location deleted successfully (soft delete)',
+               location: deletedLocation,
+          });
      } catch (error) {
-          return res.status(500).json({ error: 'Unable to delete location' });
+          console.log(error);
+          return res.status(500).json({
+               success: false,
+               error: 'Unable to delete location (soft delete)',
+          });
      }
 });
 
