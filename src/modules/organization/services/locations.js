@@ -160,20 +160,41 @@ const updateLocation = async (
      try {
           const parent = isParent ? null : parentId;
 
-          const location = await locationModel.findById(locationId).exec();
+          const updateObject = {}; // Initialize an empty update object
+
+          // Check each field and add it to the updateObject if it's provided
+          if (name !== undefined) {
+               updateObject.name = name;
+          }
+          if (organizationId !== undefined) {
+               updateObject.organizationId = organizationId;
+          }
+          if (assignedUserId !== undefined) {
+               updateObject.assignedUserId = assignedUserId;
+          }
+          if (address !== undefined) {
+               updateObject.address = address;
+          }
+          if (parent !== undefined) {
+               updateObject.parentId = parent;
+          }
+          if (isParent !== undefined) {
+               updateObject.isParent = isParent;
+          }
+
+          const location = await locationModel
+               .findByIdAndUpdate(
+                    locationId,
+                    updateObject,
+                    { new: true } // To return the updated document
+               )
+               .exec();
 
           if (!location) {
                throw new Error('Location not found');
           }
 
-          location.name = name;
-          location.organizationId = organizationId;
-          location.assignedUserId = assignedUserId;
-          location.address = address;
-          location.parentId = parent;
-          location.isParent = isParent;
-
-          return await location.save();
+          return location;
      } catch (error) {
           throw new Error('Unable to update location');
      }
