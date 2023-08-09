@@ -2,7 +2,6 @@ import jwtService from '../../auth/services/jwt-services';
 import emailtemplate from '../../../helpers/send-email';
 import userModel from '../../auth/models/index.js';
 import locationModel from '../../organization/models/locations';
-import bcrypt from 'bcryptjs';
 
 const getMemberByEmail = async (email) => {
      try {
@@ -120,29 +119,6 @@ const getAllMembers = async (parentId, userType) => {
      }
 };
 
-const setPassword = async (verificationToken, password) => {
-     try {
-          // Find the member using the verification token
-          const member = await userModel.findOne({ verificationToken });
-
-          if (!member) {
-               return { success: false };
-          }
-
-          // Set the new password
-          // member.password = password;
-          member.password = bcrypt.hashSync(password, 8);
-          member.verificationToken = null;
-          member.is_email_verified = true;
-          await member.save();
-
-          return { success: true };
-     } catch (error) {
-          console.log(error);
-          throw new Error('Failed to set password');
-     }
-};
-
 // Function to get members by roleName and parentId
 const getMembersByRole = async (teamRoleId) => {
      try {
@@ -202,7 +178,6 @@ export const memberService = {
      createMember,
      updateMember,
      getAllMembers,
-     setPassword,
      getMembersByRole,
      getMemberByEmail,
      getMemberById,

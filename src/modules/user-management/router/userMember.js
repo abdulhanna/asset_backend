@@ -169,37 +169,6 @@ router.put('/updateMember/:id', upload.single('image'), async (req, res) => {
      }
 });
 
-// Set password for the member using verification token
-router.post('/set-password', async (req, res) => {
-     try {
-          const { verificationToken, password } = req.body;
-
-          // You can handle the verification token validation here
-
-          const result = await memberService.setPassword(
-               verificationToken,
-               password
-          );
-
-          if (result.success) {
-               return res.status(200).json({
-                    success: true,
-                    message: 'Password set successfully',
-               });
-          } else {
-               return res.status(404).json({
-                    success: false,
-                    message: 'Invalid verification token',
-               });
-          }
-     } catch (error) {
-          return res.status(500).json({
-               success: false,
-               error: 'Failed to set password',
-          });
-     }
-});
-
 // Get all members of a superadmin
 router.get('/:parentId', isLoggedIn, async (req, res) => {
      try {
