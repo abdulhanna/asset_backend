@@ -1,49 +1,62 @@
-import express from 'express';
-import { assetGroupService } from '../services/assetGroups.js';
+import { Router } from 'express';
+import { httpHandler } from '@madhouselabs/http-helpers';
+import StatusCodes from 'http-status-codes';
+import assetGroupService  from '../services/assetGroups.js';
 import { isLoggedIn } from '../../auth/router/passport.js';
 
-const router = express.Router();
+const router = Router();
+
 // Create a new asset group
-router.post('/', isLoggedIn, async (req, res) => {
-     try {
+router.post(
+     "/add",
+     isLoggedIn,
+     httpHandler(async (req, res) => {
+          const organizationId = req.user.data.organizationId;
           const {
                name,
                assetCodeId,
                description,
-               groupNestingId,
-               isGroupNesting,
+               parentId
           } = req.body;
 
-          const newAssetGroup = await assetGroupService.createAssetGroup(
-               name,
-               assetCodeId,
-               description,
-               groupNestingId,
-               isGroupNesting
-          );
+      const result = await assetGroupService.createAssetGroup(name, assetCodeId, description, parentId, organizationId);
+      res.status(StatusCodes.CREATED).send(result);
+     })
+   )
 
-          return res.status(201).json(newAssetGroup);
-     } catch (error) {
-          return res
-               .status(500)
-               .json({ error: 'Unable to create asset group' });
-     }
-});
+ 
+   // edit asset group
+router.put(
+     "/edit/:id",
+     isLoggedIn,
+     httpHandler(async (req, res) =>{
+          const organizationId = req.user.data.organizationId;
+          const result = await assetGroupService.editAssetGroup(req.params.id, req.body, organizationId);
+          res.send(result)
+     })
+)   
 
-router.get('/organization/:organizationId', isLoggedIn, async (req, res) => {
-     try {
-          const { organizationId } = req.params;
+// All asset group Hierarchy
+router.get(
+ "/hierarchy",
+ isLoggedIn, 
+httpHandler (async (req, res) => {
+          const organizationId = req.user.data.organizationId;
+          const assetGroups =  await assetGroupService.getAssetGroupsHierarchyByOrganizationId(organizationId);
+               res.send(assetGroups);     
+})
+)
 
-          const assetGroups =
-               await assetGroupService.getAssetGroupsByOrganizationId(
-                    organizationId
-               );
-          return res.json(assetGroups);
-     } catch (error) {
-          return res.status(500).json({
-               error: 'Unable to get asset groups by organizationId and criteria',
-          });
-     }
-});
+// All asset group without Hierarchy
+router.get(
+     "/",
+     isLoggedIn, 
+    httpHandler (async (req, res) => {
+              const organizationId = req.user.data.organizationId;
+              const assetGroups =  await assetGroupService.getAssetGroupsByOrganizationId(organizationId);
+                   res.send(assetGroups);     
+    })
+    )
+
 
 export default router;

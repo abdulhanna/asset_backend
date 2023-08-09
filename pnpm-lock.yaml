@@ -1,4 +1,4 @@
-lockfileVersion: 5.4
+lockfileVersion: '6.0'
 
 specifiers:
   '@babel/core': ^7.22.5
