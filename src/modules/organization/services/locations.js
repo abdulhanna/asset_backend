@@ -171,7 +171,8 @@ const updateLocation = async (
      assignedUserId,
      address,
      parentId,
-     isParent
+     isParent,
+     locationCodeId
 ) => {
      try {
           const parent = isParent ? null : parentId;
@@ -196,6 +197,10 @@ const updateLocation = async (
           }
           if (isParent !== undefined) {
                updateObject.isParent = isParent;
+          }
+
+          if (locationCodeId !== undefined) {
+               updateObject.locationCodeId = locationCodeId;
           }
 
           const location = await locationModel

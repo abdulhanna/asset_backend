@@ -1,6 +1,7 @@
 import express from 'express';
 import { locationService } from '../services/locations.js';
 import { isLoggedIn } from '../../auth/router/passport.js';
+import mongoose from 'mongoose';
 
 const router = express.Router();
 
@@ -46,6 +47,10 @@ router.post('/add', isLoggedIn, async (req, res) => {
           return res.status(500).json({ error: 'Unable to create location' });
      }
 });
+
+const isValidObjectId = (id) => {
+     return mongoose.Types.ObjectId.isValid(id);
+};
 
 // Get a location by ID
 router.get('/:id', isLoggedIn, async (req, res) => {
@@ -94,6 +99,7 @@ router.get('/', isLoggedIn, async (req, res) => {
 });
 
 // Update a location by ID
+// Your existing route setup
 router.put('/edit/:id', isLoggedIn, async (req, res) => {
      try {
           const id = req.params.id;
@@ -104,7 +110,38 @@ router.put('/edit/:id', isLoggedIn, async (req, res) => {
                address,
                parentId,
                isParent,
+               locationCodeId,
           } = req.body;
+
+          // Custom validation for the update permission request
+          if (!isValidObjectId(id)) {
+               return res.status(400).json({
+                    success: false,
+                    error: 'Invalid location ID',
+               });
+          }
+
+          // Check if the provided ID exists
+          const existingLocation = await locationService.getLocationById(id);
+          if (!existingLocation) {
+               return res.status(404).json({ error: 'Location not found' });
+          }
+
+          // Validate locationCodeId if it's provided in the request body
+          if (
+               locationCodeId &&
+               locationCodeId !== existingLocation.locationCodeId
+          ) {
+               const codeExists =
+                    await locationService.checkLocationCodeIdExists(
+                         locationCodeId
+                    );
+               if (codeExists) {
+                    return res
+                         .status(400)
+                         .json({ error: 'Location code already exists' });
+               }
+          }
 
           const updatedLocation = await locationService.updateLocation(
                id,
@@ -113,7 +150,8 @@ router.put('/edit/:id', isLoggedIn, async (req, res) => {
                assignedUserId,
                address,
                parentId,
-               isParent
+               isParent,
+               locationCodeId
           );
 
           return res.status(200).json(updatedLocation);
