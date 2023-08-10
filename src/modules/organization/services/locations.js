@@ -7,8 +7,8 @@ const generateAutomaticCode = () => {
 };
 
 const createLocation = async (
-     locationCodeId,
      codeGenerationType,
+     locationCodeId,
      name,
      organizationId,
      assignedUserId,
@@ -25,8 +25,8 @@ const createLocation = async (
           }
 
           const newLocation = new locationModel({
-               locationCodeId,
                codeGenerationType,
+               locationCodeId,
                name,
                organizationId,
                assignedUserId,

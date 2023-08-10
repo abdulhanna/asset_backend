@@ -4,6 +4,8 @@ const locationSchema = new mongoose.Schema(
      {
           codeGenerationType: {
                type: String,
+               enum: ['auto', 'manual'],
+               default: 'auto',
           },
           locationCodeId: {
                // Auto- Generate
