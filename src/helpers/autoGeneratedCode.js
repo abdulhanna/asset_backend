@@ -4,7 +4,6 @@ const autoCodeGeneration = {}
 
 
   autoCodeGeneration.getdepartmentCode = async(existingCodes, organizationName) => {
- //  Generate and log a unique code
  while (true) {
   const code = Math.floor(Math.random() * 90000) + 10000;
   if (!existingCodes.has(code)) {
@@ -17,12 +16,24 @@ const autoCodeGeneration = {}
 
 
 autoCodeGeneration.getassetGrpCode = async(existingCodes, organizationName) => {
-  //  Generate and log a unique code
   while (true) {
    const code = Math.floor(Math.random() * 90000) + 10000;
    if (!existingCodes.has(code)) {
      existingCodes.add(code);
      const codeId = organizationName+'-'+'ASSETGRP'+code;
+     return codeId;
+   }
+ }
+ }
+
+
+
+ autoCodeGeneration.getlocatinCode = async(existingCodes, organizationName) => {
+  while (true) {
+   const code = Math.floor(Math.random() * 90000) + 10000;
+   if (!existingCodes.has(code)) {
+     existingCodes.add(code);
+     const codeId = organizationName+'-'+'LOC'+code;
      return codeId;
    }
  }
