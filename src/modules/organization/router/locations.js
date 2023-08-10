@@ -106,6 +106,9 @@ router.get('/', isLoggedIn, async (req, res) => {
      }
 });
 
+const isValidObjectId = (id) => {
+     return mongoose.Types.ObjectId.isValid(id);
+};
 // Update a location by ID
 // Your existing route setup
 router.put('/:id', isLoggedIn, async (req, res) => {
@@ -164,6 +167,7 @@ router.put('/:id', isLoggedIn, async (req, res) => {
 
           return res.status(200).json(updatedLocation);
      } catch (error) {
+          console.log(error);
           return res.status(500).json({ error: 'Unable to update location' });
      }
 });
