@@ -21,7 +21,7 @@ assetGroupService.createAssetGroup = async (
       const organizationName = await globalDetails.getOrganizationName(organizationId);
       const existingCodes = new Set();  // Store already generated codes
        // Generate and log a unique code
-      const autoCodeId = await autoCodeGeneration.getdepartmentCode(existingCodes, organizationName);
+      const autoCodeId = await autoCodeGeneration.getassetGrpCode(existingCodes, organizationName);
       const finalassetCodeId = codeGenerationType === 'manual' ? assetCodeId : autoCodeId;
     
      assertEvery(
