@@ -19,15 +19,23 @@ router.post('/add', isLoggedIn, async (req, res) => {
           } = req.body;
 
           // Check if locationCodeId already exists
-          const locationCodeExists =
-               await locationService.checkLocationCodeIdExists(locationCodeId);
-          if (locationCodeExists) {
-               return res.status(400).json({
-                    error: `Location code already exists`,
-               });
-          }
-
           if (!autoCodeGeneration) {
+               if (!locationCodeId) {
+                    return res.status(400).json({
+                         error: `locationCodeId is required when autoCodeGeneration is false`,
+                    });
+               }
+
+               const locationCodeExists =
+                    await locationService.checkLocationCodeIdExists(
+                         locationCodeId
+                    );
+               if (locationCodeExists) {
+                    return res.status(400).json({
+                         error: `Location code already exists`,
+                    });
+               }
+          } else {
                locationCodeId = locationService.generateAutomaticCode();
           }
 
@@ -47,10 +55,6 @@ router.post('/add', isLoggedIn, async (req, res) => {
           return res.status(500).json({ error: 'Unable to create location' });
      }
 });
-
-const isValidObjectId = (id) => {
-     return mongoose.Types.ObjectId.isValid(id);
-};
 
 // Get a location by ID
 router.get('/:id', isLoggedIn, async (req, res) => {
