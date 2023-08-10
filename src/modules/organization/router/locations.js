@@ -18,6 +18,10 @@ router.post('/add', isLoggedIn, async (req, res) => {
                isParent,
           } = req.body;
 
+          // Set default value for autoCodeGeneration if not provided
+          autoCodeGeneration =
+               autoCodeGeneration !== undefined ? autoCodeGeneration : true;
+
           // Check if locationCodeId already exists
           if (!autoCodeGeneration) {
                if (!locationCodeId) {
