@@ -4,11 +4,11 @@ import { isLoggedIn } from '../../auth/router/passport.js';
 
 const router = express.Router();
 
-// Create a new location
 router.post('/add', isLoggedIn, async (req, res) => {
      try {
           const organizationId = req.user.data.organizationId;
-          const {
+          let {
+               codeGenerationType,
                locationCodeId,
                name,
                assignedUserId,
@@ -17,7 +17,12 @@ router.post('/add', isLoggedIn, async (req, res) => {
                isParent,
           } = req.body;
 
+          if (codeGenerationType === 'auto') {
+               locationCodeId = locationService.generateAutomaticCode();
+          }
+
           const newLocation = await locationService.createLocation(
+               codeGenerationType,
                locationCodeId,
                name,
                organizationId,

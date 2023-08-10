@@ -1,7 +1,14 @@
 import { locationModel } from '../models';
 
+const generateAutomaticCode = () => {
+     const prefix = 'LOC';
+     const randomDigits = Math.floor(10000 + Math.random() * 90000);
+     return prefix + randomDigits;
+};
+
 const createLocation = async (
      locationCodeId,
+     codeGenerationType,
      name,
      organizationId,
      assignedUserId,
@@ -19,6 +26,7 @@ const createLocation = async (
 
           const newLocation = new locationModel({
                locationCodeId,
+               codeGenerationType,
                name,
                organizationId,
                assignedUserId,
@@ -29,6 +37,7 @@ const createLocation = async (
 
           return await newLocation.save();
      } catch (error) {
+          console.log(error);
           throw new Error('Unable to create location');
      }
 };
@@ -277,4 +286,5 @@ export const locationService = {
      getAllLocations,
      updateLocation,
      deleteLocation,
+     generateAutomaticCode,
 };
