@@ -17,10 +17,10 @@ authService.doRegister = async (data) => {
      const userType = 'superadmin'; // on comapany onboard default userType will be superadmin
 
      assertEvery(
-          [data.email, data.password, data.confirmPassword],
+          [data.email, data.password, data.confirmPassword, data.acceptedTAndC, data.acceptedPrivacyPolicy],
           createError(
                StatusCodes.BAD_REQUEST,
-               'Invalid Data: [email], [password] and [confirmPassword] fields must exist'
+               'Invalid Data: [email], [password], [confirmPassword], [data.acceptedTAndC] and [data.acceptedPrivacyPolicy] fields must exist'
           )
      );
 
