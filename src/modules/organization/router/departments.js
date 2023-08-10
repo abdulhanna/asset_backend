@@ -10,7 +10,7 @@ router.post('/', isLoggedIn, async (req, res) => {
      try {
           const organizationId = req.user.data.organizationId;
           const {
-               departmentId,
+               departmentCodeId,
                name,
                chargingType,
                isDeactivated,
@@ -19,13 +19,13 @@ router.post('/', isLoggedIn, async (req, res) => {
           } = req.body;
 
           // Declare these variables outside the if block
-          let trimmedDepartmentId;
+          let trimmedDepartmentCodeId;
           let trimmedName;
 
           if (!locationId && !departments) {
                // If both locationId and departments are missing, it means we are creating a master department
                // Trim leading and trailing spaces from departmentId and name
-               trimmedDepartmentId = departmentId.trim();
+               trimmedDepartmentCodeId = departmentCodeId.trim();
                trimmedName = name.trim();
 
                if (!trimmedName) {
@@ -37,7 +37,10 @@ router.post('/', isLoggedIn, async (req, res) => {
 
                const existingDepartmentId = await departmentModel.findOne({
                     departmentId: {
-                         $regex: new RegExp(`^${trimmedDepartmentId}$`, 'i'),
+                         $regex: new RegExp(
+                              `^${trimmedDepartmentCodeId}$`,
+                              'i'
+                         ),
                     },
                     isDeleted: false,
                });
@@ -45,7 +48,7 @@ router.post('/', isLoggedIn, async (req, res) => {
                if (existingDepartmentId) {
                     return res.status(400).json({
                          success: false,
-                         error: `Department '${trimmedDepartmentId}' already exists.`,
+                         error: `Department '${trimmedDepartmentCodeId}' already exists.`,
                     });
                }
 
@@ -64,7 +67,7 @@ router.post('/', isLoggedIn, async (req, res) => {
 
                const departmentData = {
                     organizationId,
-                    departmentId: trimmedDepartmentId,
+                    departmentCodeId: trimmedDepartmentCodeId,
                     name: trimmedName,
                     chargingType,
                     isDeactivated,
