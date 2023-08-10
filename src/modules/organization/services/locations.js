@@ -31,9 +31,9 @@ const createLocation = async (
      }
 };
 
-const getLocationById = async (locationId) => {
+const getLocationById = async (id) => {
      try {
-          return await locationModel.findById(locationId).exec();
+          return await locationModel.findById({ _id: id }).exec();
      } catch (error) {
           throw new Error('Unable to get location');
      }
@@ -149,7 +149,7 @@ const getAllLocations = async () => {
 };
 
 const updateLocation = async (
-     locationId,
+     id,
      name,
      organizationId,
      assignedUserId,
@@ -184,7 +184,7 @@ const updateLocation = async (
 
           const location = await locationModel
                .findByIdAndUpdate(
-                    locationId,
+                    { _id: id },
                     updateObject,
                     { new: true } // To return the updated document
                )
@@ -200,11 +200,11 @@ const updateLocation = async (
      }
 };
 
-const deleteLocation = async (locationId, organizationId) => {
+const deleteLocation = async (id, organizationId) => {
      try {
           // Validate if the location exists and is accessible to the admin
           const location = await locationModel.findOne({
-               _id: locationId,
+               _id: id,
                organizationId,
           });
 

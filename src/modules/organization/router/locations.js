@@ -5,7 +5,7 @@ import { isLoggedIn } from '../../auth/router/passport.js';
 const router = express.Router();
 
 // Create a new location
-router.post('/', isLoggedIn, async (req, res) => {
+router.post('/add', isLoggedIn, async (req, res) => {
      try {
           const organizationId = req.user.data.organizationId;
           const { name, assignedUserId, address, parentId, isParent } =
@@ -27,10 +27,10 @@ router.post('/', isLoggedIn, async (req, res) => {
 });
 
 // Get a location by ID
-router.get('/:locationId', isLoggedIn, async (req, res) => {
+router.get('/:id', isLoggedIn, async (req, res) => {
      try {
-          const locationId = req.params.locationId;
-          const location = await locationService.getLocationById(locationId);
+          const id = req.params.id;
+          const location = await locationService.getLocationById(id);
 
           if (!location) {
                return res.status(404).json({ error: 'Location not found' });
@@ -42,9 +42,9 @@ router.get('/:locationId', isLoggedIn, async (req, res) => {
      }
 });
 
-router.get('/organization/:organizationId', isLoggedIn, async (req, res) => {
+router.get('/v1/hierarchy', isLoggedIn, async (req, res) => {
      try {
-          const { organizationId } = req.params;
+          const organizationId = req.user.data.organizationId;
           const { city, state, country } = req.query;
 
           const locations =
@@ -73,9 +73,9 @@ router.get('/', isLoggedIn, async (req, res) => {
 });
 
 // Update a location by ID
-router.put('/:locationId', isLoggedIn, async (req, res) => {
+router.put('/:id', isLoggedIn, async (req, res) => {
      try {
-          const locationId = req.params.locationId;
+          const id = req.params.id;
           const {
                name,
                organizationId,
@@ -86,7 +86,7 @@ router.put('/:locationId', isLoggedIn, async (req, res) => {
           } = req.body;
 
           const updatedLocation = await locationService.updateLocation(
-               locationId,
+               id,
                name,
                organizationId,
                assignedUserId,
@@ -95,7 +95,7 @@ router.put('/:locationId', isLoggedIn, async (req, res) => {
                isParent
           );
 
-          return res.json(updatedLocation);
+          return res.status(200).json(updatedLocation);
      } catch (error) {
           return res.status(500).json({ error: 'Unable to update location' });
      }
