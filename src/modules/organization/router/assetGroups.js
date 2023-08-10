@@ -14,13 +14,15 @@ router.post(
           const organizationId = req.user.data.organizationId;
           const {
                name,
+               codeGenerationType,
                assetCodeId,
                description,
                parentId
           } = req.body;
 
-      const result = await assetGroupService.createAssetGroup(name, assetCodeId, description, parentId, organizationId);
+      const result = await assetGroupService.createAssetGroup(name, codeGenerationType, assetCodeId, description, parentId, organizationId);
       res.status(StatusCodes.CREATED).send(result);
+    
      })
    )
 
