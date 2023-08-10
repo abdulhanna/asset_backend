@@ -8,10 +8,17 @@ const router = express.Router();
 router.post('/add', isLoggedIn, async (req, res) => {
      try {
           const organizationId = req.user.data.organizationId;
-          const { name, assignedUserId, address, parentId, isParent } =
-               req.body;
+          const {
+               locationCodeId,
+               name,
+               assignedUserId,
+               address,
+               parentId,
+               isParent,
+          } = req.body;
 
           const newLocation = await locationService.createLocation(
+               locationCodeId,
                name,
                organizationId,
                assignedUserId,
@@ -73,7 +80,7 @@ router.get('/', isLoggedIn, async (req, res) => {
 });
 
 // Update a location by ID
-router.put('/:id', isLoggedIn, async (req, res) => {
+router.put('/edit/:id', isLoggedIn, async (req, res) => {
      try {
           const id = req.params.id;
           const {
