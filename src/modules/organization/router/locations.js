@@ -22,9 +22,9 @@ router.post('/add', isLoggedIn, async (req, res) => {
           const locationCodeExists =
                await locationService.checkLocationCodeIdExists(locationCodeId);
           if (locationCodeExists) {
-               return res
-                    .status(400)
-                    .json({ error: 'Location code already exists' });
+               return res.status(400).json({
+                    error: `Location code already exists`,
+               });
           }
 
           if (codeGenerationType === 'auto') {
