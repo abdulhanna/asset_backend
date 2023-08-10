@@ -100,7 +100,7 @@ router.get('/', isLoggedIn, async (req, res) => {
 
 // Update a location by ID
 // Your existing route setup
-router.put('/edit/:id', isLoggedIn, async (req, res) => {
+router.put('/:id', isLoggedIn, async (req, res) => {
      try {
           const id = req.params.id;
           const {
