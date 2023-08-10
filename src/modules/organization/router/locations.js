@@ -9,7 +9,7 @@ router.post('/add', isLoggedIn, async (req, res) => {
      try {
           const organizationId = req.user.data.organizationId;
           let {
-               codeGenerationType,
+               autoCodeGeneration,
                locationCodeId,
                name,
                assignedUserId,
@@ -27,12 +27,12 @@ router.post('/add', isLoggedIn, async (req, res) => {
                });
           }
 
-          if (codeGenerationType === 'auto') {
+          if (!autoCodeGeneration) {
                locationCodeId = locationService.generateAutomaticCode();
           }
 
           const newLocation = await locationService.createLocation(
-               codeGenerationType,
+               autoCodeGeneration,
                locationCodeId,
                name,
                organizationId,

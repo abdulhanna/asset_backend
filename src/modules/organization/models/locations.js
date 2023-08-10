@@ -2,10 +2,9 @@ import mongoose from 'mongoose';
 
 const locationSchema = new mongoose.Schema(
      {
-          codeGenerationType: {
-               type: String,
-               enum: ['auto', 'manual'],
-               default: 'auto',
+          autoCodeGeneration: {
+               type: Boolean,
+               default: true,
           },
           locationCodeId: {
                // Auto- Generate
