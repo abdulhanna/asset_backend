@@ -2,6 +2,10 @@ import mongoose from 'mongoose';
 
 const departmentSchema = new mongoose.Schema(
      {
+          autoCodeGeneration: {
+               type: Boolean,
+               default: true,
+          },
           departmentCodeId: {
                type: String,
                required: false,
