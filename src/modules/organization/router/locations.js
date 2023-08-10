@@ -17,6 +17,15 @@ router.post('/add', isLoggedIn, async (req, res) => {
                isParent,
           } = req.body;
 
+          // Check if locationCodeId already exists
+          const locationCodeExists =
+               await locationService.checkLocationCodeIdExists(locationCodeId);
+          if (locationCodeExists) {
+               return res
+                    .status(400)
+                    .json({ error: 'Location code already exists' });
+          }
+
           if (codeGenerationType === 'auto') {
                locationCodeId = locationService.generateAutomaticCode();
           }

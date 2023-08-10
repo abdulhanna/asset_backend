@@ -6,6 +6,11 @@ const generateAutomaticCode = () => {
      return prefix + randomDigits;
 };
 
+const checkLocationCodeIdExists = async (locationCodeId) => {
+     const existingLocation = await locationModel.findOne({ locationCodeId });
+     return !!existingLocation; // Return true if a location with the given codeId exists, otherwise false
+};
+
 const createLocation = async (
      codeGenerationType,
      locationCodeId,
@@ -287,4 +292,5 @@ export const locationService = {
      updateLocation,
      deleteLocation,
      generateAutomaticCode,
+     checkLocationCodeIdExists,
 };
