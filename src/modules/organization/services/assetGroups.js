@@ -17,13 +17,6 @@ assetGroupService.createAssetGroup = async (
      parentId,
      organizationId
 ) =>{
-
-      const organizationName = await globalDetails.getOrganizationName(organizationId);
-      const existingCodes = new Set();  // Store already generated codes
-       // Generate and log a unique code
-      const autoCodeId = await autoCodeGeneration.getassetGrpCode(existingCodes, organizationName);
-      const finalassetCodeId = codeGenerationType === 'manual' ? assetCodeId : autoCodeId;
-    
      assertEvery(
           [name, autoCodeGeneration, assetCodeId, description],
           createError(
@@ -32,13 +25,20 @@ assetGroupService.createAssetGroup = async (
           )
         );
 
+         if(codeGenerationType === 'manual')
+         {
+           
+         }
+
+
+        const organizationName = await globalDetails.getOrganizationName(organizationId);
+        const finalassetCodeId = codeGenerationType === 'manual' ? assetCodeId : await autoCodeGeneration.getassetGrpCode(organizationName);  
         const existingGroupName = await assetGroupModel.findOne({ 
            name,
            organizationId
       });
         assert(!existingGroupName, createError(StatusCodes.BAD_REQUEST, 'Asset Group name already exists'));
-     //   const addAssetcodeID = (autoCodeGeneration == true) ? 
-       
+      
         const existingGroupCode = await assetGroupModel.findOne({ 
           assetCodeId:finalassetCodeId,
           organizationId:organizationId
