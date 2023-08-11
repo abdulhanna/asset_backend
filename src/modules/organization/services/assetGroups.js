@@ -15,28 +15,23 @@ assetGroupService.createAssetGroup = async (
      assetCodeId,
      description,
      parentId,
-     organizationId
+     organizationId,
 ) =>{
      assertEvery(
-          [name, autoCodeGeneration, assetCodeId, description],
+          [name, codeGenerationType, description],
           createError(
             StatusCodes.BAD_REQUEST,
-            "Invalid Data: [name], [autoCodeGeneration], [assetCodeId] and [description] fields must exist"
+            "Invalid Data: [name], [codeGenerationType] and [description] fields must exist"
           )
         );
 
-         if(codeGenerationType === 'manual')
-         {
-           
-         }
-
-
+         assert(!assetCodeId && codeGenerationType != 'manual', createError(StatusCodes.BAD_REQUEST, "assetCodeId is mandatory"))
         const organizationName = await globalDetails.getOrganizationName(organizationId);
         const finalassetCodeId = codeGenerationType === 'manual' ? assetCodeId : await autoCodeGeneration.getassetGrpCode(organizationName);  
         const existingGroupName = await assetGroupModel.findOne({ 
            name,
            organizationId
-      });
+         });
         assert(!existingGroupName, createError(StatusCodes.BAD_REQUEST, 'Asset Group name already exists'));
       
         const existingGroupCode = await assetGroupModel.findOne({ 
@@ -67,7 +62,6 @@ assetGroupService.createAssetGroup = async (
 
       return savedassetGroup;
 }
-
 
 
 // edit group data
@@ -122,14 +116,30 @@ assetGroupService.editAssetGroup = async (id, data, organizationId)=>{
  return result;
 }
 
-
+////// Get Asset Group By Id ////////////
+assetGroupService.getAssetGroupbyId = async (id) =>{
+     const assetgrpData = await assetGroupModel.findById(id).select({
+          organizationId: 0,
+          isDeleted: 0,
+          deletedAt: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          __v: 0,
+        });
+     assert(assetgrpData, createError(StatusCodes.REQUEST_TIMEOUT, "Request Time out"))
+     return assetgrpData;
+}
 
 ///////// listing by hierarchy ////////////
 assetGroupService.getAssetGroupsHierarchyByOrganizationId = async (organizationId) => {
 
           const assetGroups = await assetGroupModel.find(
-               { organizationId }
+               { organizationId,
+                    isDeleted: false
+               }
                ).select({
+                    isDeleted: 0,
+                    deletedAt: 0,
                     organizationId: 0,
                     __v: 0,
                   });
@@ -174,8 +184,12 @@ assetGroupService.getAssetGroupsHierarchyByOrganizationId = async (organizationI
 //////// listing without hierarchy //////////////
 assetGroupService.getAssetGroupsByOrganizationId = async (organizationId) => {
      const assetGroups = await assetGroupModel.find(
-          { organizationId }
+          { organizationId,
+            isDeleted: false
+          }
           ).select({
+               isDeleted: 0,
+               deletedAt: 0,
                organizationId: 0,
                __v: 0,
              });
@@ -184,5 +198,25 @@ assetGroupService.getAssetGroupsByOrganizationId = async (organizationId) => {
 
 
 }
+
+//////////// delete assetgroup ////////
+assetGroupService.deleteAssetgroup = async (id) => {
+     const assetGroups = await assetGroupModel.updateMany(
+          {$or: [
+               { _id: id },
+               { parentId: id }
+           ]},
+          {$set:{
+               isDeleted: true,
+               deletedAt: Date.now()
+            }},
+             { new: true }
+          )
+             assert(assetGroups, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"))
+             return {"msg":"Asset groups and their associated children have been successfully deleted."}
+} 
+
+
+
 
 export default assetGroupService;
