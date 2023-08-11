@@ -2,8 +2,9 @@
 const autoCodeGeneration = {}
 
 
+const existingCodes = new Set();  // Store already generated codes
 
-  autoCodeGeneration.getdepartmentCode = async(existingCodes, organizationName) => {
+  autoCodeGeneration.getdepartmentCode = async(organizationName) => {
  while (true) {
   const code = Math.floor(Math.random() * 90000) + 10000;
   if (!existingCodes.has(code)) {
@@ -15,7 +16,7 @@ const autoCodeGeneration = {}
 }
 
 
-autoCodeGeneration.getassetGrpCode = async(existingCodes, organizationName) => {
+autoCodeGeneration.getassetGrpCode = async(organizationName) => {
   while (true) {
    const code = Math.floor(Math.random() * 90000) + 10000;
    if (!existingCodes.has(code)) {
@@ -28,7 +29,7 @@ autoCodeGeneration.getassetGrpCode = async(existingCodes, organizationName) => {
 
 
 
- autoCodeGeneration.getlocatinCode = async(existingCodes, organizationName) => {
+ autoCodeGeneration.getlocatinCode = async(organizationName) => {
   while (true) {
    const code = Math.floor(Math.random() * 90000) + 10000;
    if (!existingCodes.has(code)) {
