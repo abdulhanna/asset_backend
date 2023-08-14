@@ -166,7 +166,7 @@ const getAllRoles = async () => {
           //      role.permissions = role.permissions.filter((permission) => {
           //           return permission.removeAccess === false;
           //      });
-          // });g
+          // });
 
           return roles;
      } catch (error) {
@@ -191,10 +191,37 @@ const deleteRoles = async (id) => {
      }
 };
 
+const getAllRolesV2 = async (query) => {
+     try {
+          const roles = await roleDefineModel
+               .find({
+                    ...query,
+                    isDeleted: false,
+                    isDeactivated: false,
+               })
+               .select('-isDeactivated -deletedAt')
+               .populate('addedByUserId', 'email') // Only populate 'email' field from addedByUserId
+               .populate('permissions', 'moduleName read readWrite actions')
+               .exec();
+
+          // Filter out permissions with removeAccess set to true
+          roles.forEach((role) => {
+               role.permissions = role.permissions.filter(
+                    (permission) => !permission.removeAccess
+               );
+          });
+
+          return roles;
+     } catch (error) {
+          throw new Error('Unable to fetch roles');
+     }
+};
+
 export const rolesService = {
      createRole,
      updateRole,
      getAllRoles,
      restoreDefaultPermissions,
      deleteRoles,
+     getAllRolesV2,
 };

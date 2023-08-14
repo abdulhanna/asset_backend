@@ -10,6 +10,9 @@ const router = express.Router();
 router.post('/', isLoggedIn, async (req, res) => {
      try {
           const userId = req.user.data._id;
+          const organizationId = req.user.data.organizationId;
+          const locationId = req.user.data.assignedLocationId;
+
           let { roleName, description, permissions } = req.body;
 
           if (!roleName || roleName.trim() === '') {
@@ -53,13 +56,15 @@ router.post('/', isLoggedIn, async (req, res) => {
                description,
                permissions,
                addedByUserId: userId,
+               organizationId,
+               locationId,
                createdAt: new Date(), // Set createdAt to the current date/time
           };
 
           const role = await rolesService.createRole(roleData);
-          res.status(201).json(role);
+          return res.status(201).json(role);
      } catch (err) {
-          res.status(500).json({ error: 'Unable to create role' });
+          return res.status(500).json({ error: 'Unable to create role' });
      }
 });
 
@@ -114,9 +119,9 @@ router.put('/:roleId', isLoggedIn, async (req, res) => {
                roleId,
                updatedRoleData
           );
-          res.json(updatedRole);
+          return res.json(updatedRole);
      } catch (err) {
-          res.status(500).json({ error: 'Unable to update role' });
+          return res.status(500).json({ error: 'Unable to update role' });
      }
 });
 
@@ -134,9 +139,9 @@ router.put('/:roleId/restoreDefaults', isLoggedIn, async (req, res) => {
           const updatedRole = await rolesService.restoreDefaultPermissions(
                roleId
           );
-          res.json(updatedRole);
+          return res.json(updatedRole);
      } catch (err) {
-          res.status(500).json({ error: 'Unable to update role' });
+          return res.status(500).json({ error: 'Unable to update role' });
      }
 });
 
@@ -145,39 +150,70 @@ router.get('/', isLoggedIn, async (req, res) => {
      try {
           // Retrieve all roles from the database
           const roles = await rolesService.getAllRoles();
-          res.status(200).json(roles);
+          return res.status(200).json(roles);
      } catch (err) {
-          res.status(500).json({ error: 'Unable to fetch roles' });
+          return res.status(500).json({ error: 'Unable to fetch roles' });
+     }
+});
+
+router.get('/v2', isLoggedIn, async (req, res) => {
+     try {
+          // Get filter parameters from query
+          const { organizationId, locationId } = req.query;
+
+          // Create the query based on provided filter parameters
+          const query = {};
+
+          if (organizationId) {
+               query.organizationId = organizationId;
+          }
+
+          // Handle locationId filter
+
+          if (locationId === 'null') {
+               query.locationId = null;
+          } else if (locationId) {
+               query.locationId = locationId;
+          }
+
+          // Get all roles based on the provided filter query
+          const roles = await rolesService.getAllRolesV2(query);
+          return res.status(200).json(roles);
+     } catch (error) {
+          console.log(error);
+          return res.status(500).json({ error: 'Unable to fetch roles' });
      }
 });
 
 router.delete('/:id', async (req, res) => {
-     const { id } = req.params;
+     try {
+          const { id } = req.params;
 
-     if (!isValidObjectId(id)) {
-          res.status(400).json({
-               success: false,
-               error: 'Invalid roles ID',
+          if (!isValidObjectId(id)) {
+               res.status(400).json({
+                    success: false,
+                    error: 'Invalid roles ID',
+               });
+          }
+
+          const existingRole = await roleDefineModel.findById(id);
+          if (!existingRole) {
+               res.status(404).json({
+                    success: false,
+                    error: 'roleName not found',
+               });
+          }
+
+          const deleteRoles = await rolesService.deleteRoles(id);
+
+          return res.status(200).json({
+               success: true,
+               msg: 'Roles deleted successfully',
+               deleteRoles,
           });
+     } catch (error) {
+          return res.status(500).json({ error: 'Unable to delete roles' });
      }
-
-     const existingRole = await roleDefineModel.findById(id);
-     if (!existingRole) {
-          res.status(404).json({
-               success: false,
-               error: 'roleName not found',
-          });
-     }
-
-     const deleteRoles = await rolesService.deleteRoles(id);
-
-     res.status(200).json({
-          success: true,
-          msg: 'Roles deleted successfully',
-          deleteRoles,
-     });
-
-     //
 });
 
 export default router;

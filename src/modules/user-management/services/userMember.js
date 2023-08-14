@@ -1,14 +1,56 @@
 import jwtService from '../../auth/services/jwt-services';
 import emailtemplate from '../../../helpers/send-email';
 import userModel from '../../auth/models/index.js';
+import locationModel from '../../organization/models/locations';
+
+const getMemberByEmail = async (email) => {
+     try {
+          const member = await userModel.findOne({ email });
+          return member;
+     } catch (error) {
+          console.log(error);
+          throw new Error('Failed to get member by email');
+     }
+};
 
 const createMember = async (userData) => {
      try {
+          let dashboardPermission = null;
+
+          if (userData.role === 'superadmin') {
+               if (userData.userType === 'team') {
+                    dashboardPermission = 'superadmin_dashboard';
+               } else if (userData.userType === 'admin') {
+                    dashboardPermission = 'admin_dashboard';
+               }
+          } else if (userData.role === 'root') {
+               dashboardPermission = 'root_dashboard';
+          } else {
+               dashboardPermission = 'admin_dashboard';
+          }
+
           // Generate a verification token
           const verificationTokenPayload = await jwtService.generatePair(
                userData.email
           );
-          const verificationToken = verificationTokenPayload.access_token;
+          const verificationToken = verificationTokenPayload;
+
+          // Save the member with the verification token to the database
+          const member = new userModel({
+               email: userData.email,
+               password: userData.password,
+               userProfile: {
+                    ...userData.userProfile,
+                    organizationId: userData.organizationId,
+               },
+               teamRoleId: userData.teamRoleId,
+               parentId: userData.parentId,
+               dashboardPermission: dashboardPermission,
+               verificationToken: verificationToken,
+               userType: userData.userType,
+          });
+
+          const savedMember = await member.save();
 
           // Send the invitation email to the member
           await emailtemplate.sendInvitationEmail(
@@ -16,17 +58,19 @@ const createMember = async (userData) => {
                verificationToken
           );
 
-          // Save the member with the verification token to the database
-          const member = new userModel({
-               email: userData.email,
-               password: userData.password,
-               userProfile: userData.userProfile,
-               teamrole: userData.teamrole,
-               parentId: userData.parentId,
-               verificationToken: verificationToken,
-          });
+          // For assignedLocationId
+          if (userData.locationId) {
+               // Find the location by ID
+               const location = await locationModel.findById(
+                    userData.locationId
+               );
 
-          const savedMember = await member.save();
+               if (location) {
+                    // Push the current member's ID into the assignedUserId array of the location
+                    location.assignedUserId.push(savedMember._id);
+                    await location.save();
+               }
+          }
 
           return savedMember;
      } catch (error) {
@@ -55,11 +99,17 @@ const updateMember = async (id, data) => {
      }
 };
 
-const getAllMembers = async (parentId) => {
+const getAllMembers = async (parentId, userType) => {
      try {
+          let query = { parentId, isDeleted: false };
+
+          if (userType) {
+               query.userType = userType;
+          }
+
           const members = await userModel
-               .find({ parentId, isDeleted: false, isDeactivated: false })
-               .populate('teamrole', 'roleName')
+               .find(query)
+               .populate('teamRoleId', 'roleName')
                .select('-deletedAt');
 
           return members;
@@ -69,48 +119,22 @@ const getAllMembers = async (parentId) => {
      }
 };
 
-const setPassword = async (verificationToken, password) => {
+// Function to get members by roleName and parentId
+const getMembersByRole = async (teamRoleId) => {
      try {
-          // Find the member using the verification token
-          const member = await userModel.findOne({ verificationToken });
+          const query = {
+               isDeleted: false,
+          };
 
-          if (!member) {
-               return { success: false };
+          if (teamRoleId) {
+               query.teamRoleId = teamRoleId;
           }
 
-          // Set the new password
-          member.password = password;
-          member.verificationToken = null;
-          await member.save();
-
-          return { success: true };
-     } catch (error) {
-          console.log(error);
-          throw new Error('Failed to set password');
-     }
-};
-
-// Function to get members by roleName and parentId
-const getMembersByRole = async (parentId, roleName) => {
-     try {
           const members = await userModel
-               .find({
-                    parentId,
-               })
-               .populate('teamrole', '-_id -permissions ')
+               .find(query)
+               .populate('teamRoleId', '-permissions')
                .select('-password')
                .exec();
-
-          // Filter the members based on the 'roleName' if provided
-          if (roleName) {
-               const filteredMembers = members.filter(
-                    (member) =>
-                         member.teamrole &&
-                         member.teamrole.roleName === roleName
-               );
-
-               return filteredMembers;
-          }
 
           return members;
      } catch (error) {
@@ -118,10 +142,44 @@ const getMembersByRole = async (parentId, roleName) => {
      }
 };
 
+const getMemberById = async (memberId) => {
+     try {
+          const member = await userModel.findById(memberId);
+          return member;
+     } catch (error) {
+          console.log(error);
+          throw new Error('Failed to get member by ID');
+     }
+};
+
+const deleteUser = async (userId) => {
+     try {
+          // Find the user by ID
+          const user = await userModel.findById(userId);
+
+          if (!user) {
+               return null;
+          }
+
+          // Update the isDeleted field to true and set deletedAt to the current date
+          user.isDeleted = true;
+          user.deletedAt = new Date();
+
+          // Save the updated user
+          const updatedUser = await user.save();
+          return updatedUser;
+     } catch (error) {
+          console.log(error);
+          throw new Error('Unable to delete user');
+     }
+};
+
 export const memberService = {
      createMember,
      updateMember,
      getAllMembers,
-     setPassword,
      getMembersByRole,
+     getMemberByEmail,
+     getMemberById,
+     deleteUser,
 };

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import bcrypt from "bcryptjs";
+import bcrypt from 'bcryptjs';
 const userSchema = new mongoose.Schema({
      email: {
           type: String,
@@ -18,10 +18,22 @@ const userSchema = new mongoose.Schema({
           type: String,
           enum: ['root', 'superadmin'],
      },
-     teamrole: {
+     userType: {
+          // for handling user Management module
+          type: String,
+          enum: ['root', 'superadmin', 'admin', 'team'],
+          default: 'superadmin',
+     },
+     teamRoleId: {
+          // role for all other users except than root and superadmin
           type: mongoose.Schema.Types.ObjectId,
           ref: 'roles',
           default: null,
+     },
+     dashboardPermission: {
+          type: String,
+          enum: ['root_dashboard', 'superadmin_dashboard', 'admin_dashboard'],
+          required: true,
      },
      token: {
           type: String,
@@ -31,7 +43,7 @@ const userSchema = new mongoose.Schema({
           type: String,
           default: null,
      },
-     companyProfileToken: {
+     setPasswordToken: {
           type: String,
           default: null,
      },
@@ -57,13 +69,16 @@ const userSchema = new mongoose.Schema({
                     type: mongoose.Schema.Types.ObjectId,
                     ref: 'organizations',
                },
-               userIdentificationNo: {
+               userCodeId: {
                     type: String,
                },
                name: {
                     type: String,
                },
                profileImg: {
+                    type: String,
+               },
+               profileImgPublicId: {
                     type: String,
                },
                phone: {
@@ -102,6 +117,14 @@ const userSchema = new mongoose.Schema({
           type: Boolean,
           default: false,
      },
+     acceptedTAndC:{
+          type: Boolean,
+          default: false
+     },
+     acceptedPrivacyPolicy:{
+          type: Boolean,
+          default: false
+     },
      isDeleted: {
           type: Boolean,
           default: false,
@@ -129,20 +152,26 @@ userSchema.index({ email: true });
 const userModel = mongoose.model('users', userSchema);
 export default userModel;
 
-userModel.findOne({role:"root"},(findErr,findRes)=>{
-     if(findErr){console.log("default admin creation error")}
-     else if(findRes){console.log("Root user already exist")}
-     else{
-       let obj = {
-         email:"root@finbit.com",
-         role:"root",
-         password:bcrypt.hashSync("finbit",10),
-         is_email_verified: true,
-         createdAt: Date.now()
-        };
-        userModel.create(obj,(error,result)=>{
-          if(error){console.log("default admin creation error")}
-          console.log("default root user created", result);
-        })  
+userModel.findOne({ role: 'root' }, (findErr, findRes) => {
+     if (findErr) {
+          console.log('default admin creation error');
+     } else if (findRes) {
+          console.log('Root user already exist');
+     } else {
+          let obj = {
+               email: 'root@finbit.com',
+               role: 'root',
+               userType: 'root',
+               dashboardPermission: 'root_dashboard',
+               password: bcrypt.hashSync('finbit', 10),
+               is_email_verified: true,
+               createdAt: Date.now(),
+          };
+          userModel.create(obj, (error, result) => {
+               if (error) {
+                    console.log('default admin creation error');
+               }
+               console.log('default root user created', result);
+          });
      }
-   })
+});

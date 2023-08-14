@@ -34,7 +34,7 @@ const fieldSchema = new mongoose.Schema(
 );
 
 const fieldManagementSchema = new mongoose.Schema({
-     name: {
+     groupName: {
           type: String,
           required: true,
           unique: true,
@@ -51,8 +51,17 @@ const fieldManagementSchema = new mongoose.Schema({
      },
 });
 
+// const fieldManagementSchema = new mongoose.Schema({
+//      groupName: {
+//           type: String,
+//           required: true,
+//           unique: true,
+//      },
+//      fields: [fieldSchema], // Directly include the fieldSchema as an array
+// });
+
 const fieldManagementModel = mongoose.model(
-     'field_management',
+     'fieldmanagements',
      fieldManagementSchema
 );
 
