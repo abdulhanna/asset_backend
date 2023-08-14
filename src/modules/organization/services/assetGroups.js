@@ -143,8 +143,6 @@ assetGroupService.getAssetGroupsHierarchyByOrganizationId = async (organizationI
                     organizationId: 0,
                     __v: 0,
                   });
-              
-
           assert(assetGroups, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"))
           // Function to convert the asset groups into a hierarchical structure
           const convertToHierarchy = (nodes) => {

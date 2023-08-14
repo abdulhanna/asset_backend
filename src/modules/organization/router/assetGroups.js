@@ -39,7 +39,7 @@ router.put(
 
 // get assetGrp by Id
 router.get(
- "/:id",
+ "/data/:id",
  isLoggedIn,
  httpHandler (async (req, res) => {
      const id = req.params.id;
