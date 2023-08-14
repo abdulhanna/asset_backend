@@ -15,6 +15,10 @@ const organizationSchema = new mongoose.Schema(
                type: String,
                required: true,
           },
+          organizationType: {
+               type: String,
+               required: true,
+          },
           pan: {
                type: String,
                default: null,
@@ -48,6 +52,11 @@ const organizationSchema = new mongoose.Schema(
                          type: String,
                     },
                },
+          },
+          addedByUserId: {
+               type: mongoose.Schema.Types.ObjectId,
+               ref: 'users',
+               required: true
           },
           isDeleted: {
                type: Boolean,
