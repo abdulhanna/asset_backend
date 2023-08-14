@@ -81,7 +81,7 @@ authService.verifyUser = async (verificationToken) => {
      }
  
        await jwtService.verifyAccessToken(verificationToken);
-       const getUser = await userModel.findByIdAndUpdate({verificationToken});
+       const getUser = await userModel.findOne({verificationToken});
        if(getUser.role == 'superadmin')
        {
         const verifyEmail = await userModel.findOneAndUpdate(

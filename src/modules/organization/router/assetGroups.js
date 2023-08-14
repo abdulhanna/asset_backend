@@ -19,15 +19,13 @@ router.post(
                description,
                parentId
           } = req.body;
-
       const result = await assetGroupService.createAssetGroup(name, codeGenerationType, assetCodeId, description, parentId, organizationId);
       res.status(StatusCodes.CREATED).send(result);
     
      })
    )
-
  
-   // edit asset group
+// edit asset group
 router.put(
      "/edit/:id",
      isLoggedIn,
@@ -37,6 +35,19 @@ router.put(
           res.send(result)
      })
 )   
+
+
+// get assetGrp by Id
+router.get(
+ "/data/:id",
+ isLoggedIn,
+ httpHandler (async (req, res) => {
+     const id = req.params.id;
+     const result = await assetGroupService.getAssetGroupbyId(id);
+     res.send(result)
+ })    
+)
+
 
 // All asset group Hierarchy
 router.get(
@@ -59,6 +70,19 @@ router.get(
                    res.send(assetGroups);     
     })
     )
+
+
+
+  // Delete asset group
+  router.delete(
+     "/:id",
+     isLoggedIn,
+     httpHandler (async (req, res) => {
+          const id = req.params.id;
+          const result = await assetGroupService.deleteAssetgroup(id)
+          res.send(result)
+     })
+  )
 
 
 export default router;
