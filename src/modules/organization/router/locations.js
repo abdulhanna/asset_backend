@@ -45,10 +45,10 @@ router.post('/add', isLoggedIn, async (req, res) => {
                     organizationId
                );
                const finalLocationCodeId =
-                    autoCodeGeneration.getlocatinCode(organizationName);
+                    await autoCodeGeneration.getlocatinCode(organizationName);
 
                // locationCodeId = locationService.generateAutomaticCode();
-               locationCodeId = await finalLocationCodeId;
+               locationCodeId = finalLocationCodeId;
           }
 
           const newLocation = await locationService.createLocation(
