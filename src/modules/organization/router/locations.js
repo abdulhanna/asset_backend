@@ -9,7 +9,7 @@ router.post('/add', isLoggedIn, async (req, res) => {
      try {
           const organizationId = req.user.data.organizationId;
           let {
-               autoCodeGeneration,
+               codeGenerationType,
                locationCodeId,
                name,
                assignedUserId,
@@ -18,18 +18,17 @@ router.post('/add', isLoggedIn, async (req, res) => {
                isParent,
           } = req.body;
 
-          // Set default value for autoCodeGeneration if not provided
-          autoCodeGeneration =
-               autoCodeGeneration !== undefined ? autoCodeGeneration : true;
+          // Set default value for codeGenerationType if not provided
+          codeGenerationType = codeGenerationType || 'auto'; // Default to "auto"
 
           // Check if locationCodeId already exists
-          if (!autoCodeGeneration) {
-               if (!locationCodeId) {
-                    return res.status(400).json({
-                         error: 'locationCodeId is required when autoCodeGeneration is false',
-                    });
-               }
+          if (codeGenerationType === 'manual' && !locationCodeId) {
+               return res.status(400).json({
+                    error: 'locationCodeId is required when codeGenerationType is manual',
+               });
+          }
 
+          if (codeGenerationType === 'manual') {
                const locationCodeExists =
                     await locationService.checkLocationCodeIdExists(
                          locationCodeId
@@ -44,7 +43,7 @@ router.post('/add', isLoggedIn, async (req, res) => {
           }
 
           const newLocation = await locationService.createLocation(
-               autoCodeGeneration,
+               codeGenerationType,
                locationCodeId,
                name,
                organizationId,

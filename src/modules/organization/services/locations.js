@@ -12,7 +12,7 @@ const checkLocationCodeIdExists = async (locationCodeId) => {
 };
 
 const createLocation = async (
-     autoCodeGeneration,
+     codeGenerationType,
      locationCodeId,
      name,
      organizationId,
@@ -30,7 +30,7 @@ const createLocation = async (
           }
 
           const newLocation = new locationModel({
-               autoCodeGeneration,
+               codeGenerationType,
                locationCodeId,
                name,
                organizationId,
