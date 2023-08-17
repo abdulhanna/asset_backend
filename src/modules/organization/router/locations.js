@@ -8,8 +8,40 @@ const router = express.Router();
 router.post('/', isLoggedIn, async (req, res) => {
      try {
           const organizationId = req.user.data.organizationId;
-          const { name, assignedUserId, address, parentId, isParent } =
-               req.body;
+          let {
+               autoCodeGeneration,
+               locationCodeId,
+               name,
+               assignedUserId,
+               address,
+               parentId,
+               isParent,
+          } = req.body;
+
+          // Set default value for autoCodeGeneration if not provided
+          autoCodeGeneration =
+               autoCodeGeneration !== undefined ? autoCodeGeneration : true;
+
+          // Check if locationCodeId already exists
+          if (!autoCodeGeneration) {
+               if (!locationCodeId) {
+                    return res.status(400).json({
+                         error: 'locationCodeId is required when autoCodeGeneration is false',
+                    });
+               }
+
+               const locationCodeExists =
+                    await locationService.checkLocationCodeIdExists(
+                         locationCodeId
+                    );
+               if (locationCodeExists) {
+                    return res.status(400).json({
+                         error: `Location code already exists`,
+                    });
+               }
+          } else {
+               locationCodeId = locationService.generateAutomaticCode();
+          }
 
           const newLocation = await locationService.createLocation(
                name,

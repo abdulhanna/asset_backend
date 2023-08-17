@@ -12,6 +12,19 @@ const addDepartmentToDepartmentsCollection = async (data) => {
      }
 };
 
+const checkDepartmentCodeExists = async (trimmedDepartmentCodeId) => {
+     const existingDepartment = await departmentModel.findOne({
+          trimmedDepartmentCodeId,
+     });
+     return !!existingDepartment; // Return true if a location with the given codeId exists, otherwise false
+};
+
+const generateAutomaticCode = () => {
+     const prefix = 'LOC';
+     const randomDigits = Math.floor(10000 + Math.random() * 90000);
+     return prefix + randomDigits;
+};
+
 const addDepartmentsToLocation = async (
      locationId,
      departments,
@@ -242,4 +255,6 @@ export const departmentService = {
      getDepartmentsByOrganizationId,
      getDepartmentsByLocationAndOrganization,
      isValidDepartments,
+     checkDepartmentCodeExists,
+     generateAutomaticCode,
 };
