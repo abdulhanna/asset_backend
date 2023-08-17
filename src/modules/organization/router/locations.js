@@ -26,7 +26,7 @@ router.post('/add', isLoggedIn, async (req, res) => {
           if (!autoCodeGeneration) {
                if (!locationCodeId) {
                     return res.status(400).json({
-                         error: `locationCodeId is required when autoCodeGeneration is false`,
+                         error: 'locationCodeId is required when autoCodeGeneration is false',
                     });
                }
 

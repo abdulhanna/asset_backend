@@ -121,6 +121,34 @@ const locationSchema = new mongoose.Schema(
                     },
                },
           ],
+          assetgroups: [
+               {
+                    assetgroupId: {
+                         type: mongoose.Schema.Types.ObjectId,
+                         ref: 'assetgroups',
+                    },
+                    createdAt: {
+                         type: Date,
+                         default: null,
+                    },
+                    updatedAt: {
+                         type: Date,
+                         default: null,
+                    },
+                    isDeleted: {
+                         type: Boolean,
+                         default: false,
+                    },
+                    isDeactivated: {
+                         type: Boolean,
+                         default: false,
+                    },
+                    deletedAt: {
+                         type: Date,
+                         default: null,
+                    },
+               },
+          ],
           createdAt: {
                type: Date,
                default: null,

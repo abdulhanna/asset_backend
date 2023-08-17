@@ -10,6 +10,8 @@ router.post('/', isLoggedIn, async (req, res) => {
      try {
           const organizationId = req.user.data.organizationId;
           const {
+               departmentId,
+               autoCodeGeneration,
                departmentCodeId,
                name,
                chargingType,
@@ -18,25 +20,41 @@ router.post('/', isLoggedIn, async (req, res) => {
                departments,
           } = req.body;
 
-          // Declare these variables outside the if block
-          let trimmedDepartmentCodeId;
-          let trimmedName;
+          const ERROR_DEPARTMENT_NAME_EMPTY =
+               'Department name cannot be empty. Please provide a valid name.';
+          const ERROR_DUPLICATE_DEPARTMENT_CODE =
+               'Department code already exists';
+          const ERROR_DUPLICATE_DEPARTMENT_NAME =
+               'Department with name already exists';
+          const ERROR_INVALID_REQUEST =
+               'Invalid request. Either provide both locationId and departments or none.';
 
           if (!locationId && !departments) {
-               // If both locationId and departments are missing, it means we are creating a master department
-               // Trim leading and trailing spaces from departmentId and name
-               trimmedDepartmentCodeId = departmentCodeId.trim();
-               trimmedName = name.trim();
+               autoCodeGeneration =
+                    autoCodeGeneration !== undefined
+                         ? autoCodeGeneration
+                         : true;
+
+               let trimmedDepartmentCodeId = departmentCodeId
+                    ? departmentCodeId.trim()
+                    : '';
+               let trimmedName = name.trim();
+
+               if (!autoCodeGeneration && !trimmedDepartmentCodeId) {
+                    return res.status(400).json({
+                         error: 'departmentCodeId is required when autoCodeGeneration is false',
+                    });
+               }
 
                if (!trimmedName) {
                     return res.status(400).json({
                          success: false,
-                         error: 'Department name cannot be empty. Please provide a valid name.',
+                         error: ERROR_DEPARTMENT_NAME_EMPTY,
                     });
                }
 
                const existingDepartmentId = await departmentModel.findOne({
-                    departmentId: {
+                    departmentCodeId: {
                          $regex: new RegExp(
                               `^${trimmedDepartmentCodeId}$`,
                               'i'
@@ -48,11 +66,10 @@ router.post('/', isLoggedIn, async (req, res) => {
                if (existingDepartmentId) {
                     return res.status(400).json({
                          success: false,
-                         error: `Department '${trimmedDepartmentCodeId}' already exists.`,
+                         error: ERROR_DUPLICATE_DEPARTMENT_CODE,
                     });
                }
 
-               // Check if name is duplicate (case-insensitive match)
                const existingName = await departmentModel.findOne({
                     name: { $regex: new RegExp(`^${trimmedName}$`, 'i') },
                     isDeleted: false,
@@ -61,13 +78,17 @@ router.post('/', isLoggedIn, async (req, res) => {
                if (existingName) {
                     return res.status(400).json({
                          success: false,
-                         error: `Department with name '${trimmedName}' already exists.`,
+                         error: ERROR_DUPLICATE_DEPARTMENT_NAME,
                     });
                }
 
+               departmentCodeId = autoCodeGeneration
+                    ? departmentService.generateAutomaticCode()
+                    : trimmedDepartmentCodeId;
+
                const departmentData = {
                     organizationId,
-                    departmentCodeId: trimmedDepartmentCodeId,
+                    departmentCodeId,
                     name: trimmedName,
                     chargingType,
                     isDeactivated,
@@ -85,7 +106,6 @@ router.post('/', isLoggedIn, async (req, res) => {
                     department: addDepartment,
                });
           } else if (locationId && departments) {
-               // If both locationId and departments are present, it means we are assigning departments to a location
                try {
                     const updatedLocation =
                          await departmentService.addDepartmentsToLocation(
@@ -112,11 +132,9 @@ router.post('/', isLoggedIn, async (req, res) => {
                     });
                }
           } else {
-               // Handle the case where either locationId or departments is missing
-               return res.status(400).json({
-                    success: false,
-                    error: 'Invalid request. Either provide both locationId and departments or none.',
-               });
+               return res
+                    .status(400)
+                    .json({ success: false, error: ERROR_INVALID_REQUEST });
           }
      } catch (error) {
           console.log(error);
