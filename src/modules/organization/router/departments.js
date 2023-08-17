@@ -10,7 +10,6 @@ router.post('/', isLoggedIn, async (req, res) => {
      try {
           const organizationId = req.user.data.organizationId;
           const {
-               departmentId,
                autoCodeGeneration,
                departmentCodeId,
                name,
