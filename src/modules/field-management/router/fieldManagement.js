@@ -40,14 +40,13 @@ router.put('/:groupId/add-subgroups', isLoggedIn, async (req, res) => {
 });
 
 // Update fields within a subgroup by subgroup ID
-router.put('/:groupId/subgroups/:subgroupId', isLoggedIn, async (req, res) => {
+router.put('/subgroups/:subgroupId', isLoggedIn, async (req, res) => {
      try {
-          const { groupId, subgroupId } = req.params;
+          const { subgroupId } = req.params;
           const { fields } = req.body;
 
           const updatedFieldGroup =
                await fieldManagementService.updateSubgroupFields(
-                    groupId,
                     subgroupId,
                     fields
                );

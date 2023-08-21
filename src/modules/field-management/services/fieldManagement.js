@@ -21,9 +21,9 @@ const updateSubgroups = async (groupId, subgroups) => {
      );
 };
 
-const updateSubgroupFields = async (groupId, subgroupId, fields) => {
+const updateSubgroupFields = async (subgroupId, fields) => {
      const updatedSubgroup = await fieldManagementModel.findOneAndUpdate(
-          { _id: groupId, 'subgroups._id': subgroupId },
+          { 'subgroups._id': subgroupId },
           { $set: { 'subgroups.$.fields': fields } },
           { new: true }
      );
