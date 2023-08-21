@@ -4,23 +4,23 @@ import { isLoggedIn } from '../../auth/router/passport.js';
 
 const router = express.Router();
 
-// Create multiple groups
+// Create multiple groups with only group names
 router.post('/add-groups', isLoggedIn, async (req, res) => {
      try {
-          const { groupName } = req.body;
+          const { groupNames } = req.body; // groupNames should be an array of strings
 
-          if (Array.isArray(groupName)) {
+          if (Array.isArray(groupNames)) {
                const newFieldGroups =
                     await fieldManagementService.createMultipleFieldGroups(
-                         groupName
+                         groupNames
                     );
                return res.status(201).json(newFieldGroups);
           }
      } catch (error) {
-          console.log(error);
+          console.error(error);
           return res
                .status(500)
-               .json({ error: 'Unable to create field group' });
+               .json({ error: 'Unable to create field groups' });
      }
 });
 

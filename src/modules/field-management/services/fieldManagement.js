@@ -6,13 +6,11 @@ const createMultipleFieldGroups = async (groupNames) => {
           groupNames.map(async (groupName) => {
                return await fieldManagementModel.create({
                     groupName: groupName,
-                    fields: [],
                });
           })
      );
      return newFieldGroups;
 };
-
 const updateSubgroups = async (groupId, subgroups) => {
      return await fieldManagementModel.findByIdAndUpdate(
           groupId,
