@@ -131,17 +131,9 @@ const locationSchema = new mongoose.Schema(
                          type: Date,
                          default: null,
                     },
-                    isDeleted: {
-                         type: Boolean,
-                         default: false,
-                    },
                     isDeactivated: {
                          type: Boolean,
                          default: false,
-                    },
-                    deletedAt: {
-                         type: Date,
-                         default: null,
                     },
                },
           ],

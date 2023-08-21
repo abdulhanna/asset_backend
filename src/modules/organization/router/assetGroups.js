@@ -65,9 +65,15 @@ router.get(
      "/",
      isLoggedIn, 
     httpHandler (async (req, res) => {
+        const page = parseInt(req.query.page) || 1; // Current page (default: 1)
+        const limit = parseInt(req.query.limit) || 10; // Number of items per page (default: 10)
+        const sortBy = req.query.sortBy || 'name'; // Field to sort by (default: name)
+        const sortOrder = req.query.sortOrder === 'desc' ? -1 : 1; // Sorting order (default: ascending)
+
               const organizationId = req.user.data.organizationId;
-              const assetGroups =  await assetGroupService.getAssetGroupsByOrganizationId(organizationId);
-                   res.send(assetGroups);     
+              const  assignedLocationId =  req.user.data.assignedLocationId;
+              const assetGroups =  await assetGroupService.getAssetGroupsByOrganizationId(organizationId, assignedLocationId, page, limit, sortBy, sortOrder);
+              res.send(assetGroups);
     })
     )
 
