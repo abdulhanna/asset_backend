@@ -1,4 +1,4 @@
-import { fieldManagementModel } from '../models';
+import fieldManagementModel from '../models/fieldManagement';
 import mongoose from 'mongoose';
 
 const createMultipleFieldGroups = async (groupNames) => {
@@ -6,25 +6,28 @@ const createMultipleFieldGroups = async (groupNames) => {
           groupNames.map(async (groupName) => {
                return await fieldManagementModel.create({
                     groupName: groupName,
+                    subgroups: [], // Initialize with an empty array of subgroups
                });
           })
      );
      return newFieldGroups;
 };
+
 const updateSubgroups = async (groupId, subgroups) => {
      return await fieldManagementModel.findByIdAndUpdate(
           groupId,
-          { subgroups: subgroups },
+          { subgroups: subgroups || [] },
           { new: true }
      );
 };
 
-const addFieldToGroup = async (groupId, fields) => {
-     return await fieldManagementModel.findOneAndUpdate(
-          { _id: groupId },
-          { $push: { fields } },
+const updateSubgroupFields = async (groupId, subgroupId, fields) => {
+     const updatedSubgroup = await fieldManagementModel.findOneAndUpdate(
+          { _id: groupId, 'subgroups._id': subgroupId },
+          { $set: { 'subgroups.$.fields': fields } },
           { new: true }
      );
+     return updatedSubgroup;
 };
 
 const getFieldGroups = async () => {
@@ -157,11 +160,11 @@ const deleteGroupAndFieldsById = async (groupId) => {
 
 export const fieldManagementService = {
      createMultipleFieldGroups,
-     addFieldToGroup,
      getFieldGroupsById,
      getFieldGroups,
      addFieldToGroupV2,
      deleteFieldById,
      deleteGroupAndFieldsById,
      updateSubgroups,
+     updateSubgroupFields,
 };

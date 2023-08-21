@@ -7,7 +7,7 @@ const router = express.Router();
 // Create multiple groups with only group names
 router.post('/add-groups', isLoggedIn, async (req, res) => {
      try {
-          const { groupNames } = req.body; // groupNames should be an array of strings
+          const { groupNames } = req.body;
 
           if (Array.isArray(groupNames)) {
                const newFieldGroups =
@@ -25,7 +25,7 @@ router.post('/add-groups', isLoggedIn, async (req, res) => {
 });
 
 // Update subgroups within a group
-router.put('/:groupId/update-subgroups', isLoggedIn, async (req, res) => {
+router.put('/:groupId/add-subgroups', isLoggedIn, async (req, res) => {
      try {
           const { groupId } = req.params;
           const { subgroups } = req.body;
@@ -39,19 +39,24 @@ router.put('/:groupId/update-subgroups', isLoggedIn, async (req, res) => {
      }
 });
 
-router.put('/:groupId/add-fields', isLoggedIn, async (req, res) => {
+// Update fields within a subgroup by subgroup ID
+router.put('/:groupId/subgroups/:subgroupId', isLoggedIn, async (req, res) => {
      try {
-          const { groupId } = req.params;
+          const { groupId, subgroupId } = req.params;
           const { fields } = req.body;
 
           const updatedFieldGroup =
-               await fieldManagementService.addFieldToGroup(groupId, fields);
+               await fieldManagementService.updateSubgroupFields(
+                    groupId,
+                    subgroupId,
+                    fields
+               );
           return res.status(200).json(updatedFieldGroup);
      } catch (error) {
           console.log(error);
           return res
                .status(500)
-               .json({ error: 'Unable to update field group' });
+               .json({ error: 'Unable to update subgroup fields' });
      }
 });
 
