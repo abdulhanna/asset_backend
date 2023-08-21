@@ -4,6 +4,7 @@ import { isLoggedIn } from '../../auth/router/passport.js';
 
 const router = express.Router();
 
+
 // Create a new location
 router.post('/', isLoggedIn, async (req, res) => {
      try {
@@ -58,8 +59,9 @@ router.post('/', isLoggedIn, async (req, res) => {
      }
 });
 
+
 // Get a location by ID
-router.get('/:locationId', isLoggedIn, async (req, res) => {
+router.get('data/:locationId', isLoggedIn, async (req, res) => {
      try {
           const locationId = req.params.locationId;
           const location = await locationService.getLocationById(locationId);
@@ -74,6 +76,8 @@ router.get('/:locationId', isLoggedIn, async (req, res) => {
      }
 });
 
+
+/////////////////////////////
 router.get('/organization/:organizationId', isLoggedIn, async (req, res) => {
      try {
           const { organizationId } = req.params;
@@ -94,6 +98,7 @@ router.get('/organization/:organizationId', isLoggedIn, async (req, res) => {
      }
 });
 
+
 // Get all locations
 router.get('/', isLoggedIn, async (req, res) => {
      try {
@@ -103,6 +108,7 @@ router.get('/', isLoggedIn, async (req, res) => {
           return res.status(500).json({ error: 'Unable to get locations' });
      }
 });
+
 
 // Update a location by ID
 router.put('/:locationId', isLoggedIn, async (req, res) => {
@@ -133,6 +139,8 @@ router.put('/:locationId', isLoggedIn, async (req, res) => {
      }
 });
 
+
+//////////////////////
 router.delete('/:id', isLoggedIn, async (req, res) => {
      try {
           const { id } = req.params;
@@ -163,5 +171,46 @@ router.delete('/:id', isLoggedIn, async (req, res) => {
           });
      }
 });
+
+
+////////////////////////
+router.put('/assetGroups/add', isLoggedIn, async(req, res) => {
+     try 
+     {
+          const locationId = req.user.data.assignedLocationId;
+
+          const assetGroup = await locationService.addlocationassetGroup(locationId, req.body)
+
+          return res.json(assetGroup);
+
+     } catch(error) {
+          console.log(error);
+          return res.status(500).json({
+               success: false,
+               error: 'Unable to add Asset Groups',
+          });
+     }
+})
+
+
+////////////////
+router.put('/assetGroups/delete/:id', isLoggedIn, async(req, res) => {
+     try 
+     {
+          const locationId = req.user.data.assignedLocationId;
+          const assetgroupIdToRemove = req.params.id;
+
+          const removeassetGroup = await locationService.removeAssetGroupFromLocation(locationId, assetgroupIdToRemove)
+
+          return res.json(removeassetGroup);
+
+     } catch(error) {
+          console.log(error);
+          return res.status(500).json({
+               success: false,
+               error: 'Unable to Delete Asset Groups',
+          });
+     }
+})
 
 export default router;
