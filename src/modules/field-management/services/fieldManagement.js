@@ -13,6 +13,14 @@ const createMultipleFieldGroups = async (groupNames) => {
      return newFieldGroups;
 };
 
+const updateSubgroups = async (groupId, subgroups) => {
+     return await fieldManagementModel.findByIdAndUpdate(
+          groupId,
+          { subgroups: subgroups },
+          { new: true }
+     );
+};
+
 const addFieldToGroup = async (groupId, fields) => {
      return await fieldManagementModel.findOneAndUpdate(
           { _id: groupId },
@@ -157,4 +165,5 @@ export const fieldManagementService = {
      addFieldToGroupV2,
      deleteFieldById,
      deleteGroupAndFieldsById,
+     updateSubgroups,
 };

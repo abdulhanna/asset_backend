@@ -4,6 +4,7 @@ import { isLoggedIn } from '../../auth/router/passport.js';
 
 const router = express.Router();
 
+// Create multiple groups
 router.post('/add-groups', isLoggedIn, async (req, res) => {
      try {
           const { groupName } = req.body;
@@ -20,6 +21,21 @@ router.post('/add-groups', isLoggedIn, async (req, res) => {
           return res
                .status(500)
                .json({ error: 'Unable to create field group' });
+     }
+});
+
+// Update subgroups within a group
+router.put('/:groupId/update-subgroups', isLoggedIn, async (req, res) => {
+     try {
+          const { groupId } = req.params;
+          const { subgroups } = req.body;
+
+          const updatedFieldGroup =
+               await fieldManagementService.updateSubgroups(groupId, subgroups);
+          return res.status(200).json(updatedFieldGroup);
+     } catch (error) {
+          console.log(error);
+          return res.status(500).json({ error: 'Unable to update subgroups' });
      }
 });
 
