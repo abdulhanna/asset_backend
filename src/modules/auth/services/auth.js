@@ -187,6 +187,7 @@ authService.setPassword = async (data) =>
           userId:user._id,
           organizationName: data.organizationName,
           organizationRegistrationNumber:data.organizationRegistrationNumber,
+          organizationType: data.organizationType,
           pan:data.pan,
           gstin:data.gstin,
           contactNo:data.contactNo,
@@ -198,6 +199,7 @@ authService.setPassword = async (data) =>
               country:data.mainAddress.country,
               pinCode:data.mainAddress.pinCode,
           },
+          addedByUserId: id,
         createdAt: Date.now()
       
       });

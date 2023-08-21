@@ -62,7 +62,7 @@ const getLocationsByOrganizationIdV2 = async (
      country
 ) => {
      try {
-          const query = { organizationId };
+          const query = { organizationId, isDeleted: false };
 
           if (city) {
                query['address.city'] = city;
@@ -130,7 +130,7 @@ const getLocationsByOrganizationId = async (
 ) => {
      try {
           //   console.log('city', city);
-          const query = { organizationId };
+          const query = { organizationId, isDeleted: false };
 
           if (city) {
                query['address.city'] = city;
@@ -157,7 +157,7 @@ const getAllLocations = async () => {
           return await locationModel
                .find({ isDeleted: false })
                .populate('assignedUserId', 'email userProfile.name')
-               .select('-address -organizationId  -__v')
+               .select('-address -organizationId  -isDeleted -deletedAt -__v')
                .exec();
      } catch (error) {
           throw new Error('Unable to get locations');
@@ -246,47 +246,68 @@ const deleteLocation = async (id, organizationId) => {
      }
 };
 
-// const axios = require('axios');
+// add asset Group in locations
 
-// const createLocations = async (
-//      name,
-//      industryType,
-//      assignedUser,
-//      address,
-//      children
-// ) => {
-//      try {
-//           // Assuming 'address' is an object containing city, state, country, etc.
-//           const fullAddress = `${address.city}, ${address.state}, ${address.country}`;
-//           const encodedAddress = encodeURIComponent(fullAddress);
+const addlocationassetGroup = async (locationId, data) => {
+     try {
+          const assetgroupIds = data.assetgroups;
+          // Fetch the location by its ID from the database
+          const location = await locationModel.findById(locationId);
 
-//           // Use your Google Maps Geocoding API key here
-//           const apiKey = 'YOUR_GOOGLE_MAPS_API_KEY';
+          if (!location) {
+               throw new Error('Location not found or not accessible.');
+          }
 
-//           // Fetch latitude and longitude using the Google Maps Geocoding API
-//           const geocodeResponse = await axios.get(
-//                `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${apiKey}`
-//           );
+          // Add only new asset groups to the location's assetgroups array
+          assetgroupIds.forEach((assetgroupId) => {
+               const existingAssetGroup = location.assetgroups.find((group) =>
+                    group.assetgroupId.equals(assetgroupId)
+               );
 
-//           const location = geocodeResponse.data.results[0].geometry.location;
-//           const latitude = location.lat;
-//           const longitude = location.lng;
+               if (!existingAssetGroup) {
+                    location.assetgroups.push({ assetgroupId });
+               }
+          });
+          // Save the updated location
+          const updatedLocation = await location.save();
+          return updatedLocation;
+     } catch (error) {
+          console.log(error);
+          throw new Error('Unable to Add Asset Group');
+     }
+};
 
-//           const newLocation = new locationModel({
-//                name,
-//                industryType,
-//                assignedUser,
-//                address,
-//                latitude,
-//                longitude,
-//                children,
-//           });
+const removeAssetGroupFromLocation = async (
+     locationId,
+     assetgroupIdToRemove
+) => {
+     try {
+          // Fetch the location by its ID from the database
+          const location = await locationModel.findById(locationId);
 
-//           return await newLocation.save();
-//      } catch (error) {
-//           throw new Error('Unable to create location');
-//      }
-// };
+          if (!location) {
+               throw new Error('Location not found or not accessible.');
+          }
+
+          // Find the index of the asset group to remove
+          const indexToRemove = location.assetgroups.findIndex((group) =>
+               group.assetgroupId.equals(assetgroupIdToRemove)
+          );
+
+          if (indexToRemove !== -1) {
+               // Remove the asset group from the array
+               location.assetgroups.splice(indexToRemove, 1);
+               // Save the updated location
+               const updatedLocation = await location.save();
+               return updatedLocation;
+          } else {
+               throw new Error('Asset group not found in location.');
+          }
+     } catch (error) {
+          console.log(error);
+          throw new Error('Unable to Delete Asset Group');
+     }
+};
 
 export const locationService = {
      createLocation,
@@ -298,4 +319,6 @@ export const locationService = {
      deleteLocation,
      generateAutomaticCode,
      checkLocationCodeIdExists,
+     addlocationassetGroup,
+     removeAssetGroupFromLocation,
 };
