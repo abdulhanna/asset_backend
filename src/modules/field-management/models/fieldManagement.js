@@ -24,6 +24,14 @@ const fieldSchema = new mongoose.Schema(
                type: String,
                required: true,
           },
+          fieldType: {
+               type: String,
+               enum: ['Input text', 'Select'],
+               required: true,
+          },
+          fieldRelation: {
+               type: String,
+          },
           isMandatory: {
                type: Boolean,
                default: false,
