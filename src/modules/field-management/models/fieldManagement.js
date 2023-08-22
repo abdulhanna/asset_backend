@@ -8,7 +8,7 @@ const fieldSchema = new mongoose.Schema(
           },
           dataType: {
                type: String,
-               enum: ['number', 'string', 'list', 'date'],
+               enum: ['Number', 'String', 'List', 'Date'],
                required: true,
           },
           fieldLength: {
@@ -20,17 +20,26 @@ const fieldSchema = new mongoose.Schema(
           listOptions: {
                type: [String],
           },
-          errorTitle: {
+          errorMessage: {
                type: String,
                required: true,
           },
           fieldType: {
                type: String,
-               enum: ['Input text', 'Select'],
+               enum: ['Input text', 'Select', 'Radio Button'],
                required: true,
           },
           fieldRelation: {
                type: String,
+               enum: ['Dependent', 'Independent'],
+          },
+          dependentFieldId: {
+               type: [mongoose.Schema.Types.ObjectId],
+               default: null,
+          },
+          dependentOn: {
+               type: String,
+               required: false,
           },
           isMandatory: {
                type: Boolean,
