@@ -101,7 +101,6 @@ const getFieldsBySubgroupId = async (subgroupId) => {
 
      try {
           const subgroup = await fieldManagementModel.findOne({ 'subgroups._id': subgroupId });
-          console.log(subgroup)
 
           if (!subgroup) {
                throw new Error('Subgroup not found');
