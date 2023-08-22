@@ -146,22 +146,35 @@ router.put('/:groupId/update-fields', isLoggedIn, async (req, res) => {
 });
 
 router.delete('/fields/:fieldId', isLoggedIn, async (req, res) => {
-     const { fieldId } = req.params;
-
      try {
-          const result = await fieldManagementService.deleteFieldById(fieldId);
-          if (result) {
-               return res.status(200).json({
-                    success: true,
-                    message: 'Field deleted successfully',
-               });
-          } else {
-               return res.status(404).json({ message: 'Field not found' });
-          }
+          const { fieldId } = req.params;
+
+          const updatedFieldGroup = await fieldManagementService.deleteFieldById(fieldId);
+          return res.status(200).json(updatedFieldGroup);
      } catch (error) {
-          return res.status(500).json({ message: 'Internal server error' });
+          console.log(error);
+          return res.status(500).json({ error: 'Unable to delete field' });
      }
 });
+
+
+// router.delete('/fields/:fieldId', isLoggedIn, async (req, res) => {
+//      const { fieldId } = req.params;
+//
+//      try {
+//           const result = await fieldManagementService.deleteFieldById(fieldId);
+//           if (result) {
+//                return res.status(200).json({
+//                     success: true,
+//                     message: 'Field deleted successfully',
+//                });
+//           } else {
+//                return res.status(404).json({ message: 'Field not found' });
+//           }
+//      } catch (error) {
+//           return res.status(500).json({ message: 'Internal server error' });
+//      }
+// });
 
 router.delete('/groups/:groupId', isLoggedIn, async (req, res) => {
      const { groupId } = req.params;

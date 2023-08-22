@@ -191,18 +191,47 @@ const addFieldToGroupV2 = async (groupId, fields, groupName) => {
           return await fieldManagementModel.bulkWrite(bulkOps);
      }
 };
-const deleteFieldById = async (fieldId) => {
-     try {
-          const result = await fieldManagementModel.updateOne(
-               { 'fields._id': fieldId },
-               { $pull: { fields: { _id: fieldId } } }
-          );
-          return result;
-     } catch (error) {
-          throw error;
-     }
-};
+// const deleteFieldById = async (fieldId) => {
+//      try {
+//           const result = await fieldManagementModel.updateOne(
+//                { 'fields._id': fieldId },
+//                { $pull: { fields: { _id: fieldId } } }
+//           );
+//           return result;
+//      } catch (error) {
+//           throw error;
+//      }
+// };
 
+const deleteFieldById = async (fieldId) => {
+     const query = {};
+     const update = {};
+
+     query['fields._id'] = fieldId;
+     update.$pull = { fields: { _id: fieldId } };
+
+     const updatedGroup = await fieldManagementModel.findOneAndUpdate(
+         query,
+         update,
+         { new: true }
+     );
+
+     if (!updatedGroup) {
+          const updatedSubgroup = await fieldManagementModel.findOneAndUpdate(
+              { 'subgroups.fields._id': fieldId },
+              { $pull: { 'subgroups.$.fields': { _id: fieldId } } },
+              { new: true }
+          );
+
+          if (!updatedSubgroup) {
+               throw new Error('Field not found');
+          }
+
+          return updatedSubgroup;
+     }
+
+     return updatedGroup;
+};
 const deleteGroupAndFieldsById = async (groupId) => {
      try {
           const group = await fieldManagementModel.findById(groupId);
