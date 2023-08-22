@@ -32,19 +32,19 @@ const updateSubgroupFields = async (subgroupId, fields) => {
 
 const getFieldGroups = async () => {
      try {
-          const fieldGroups = await fieldManagementModel.find();
+          const fieldGroups = await fieldManagementModel.find()
 
           // Loop through the fieldGroups, subgroups, and fields to populate dependentFieldId
-          for (const group of fieldGroups) {
-               for (const subgroup of group.subgroups) {
-                    for (const field of subgroup.fields) {
-                         await fieldManagementModel.populate(field, {
-                              path: 'dependentFieldId',
-                              model: 'fieldmanagements',
-                         });
-                    }
-               }
-          }
+          // for (const group of fieldGroups) {
+          //      for (const subgroup of group.subgroups) {
+          //           for (const field of subgroup.fields) {
+          //                await fieldManagementModel.populate(field, {
+          //                     path: 'dependentFieldId',
+          //                     model: 'fieldmanagements',
+          //                });
+          //           }
+          //      }
+          // }
 
           return fieldGroups;
      } catch (error) {
