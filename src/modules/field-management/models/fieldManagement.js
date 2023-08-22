@@ -33,14 +33,12 @@ const fieldSchema = new mongoose.Schema(
                type: String,
                enum: ['Dependent', 'Independent'],
           },
-          dependentFieldId: {
-               type: [
-                    {
-                         type: mongoose.Schema.Types.ObjectId,
-                         ref: 'fieldmanagements',
-                    },
-               ],
-          },
+          dependentFieldId: [
+               {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'fieldmanagements',
+               },
+          ],
           dependentOn: {
                type: String,
                required: false,

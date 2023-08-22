@@ -34,23 +34,17 @@ const getFieldGroups = async () => {
      try {
           const fieldGroups = await fieldManagementModel.find();
 
-          await Promise.all(
-               fieldGroups.map(async (group) => {
-                    for (const subgroup of group.subgroups) {
-                         await Promise.all(
-                              subgroup.fields.map(async (field) => {
-                                   const populatedFieldArray =
-                                        await fieldManagementModel.populate(
-                                             field.dependentFieldId,
-                                             { path: 'dependentFieldId' }
-                                        );
-
-                                   field.dependentFieldId = populatedFieldArray;
-                              })
-                         );
+          // Loop through the fieldGroups, subgroups, and fields to populate dependentFieldId
+          for (const group of fieldGroups) {
+               for (const subgroup of group.subgroups) {
+                    for (const field of subgroup.fields) {
+                         await fieldManagementModel.populate(field, {
+                              path: 'dependentFieldId',
+                              model: 'fieldmanagements',
+                         });
                     }
-               })
-          );
+               }
+          }
 
           return fieldGroups;
      } catch (error) {
