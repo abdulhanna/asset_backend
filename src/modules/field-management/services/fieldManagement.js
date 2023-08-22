@@ -191,17 +191,6 @@ const addFieldToGroupV2 = async (groupId, fields, groupName) => {
           return await fieldManagementModel.bulkWrite(bulkOps);
      }
 };
-// const deleteFieldById = async (fieldId) => {
-//      try {
-//           const result = await fieldManagementModel.updateOne(
-//                { 'fields._id': fieldId },
-//                { $pull: { fields: { _id: fieldId } } }
-//           );
-//           return result;
-//      } catch (error) {
-//           throw error;
-//      }
-// };
 
 const deleteFieldById = async (fieldId) => {
      const query = {};
