@@ -14,7 +14,7 @@ const createMultipleFieldGroups = async (groupNames) => {
 };
 
 const updateSubgroups = async (groupId, subgroups) => {
-     return await fieldManagementModel.findByIdAndUpdate(
+     return  fieldManagementModel.findByIdAndUpdate(
           groupId,
           { subgroups: subgroups || [] },
           { new: true }
@@ -28,6 +28,13 @@ const updateSubgroupFields = async (subgroupId, fields) => {
           { new: true }
      );
      return updatedSubgroup;
+};
+const updateGroupFields = async (groupId, fields) => {
+     return  fieldManagementModel.findByIdAndUpdate(
+         groupId,
+         { $push: { fields: { $each: fields } } },
+         { new: true }
+     );
 };
 
 const getFieldGroups = async () => {
@@ -179,4 +186,5 @@ export const fieldManagementService = {
      deleteGroupAndFieldsById,
      updateSubgroups,
      updateSubgroupFields,
+     updateGroupFields,
 };

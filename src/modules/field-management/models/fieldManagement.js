@@ -70,6 +70,9 @@ const groupSchema = new mongoose.Schema({
      subgroups: {
           type: [subgroupSchema],
      },
+    fields: {
+        type: [fieldSchema],
+    },
 });
 
 const fieldManagementModel = mongoose.model('fieldmanagements', groupSchema);
