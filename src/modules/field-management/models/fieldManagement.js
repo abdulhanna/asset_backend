@@ -34,8 +34,12 @@ const fieldSchema = new mongoose.Schema(
                enum: ['Dependent', 'Independent'],
           },
           dependentFieldId: {
-               type: [mongoose.Schema.Types.ObjectId],
-               default: null,
+               type: [
+                    {
+                         type: mongoose.Schema.Types.ObjectId,
+                         ref: 'fieldmanagements',
+                    },
+               ],
           },
           dependentOn: {
                type: String,

@@ -65,6 +65,7 @@ router.get('/list', isLoggedIn, async (req, res) => {
 
           return res.status(200).json(fieldGroups);
      } catch (error) {
+          console.log(error);
           return res.status(500).json({ error: 'Unable to get field groups' });
      }
 });

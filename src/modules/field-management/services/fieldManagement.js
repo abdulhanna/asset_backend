@@ -24,7 +24,7 @@ const updateSubgroups = async (groupId, subgroups) => {
 const updateSubgroupFields = async (subgroupId, fields) => {
      const updatedSubgroup = await fieldManagementModel.findOneAndUpdate(
           { 'subgroups._id': subgroupId },
-          { $set: { 'subgroups.$.fields': fields } },
+          { $push: { 'subgroups.$.fields': { $each: fields } } },
           { new: true }
      );
      return updatedSubgroup;
@@ -32,9 +32,27 @@ const updateSubgroupFields = async (subgroupId, fields) => {
 
 const getFieldGroups = async () => {
      try {
-          const filedGroups = await fieldManagementModel.find();
+          const fieldGroups = await fieldManagementModel.find();
 
-          return filedGroups;
+          await Promise.all(
+               fieldGroups.map(async (group) => {
+                    for (const subgroup of group.subgroups) {
+                         await Promise.all(
+                              subgroup.fields.map(async (field) => {
+                                   const populatedFieldArray =
+                                        await fieldManagementModel.populate(
+                                             field.dependentFieldId,
+                                             { path: 'dependentFieldId' }
+                                        );
+
+                                   field.dependentFieldId = populatedFieldArray;
+                              })
+                         );
+                    }
+               })
+          );
+
+          return fieldGroups;
      } catch (error) {
           throw new Error('Unable to get field group');
      }
