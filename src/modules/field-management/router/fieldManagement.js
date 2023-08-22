@@ -75,7 +75,10 @@ router.get('/subgroups/:subgroupId', isLoggedIn, async (req, res) => {
      try {
           const { subgroupId } = req.params;
           const fields = await fieldManagementService.getFieldsBySubgroupId(subgroupId);
-          return res.status(200).json(fields);
+          return res.status(200).json({
+               success:true,
+               fields
+          });
      } catch (error) {
           console.log(error);
           return res.status(500).json({ error: 'Unable to fetch subgroup fields' });
