@@ -36,6 +36,27 @@ const updateGroupFields = async (groupId, fields) => {
          { new: true }
      );
 };
+const updateFields = async (id, fields) => {
+     const group = await fieldManagementModel.findById(id);
+
+     if (!group) {
+          // If group not found, try updating subgroup
+          const updatedSubgroup = await fieldManagementModel.findOneAndUpdate(
+              { 'subgroups._id': id },
+              { $push: { 'subgroups.$.fields': { $each: fields } } },
+              { new: true }
+          );
+          return updatedSubgroup;
+     }
+
+     // Update group fields
+     const updatedGroup = await fieldManagementModel.findByIdAndUpdate(
+         id,
+         { $push: { fields: { $each: fields } } },
+         { new: true }
+     );
+     return updatedGroup;
+};
 
 const getFieldGroups = async () => {
      try {
@@ -187,4 +208,5 @@ export const fieldManagementService = {
      updateSubgroups,
      updateSubgroupFields,
      updateGroupFields,
+     updateFields
 };

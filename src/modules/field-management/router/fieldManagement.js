@@ -71,6 +71,20 @@ router.put('/groups/:groupId', isLoggedIn, async (req, res) => {
           return res.status(500).json({ error: 'Unable to update group fields' });
      }
 });
+
+router.put('/fields/:id', isLoggedIn, async (req, res) => {
+     try {
+          const { id } = req.params;
+          const { fields } = req.body;
+
+          const updatedFieldGroup = await fieldManagementService.updateFields(id, fields);
+          return res.status(200).json(updatedFieldGroup);
+     } catch (error) {
+          console.log(error);
+          return res.status(500).json({ error: 'Unable to update fields' });
+     }
+});
+
 router.get('/list', isLoggedIn, async (req, res) => {
      try {
           const fieldGroups = await fieldManagementService.getFieldGroups();
