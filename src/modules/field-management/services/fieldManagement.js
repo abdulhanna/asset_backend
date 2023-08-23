@@ -243,7 +243,7 @@ const deleteGroupAndFieldsById = async (groupId) => {
      }
 };
 
-const updateFieldById = async (fieldId, updatedData) => {
+const editFieldById = async (fieldId, updatedData) => {
      try {
 
           const document = await fieldManagementModel.findOne({
@@ -325,7 +325,7 @@ export const fieldManagementService = {
      updateGroupFields,
      updateFields,
      getFieldsBySubgroupId,
-     updateFieldById,
+     editFieldById,
      updateGroupNameById,
      updateSubgroupNameById
 };
