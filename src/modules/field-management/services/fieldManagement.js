@@ -109,7 +109,7 @@ const getFieldsBySubgroupId = async (subgroupId) => {
           const matchingSubgroup = subgroup.subgroups.find(sub => sub._id.toString() === subgroupId);
 
           if (!matchingSubgroup) {
-               throw new Error('Subgroup not found');
+              throw new Error('Unable to fetch subgroup fields');
           }
           return matchingSubgroup.fields;
      }
