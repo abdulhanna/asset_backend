@@ -66,35 +66,45 @@ const updateFields = async (id, fields) => {
 
 const getFieldGroups = async () => {
      try {
-          const fieldGroups = await fieldManagementModel.find()
+          const fieldGroups = await fieldManagementModel.find();
 
-          // Loop through the fieldGroups, subgroups, and fields to populate dependentFieldId
-          // for (const group of fieldGroups) {
-          //      for (const subgroup of group.subgroups) {
-          //           for (const field of subgroup.fields) {
-          //                await fieldManagementModel.populate(field, {
-          //                     path: 'dependentFieldId',
-          //                     model: 'fieldmanagements',
-          //                });
-          //           }
-          //      }
-          // }
+          // Remove fields with isDeleted: true from each subgroup
+          fieldGroups.forEach(group => {
+               group.subgroups.forEach(subgroup => {
+                    subgroup.fields = subgroup.fields.filter(field => !field.isDeleted);
+               });
+
+               // Remove fields with isDeleted: true from the top-level fields array
+               group.fields = group.fields.filter(field => !field.isDeleted);
+          });
 
           return fieldGroups;
      } catch (error) {
-          throw new Error('Unable to get field group');
+          throw new Error('Unable to get field groups');
      }
 };
 
+
 const getFieldGroupsById = async (groupId) => {
      try {
-          const filedGroups = await fieldManagementModel.findById({
-               _id: groupId,
+          const fieldGroup = await fieldManagementModel.findById(groupId);
+
+          if (!fieldGroup) {
+               throw new Error('Field group not found');
+          }
+
+          // Remove fields with isDeleted: true from the top-level fields array
+          fieldGroup.fields = fieldGroup.fields.filter(field => !field.isDeleted);
+
+          // Optionally, you can also remove fields with isDeleted: true from subgroups
+          fieldGroup.subgroups.forEach(subgroup => {
+               subgroup.fields = subgroup.fields.filter(field => !field.isDeleted);
           });
 
-          return filedGroups;
+          return fieldGroup;
      } catch (error) {
-          throw new Error('Unable to get field group by Id');
+          console.log(error);
+          throw new Error('Unable to get field group by ID');
      }
 };
 const getFieldsBySubgroupId = async (subgroupId) => {
