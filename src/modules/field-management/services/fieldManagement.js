@@ -245,8 +245,6 @@ const deleteGroupAndFieldsById = async (groupId) => {
 
 const updateFieldById = async (fieldId, updatedData) => {
      try {
-          console.log('Updating field with ID:', fieldId);
-          console.log('Updated data:', updatedData);
 
           const document = await fieldManagementModel.findOne({
                $or: [
@@ -286,6 +284,33 @@ const updateFieldById = async (fieldId, updatedData) => {
      }
 }
 
+const updateGroupNameById = async (groupId, updatedGroupName) => {
+     try {
+          const result = await fieldManagementModel.updateOne(
+              { _id: groupId },
+              { $set: { groupName: updatedGroupName } }
+          );
+
+          return result;
+     } catch (error) {
+          throw error;
+     }
+}
+
+const updateSubgroupNameById = async (groupId, updatedSubgroup) => {
+     try {
+          const result = await fieldManagementModel.updateOne(
+              { _id: groupId, 'subgroups._id': updatedSubgroup._id },
+              { $set: { 'subgroups.$.subgroupName': updatedSubgroup.subgroupName } }
+          );
+
+          return result;
+     } catch (error) {
+          throw error;
+     }
+}
+
+
 
 
 export const fieldManagementService = {
@@ -300,7 +325,9 @@ export const fieldManagementService = {
      updateGroupFields,
      updateFields,
      getFieldsBySubgroupId,
-     updateFieldById
+     updateFieldById,
+     updateGroupNameById,
+     updateSubgroupNameById
 };
 
 

@@ -117,6 +117,31 @@ router.put('/update-field/:id', async (req, res) => {
 });
 
 
+router.put('/update/:id', async (req, res) => {
+     try {
+          const { id } = req.params;
+          const { groupName, subgroup } = req.body;
+
+          if (groupName) {
+               const result = await fieldManagementService.updateGroupNameById(id, groupName);
+               if (result.nModified === 0) {
+                    return res.status(404).json({ error: 'Group not found' });
+               }
+               return res.json({ message: 'Group name updated successfully' });
+          } else if (subgroup && subgroup._id && subgroup.subgroupName) {
+               const result = await fieldManagementService.updateSubgroupNameById(id, subgroup);
+               if (result.nModified === 0) {
+                    return res.status(404).json({ error: 'Group or subgroup not found' });
+               }
+               return res.json({ message: 'Subgroup name updated successfully' });
+          } else {
+               return res.status(400).json({ error: 'Invalid request data' });
+          }
+     } catch (error) {
+          res.status(500).json({ error: error.message });
+     }
+});
+
 router.get('/list', isLoggedIn, async (req, res) => {
      try {
           const fieldGroups = await fieldManagementService.getFieldGroups();
