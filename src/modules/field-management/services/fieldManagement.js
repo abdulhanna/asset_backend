@@ -243,6 +243,51 @@ const deleteGroupAndFieldsById = async (groupId) => {
      }
 };
 
+const updateFieldById = async (fieldId, updatedData) => {
+     try {
+          console.log('Updating field with ID:', fieldId);
+          console.log('Updated data:', updatedData);
+
+          const document = await fieldManagementModel.findOne({
+               $or: [
+                    { 'subgroups.fields._id': fieldId },
+                    { 'fields._id': fieldId }
+               ]
+          });
+
+          if (!document) {
+               console.error('Field not found');
+               return { nModified: 0 };
+          }
+
+          const updatedDocument = document.toObject();
+
+          for (const subgroup of updatedDocument.subgroups) {
+               const fieldIndex = subgroup.fields.findIndex(field => field._id.toString() === fieldId);
+               if (fieldIndex !== -1) {
+                    subgroup.fields[fieldIndex] = { ...subgroup.fields[fieldIndex], ...updatedData };
+                    break; // Assuming only one field matches the ID
+               }
+          }
+
+          const topLevelFieldIndex = updatedDocument.fields.findIndex(field => field._id.toString() === fieldId);
+          if (topLevelFieldIndex !== -1) {
+               updatedDocument.fields[topLevelFieldIndex] = { ...updatedDocument.fields[topLevelFieldIndex], ...updatedData };
+          }
+
+          await fieldManagementModel.updateOne({ _id: document._id }, updatedDocument);
+
+          console.log('Update successful');
+
+          return { nModified: 1 };
+     } catch (error) {
+          console.error('Error while updating field:', error);
+          throw error;
+     }
+}
+
+
+
 export const fieldManagementService = {
      createMultipleFieldGroups,
      getFieldGroupsById,
@@ -254,5 +299,8 @@ export const fieldManagementService = {
      updateSubgroupFields,
      updateGroupFields,
      updateFields,
-     getFieldsBySubgroupId
+     getFieldsBySubgroupId,
+     updateFieldById
 };
+
+

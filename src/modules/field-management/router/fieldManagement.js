@@ -99,6 +99,24 @@ router.put('/fields/:id', isLoggedIn, async (req, res) => {
      }
 });
 
+router.put('/update-field/:id', async (req, res) => {
+     try {
+          const { id } = req.params;
+          const updatedData = req.body;
+
+          const result = await fieldManagementService.updateFieldById(id, updatedData);
+
+          if (result.matchedCount === 0) {
+               return res.status(404).json({ error: 'Field not found' });
+          }
+
+          res.json({result, message: 'Field updated successfully' });
+     } catch (error) {
+          res.status(500).json({ error: error.message });
+     }
+});
+
+
 router.get('/list', isLoggedIn, async (req, res) => {
      try {
           const fieldGroups = await fieldManagementService.getFieldGroups();
