@@ -284,11 +284,11 @@ const editFieldById = async (fieldId, updatedData) => {
      }
 }
 
-const updateGroupNameById = async (groupId, updatedGroupName) => {
+const updateFieldData = async (groupId, updatedData) => {
      try {
           const result = await fieldManagementModel.updateOne(
               { _id: groupId },
-              { $set: { groupName: updatedGroupName } }
+              { $set: updatedData }
           );
 
           return result;
@@ -296,22 +296,6 @@ const updateGroupNameById = async (groupId, updatedGroupName) => {
           throw error;
      }
 }
-
-const updateSubgroupNameById = async (groupId, updatedSubgroup) => {
-     try {
-          const result = await fieldManagementModel.updateOne(
-              { _id: groupId, 'subgroups._id': updatedSubgroup._id },
-              { $set: { 'subgroups.$.subgroupName': updatedSubgroup.subgroupName } }
-          );
-
-          return result;
-     } catch (error) {
-          throw error;
-     }
-}
-
-
-
 
 export const fieldManagementService = {
      createMultipleFieldGroups,
@@ -326,8 +310,7 @@ export const fieldManagementService = {
      updateFields,
      getFieldsBySubgroupId,
      editFieldById,
-     updateGroupNameById,
-     updateSubgroupNameById
+     updateFieldData
 };
 
 
