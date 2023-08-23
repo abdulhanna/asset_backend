@@ -297,6 +297,40 @@ const updateFieldData = async (groupId, updatedData) => {
      }
 }
 
+
+const markFieldAsDeleted = async (fieldId) => {
+     const query = { 'fields._id': fieldId };
+     const update = { $set: { 'fields.$.isDeleted': true } };
+
+     const updatedGroup = await fieldManagementModel.findOneAndUpdate(
+         query,
+         update,
+         { new: true }
+     );
+
+     if (!updatedGroup) {
+          const updatedSubgroup = await fieldManagementModel.findOneAndUpdate(
+              { 'subgroups.fields._id': fieldId },
+              { $set: { 'subgroups.$[subgroup].fields.$[field].isDeleted': true } },
+              {
+                   new: true,
+                   arrayFilters: [
+                        { 'subgroup.fields._id': fieldId },
+                        { 'field._id': fieldId }
+                   ]
+              }
+          );
+
+          if (!updatedSubgroup) {
+               throw new Error('Field not found');
+          }
+
+          return updatedSubgroup;
+     }
+
+     return updatedGroup;
+};
+
 export const fieldManagementService = {
      createMultipleFieldGroups,
      getFieldGroupsById,
@@ -310,7 +344,8 @@ export const fieldManagementService = {
      updateFields,
      getFieldsBySubgroupId,
      editFieldById,
-     updateFieldData
+     updateFieldData,
+     markFieldAsDeleted
 };
 
 

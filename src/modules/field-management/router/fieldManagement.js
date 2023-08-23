@@ -193,6 +193,19 @@ router.delete('/fields/:fieldId', isLoggedIn, async (req, res) => {
 });
 
 
+router.put('/fields/:fieldId/mark-deleted', isLoggedIn, async (req, res) => {
+     try {
+          const { fieldId } = req.params;
+
+          const updatedFieldGroup = await fieldManagementService.markFieldAsDeleted(fieldId);
+          return res.status(200).json(updatedFieldGroup);
+     } catch (error) {
+          console.log(error);
+          return res.status(500).json({ error: 'Unable to mark field as deleted' });
+     }
+});
+
+
 router.delete('/groups/:groupId', isLoggedIn, async (req, res) => {
      const { groupId } = req.params;
      try {

@@ -47,6 +47,10 @@ const fieldSchema = new mongoose.Schema(
                type: Boolean,
                default: false,
           },
+         isDeleted:{
+              type:Boolean,
+             default: false
+         }
      },
      { _id: true }
 );
