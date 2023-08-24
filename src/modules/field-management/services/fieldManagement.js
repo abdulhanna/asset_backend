@@ -6,7 +6,7 @@ const createMultipleFieldGroups = async (groupNames) => {
           groupNames.map(async (groupName) => {
                return await fieldManagementModel.create({
                     groupName: groupName,
-                    subgroups: [], // Initialize with an empty array of subgroups
+                    // subgroups: [], // Initialize with an empty array of subgroups
                });
           })
      );

@@ -14,7 +14,7 @@ router.post('/add-groups', isLoggedIn, async (req, res) => {
                     await fieldManagementService.createMultipleFieldGroups(
                          groupNames
                     );
-               return res.status(201).json(newFieldGroups);
+               return res.status(201).json({success:true, message:'Field groups added successfully',groupNames});
           }
      } catch (error) {
           console.error(error);
@@ -138,7 +138,7 @@ router.get('/list', isLoggedIn, async (req, res) => {
      try {
           const fieldGroups = await fieldManagementService.getFieldGroups();
 
-          return res.status(200).json(fieldGroups);
+          return res.status(200).json({success:true, fieldGroups});
      } catch (error) {
           console.log(error);
           return res.status(500).json({ error: 'Unable to get field groups' });
