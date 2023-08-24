@@ -1,4 +1,4 @@
-import { fieldManagementModel } from '../models';
+import fieldManagementModel from '../models/fieldManagement';
 import mongoose from 'mongoose';
 
 const createMultipleFieldGroups = async (groupNames) => {
@@ -6,41 +6,127 @@ const createMultipleFieldGroups = async (groupNames) => {
           groupNames.map(async (groupName) => {
                return await fieldManagementModel.create({
                     groupName: groupName,
-                    fields: [],
+                    // subgroups: [], // Initialize with an empty array of subgroups
                });
           })
      );
      return newFieldGroups;
 };
 
-const addFieldToGroup = async (groupId, fields) => {
-     return await fieldManagementModel.findOneAndUpdate(
-          { _id: groupId },
-          { $push: { fields } },
+const updateSubgroups = async (groupId, subgroups) => {
+     return  fieldManagementModel.findByIdAndUpdate(
+          groupId,
+          { subgroups: subgroups || [] },
           { new: true }
      );
 };
 
+const updateSubgroupFields = async (subgroupId, fields) => {
+     const updatedSubgroup = await fieldManagementModel.findOneAndUpdate(
+          { 'subgroups._id': subgroupId },
+          { $push: { 'subgroups.$.fields': { $each: fields } } },
+          { new: true }
+     );
+     return updatedSubgroup;
+};
+const updateGroupFields = async (groupId, fields) => {
+     return  fieldManagementModel.findByIdAndUpdate(
+         groupId,
+         { $push: { fields: { $each: fields } } },
+         { new: true }
+     );
+};
+const updateFields = async (id, fields) => {
+
+     try{
+          const group = await fieldManagementModel.findById(id);
+
+          if (!group) {
+               // If group not found, try updating subgroup
+               const updatedSubgroup = await fieldManagementModel.findOneAndUpdate(
+                   { 'subgroups._id': id },
+                   { $push: { 'subgroups.$.fields': { $each: fields } } },
+                   { new: true }
+               );
+               return updatedSubgroup;
+          }
+
+          // Update group fields
+          const updatedGroup = await fieldManagementModel.findByIdAndUpdate(
+              id,
+              { $push: { fields: { $each: fields } } },
+              { new: true }
+          );
+          return updatedGroup;
+     }catch (error){
+        throw error;
+     }
+
+};
+
 const getFieldGroups = async () => {
      try {
-          const filedGroups = await fieldManagementModel.find();
+          const fieldGroups = await fieldManagementModel.find();
 
-          return filedGroups;
+          // Remove fields with isDeleted: true from each subgroup
+          fieldGroups.forEach(group => {
+               group.subgroups.forEach(subgroup => {
+                    subgroup.fields = subgroup.fields.filter(field => !field.isDeleted);
+               });
+
+               // Remove fields with isDeleted: true from the top-level fields array
+               group.fields = group.fields.filter(field => !field.isDeleted);
+          });
+
+          return fieldGroups;
      } catch (error) {
-          throw new Error('Unable to get field group');
+          throw new Error('Unable to get field groups');
      }
 };
 
+
 const getFieldGroupsById = async (groupId) => {
      try {
-          const filedGroups = await fieldManagementModel.findById({
-               _id: groupId,
+          const fieldGroup = await fieldManagementModel.findById(groupId);
+
+          if (!fieldGroup) {
+               throw new Error('Field group not found');
+          }
+
+          // Remove fields with isDeleted: true from the top-level fields array
+          fieldGroup.fields = fieldGroup.fields.filter(field => !field.isDeleted);
+
+          // Optionally, you can also remove fields with isDeleted: true from subgroups
+          fieldGroup.subgroups.forEach(subgroup => {
+               subgroup.fields = subgroup.fields.filter(field => !field.isDeleted);
           });
 
-          return filedGroups;
+          return fieldGroup;
      } catch (error) {
-          throw new Error('Unable to get field group by Id');
+          console.log(error);
+          throw new Error('Unable to get field group by ID');
      }
+};
+const getFieldsBySubgroupId = async (subgroupId) => {
+
+     try {
+          const subgroup = await fieldManagementModel.findOne({ 'subgroups._id': subgroupId });
+
+          if (!subgroup) {
+               throw new Error('Subgroup not found');
+          }
+
+          const matchingSubgroup = subgroup.subgroups.find(sub => sub._id.toString() === subgroupId);
+
+          if (!matchingSubgroup) {
+              throw new Error('Unable to fetch subgroup fields');
+          }
+          return matchingSubgroup.fields;
+     }
+     catch(error){
+          throw  error
+     }
+
 };
 
 const addFieldToGroupV2 = async (groupId, fields, groupName) => {
@@ -115,18 +201,36 @@ const addFieldToGroupV2 = async (groupId, fields, groupName) => {
           return await fieldManagementModel.bulkWrite(bulkOps);
      }
 };
-const deleteFieldById = async (fieldId) => {
-     try {
-          const result = await fieldManagementModel.updateOne(
-               { 'fields._id': fieldId },
-               { $pull: { fields: { _id: fieldId } } }
-          );
-          return result;
-     } catch (error) {
-          throw error;
-     }
-};
 
+const deleteFieldById = async (fieldId) => {
+     const query = {};
+     const update = {};
+
+     query['fields._id'] = fieldId;
+     update.$pull = { fields: { _id: fieldId } };
+
+     const updatedGroup = await fieldManagementModel.findOneAndUpdate(
+         query,
+         update,
+         { new: true }
+     );
+
+     if (!updatedGroup) {
+          const updatedSubgroup = await fieldManagementModel.findOneAndUpdate(
+              { 'subgroups.fields._id': fieldId },
+              { $pull: { 'subgroups.$.fields': { _id: fieldId } } },
+              { new: true }
+          );
+
+          if (!updatedSubgroup) {
+               throw new Error('Field not found');
+          }
+
+          return updatedSubgroup;
+     }
+
+     return updatedGroup;
+};
 const deleteGroupAndFieldsById = async (groupId) => {
      try {
           const group = await fieldManagementModel.findById(groupId);
@@ -149,12 +253,109 @@ const deleteGroupAndFieldsById = async (groupId) => {
      }
 };
 
+const editFieldById = async (fieldId, updatedData) => {
+     try {
+
+          const document = await fieldManagementModel.findOne({
+               $or: [
+                    { 'subgroups.fields._id': fieldId },
+                    { 'fields._id': fieldId }
+               ]
+          });
+
+          if (!document) {
+               console.error('Field not found');
+               return { nModified: 0 };
+          }
+
+          const updatedDocument = document.toObject();
+
+          for (const subgroup of updatedDocument.subgroups) {
+               const fieldIndex = subgroup.fields.findIndex(field => field._id.toString() === fieldId);
+               if (fieldIndex !== -1) {
+                    subgroup.fields[fieldIndex] = { ...subgroup.fields[fieldIndex], ...updatedData };
+                    break; // Assuming only one field matches the ID
+               }
+          }
+
+          const topLevelFieldIndex = updatedDocument.fields.findIndex(field => field._id.toString() === fieldId);
+          if (topLevelFieldIndex !== -1) {
+               updatedDocument.fields[topLevelFieldIndex] = { ...updatedDocument.fields[topLevelFieldIndex], ...updatedData };
+          }
+
+          await fieldManagementModel.updateOne({ _id: document._id }, updatedDocument);
+
+          console.log('Update successful');
+
+          return { nModified: 1 };
+     } catch (error) {
+          console.error('Error while updating field:', error);
+          throw error;
+     }
+}
+
+const updateFieldData = async (groupId, updatedData) => {
+     try {
+          const result = await fieldManagementModel.updateOne(
+              { _id: groupId },
+              { $set: updatedData }
+          );
+
+          return result;
+     } catch (error) {
+          throw error;
+     }
+}
+
+
+const markFieldAsDeleted = async (fieldId) => {
+     const query = { 'fields._id': fieldId };
+     const update = { $set: { 'fields.$.isDeleted': true } };
+
+     const updatedGroup = await fieldManagementModel.findOneAndUpdate(
+         query,
+         update,
+         { new: true }
+     );
+
+     if (!updatedGroup) {
+          const updatedSubgroup = await fieldManagementModel.findOneAndUpdate(
+              { 'subgroups.fields._id': fieldId },
+              { $set: { 'subgroups.$[subgroup].fields.$[field].isDeleted': true } },
+              {
+                   new: true,
+                   arrayFilters: [
+                        { 'subgroup.fields._id': fieldId },
+                        { 'field._id': fieldId }
+                   ]
+              }
+          );
+
+          if (!updatedSubgroup) {
+               throw new Error('Field not found');
+          }
+
+          return updatedSubgroup;
+     }
+
+     return updatedGroup;
+};
+
 export const fieldManagementService = {
      createMultipleFieldGroups,
-     addFieldToGroup,
      getFieldGroupsById,
      getFieldGroups,
      addFieldToGroupV2,
      deleteFieldById,
      deleteGroupAndFieldsById,
+     updateSubgroups,
+     updateSubgroupFields,
+     updateGroupFields,
+     updateFields,
+     getFieldsBySubgroupId,
+     editFieldById,
+     updateFieldData,
+     markFieldAsDeleted
 };
+
+

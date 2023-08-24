@@ -2,14 +2,19 @@ import mongoose from 'mongoose';
 
 const locationSchema = new mongoose.Schema(
      {
-          name: {
+          codeGenerationType: {
                type: String,
-               required: true,
+               enum: ['auto', 'manual'],
+               default: 'auto',
           },
           locationCodeId: {
                // Auto- Generate
                type: String,
                required: false,
+          },
+          name: {
+               type: String,
+               required: true,
           },
           organizationId: {
                type: mongoose.Schema.Types.ObjectId,

@@ -57,7 +57,7 @@ const getAllPermissions = async () => {
      try {
           const permissions = await permissionModel
                .find({ isDeleted: false, isDeactivated: false })
-               .select('moduleName read readWrite actions allAccess _id');
+               .select('moduleName read readWrite actions allAccess removeAccess _id');
           return permissions;
      } catch (error) {
           throw new Error(error.message);

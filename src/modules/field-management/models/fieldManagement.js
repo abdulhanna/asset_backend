@@ -1,6 +1,5 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
-// Define the dynamic field schema
 const fieldSchema = new mongoose.Schema(
      {
           name: {
@@ -9,7 +8,7 @@ const fieldSchema = new mongoose.Schema(
           },
           dataType: {
                type: String,
-               enum: ['number', 'string', 'list', 'date'],
+               enum: ['Number', 'String', 'List', 'Date'],
                required: true,
           },
           fieldLength: {
@@ -21,48 +20,65 @@ const fieldSchema = new mongoose.Schema(
           listOptions: {
                type: [String],
           },
-          errorTitle: {
+          errorMessage: {
                type: String,
                required: true,
+          },
+          fieldType: {
+               type: String,
+               enum: ['Input text', 'Select', 'Radio Button'],
+               required: true,
+          },
+          fieldRelation: {
+               type: String,
+               enum: ['Dependent', 'Independent'],
+          },
+          dependentFieldId: [
+               {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'fieldmanagements',
+               },
+          ],
+          dependentOn: {
+               type: String,
+               required: false,
           },
           isMandatory: {
                type: Boolean,
                default: false,
           },
+         isDeleted:{
+              type:Boolean,
+             default: false
+         }
      },
      { _id: true }
 );
 
-const fieldManagementSchema = new mongoose.Schema({
+const subgroupSchema = new mongoose.Schema({
+     subgroupName: {
+          type: String,
+          required: true,
+     },
+     fields: {
+          type: [fieldSchema],
+     },
+});
+
+const groupSchema = new mongoose.Schema({
      groupName: {
           type: String,
           required: true,
           unique: true,
      },
-     fields: {
-          type: [fieldSchema],
-          // required: true,
-          // validate: {
-          //      validator: function (fields) {
-          //           return fields.length > 0; // Ensure there is at least one field defined
-          //      },
-          //      message: 'At least one field must be defined for the groupName.',
-          // },
+     subgroups: {
+          type: [subgroupSchema],
      },
+    fields: {
+        type: [fieldSchema],
+    },
 });
 
-// const fieldManagementSchema = new mongoose.Schema({
-//      groupName: {
-//           type: String,
-//           required: true,
-//           unique: true,
-//      },
-//      fields: [fieldSchema], // Directly include the fieldSchema as an array
-// });
-
-const fieldManagementModel = mongoose.model(
-     'fieldmanagements',
-     fieldManagementSchema
-);
+const fieldManagementModel = mongoose.model('fieldmanagements', groupSchema);
 
 export default fieldManagementModel;
