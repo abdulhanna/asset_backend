@@ -232,7 +232,7 @@ const addlocationassetGroup = async (locationId, data) => {
 try
 {
      const assetgroupIds = data.assetgroups;
-     // Fetch the location by its ID from the database
+     // Fetch the location by its ID from the collection
      const location = await locationModel.findById(locationId);
 
      if (!location) {
@@ -262,7 +262,7 @@ try
 
 const removeAssetGroupFromLocation = async (locationId, assetgroupIdToRemove) => {
      try {
-         // Fetch the location by its ID from the database
+         // Fetch the location by its ID from the collection
          const location = await locationModel.findById(locationId);
  
          if (!location) {
