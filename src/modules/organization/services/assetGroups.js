@@ -31,7 +31,8 @@ assetGroupService.createAssetGroup = async (
         const finalassetCodeId = codeGenerationType === 'manual' ? assetCodeId : await autoCodeGeneration.getassetGrpCode(organizationName);  
         const existingGroupName = await assetGroupModel.findOne({ 
            name,
-           organizationId
+           organizationId,
+           isDeleted: false
          });
         assert(!existingGroupName, createError(StatusCodes.BAD_REQUEST, 'Asset Group name already exists'));
       
@@ -238,6 +239,55 @@ assetGroupService.getAssetGroupsByOrganizationId = async (organizationId, assign
 
 
 }
+
+
+
+
+
+///////////// Modal View ///////////
+
+assetGroupService.modalViewAssetgroups = async (organizationId, assignedLocationId) => {
+     // Fetch all asset groups from the assetGroupModel
+    const assetGroups = await assetGroupModel.find(
+     { organizationId,
+     isDeleted: false
+   })
+   .select('-isDeleted -deletedAt -organizationId -__v');
+   assert(assetGroups, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"))
+
+    // Add the 'isExist' property to each asset group
+    const assetGroupsWithExistProperty = await Promise.all(assetGroups.map(async assetGroup => {
+     const isExist = await checkAssetGroupExistence(assignedLocationId, assetGroup._id);
+     return { ...assetGroup.toObject(), isExist };
+   }));
+
+    return assetGroupsWithExistProperty;
+   console.log(assetGroupsWithExistProperty);
+
+}
+
+
+
+
+const checkAssetGroupExistence = async (locationId, assetGroupId) => {
+     try {
+       // Find the location by its ID
+       const location = await locationModel.findById(locationId);
+       // Check if the location exists and contains the asset group
+       if (location && location.assetgroups.some(assetgroup => assetgroup.assetgroupId.equals(assetGroupId))) {
+         return true; // Asset group exists in the location
+       }
+   
+       return false; // Asset group doesn't exist in the location
+     } catch (error) {
+       console.error('Error:', error);
+       return false;
+     }
+   };
+
+
+
+
 
 //////////// delete assetgroup ////////
 assetGroupService.deleteAssetgroup = async (id) => {
