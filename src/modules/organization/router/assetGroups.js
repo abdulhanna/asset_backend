@@ -77,6 +77,18 @@ router.get(
     })
     )
 
+  // Asset Groups for modal view in Admin dash
+
+  router.get(
+     "/modalView",
+     isLoggedIn,
+     httpHandler (async (req, res) => {
+          const organizationId = req.user.data.organizationId;
+          const assignedLocationId = req.user.data.assignedLocationId;
+          const result = await assetGroupService.modalViewAssetgroups(organizationId, assignedLocationId);
+          res.send(result)
+     })
+  )
 
 
   // Delete asset group
