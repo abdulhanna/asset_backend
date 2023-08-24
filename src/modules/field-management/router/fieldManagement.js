@@ -14,7 +14,7 @@ router.post('/add-groups', isLoggedIn, async (req, res) => {
                     await fieldManagementService.createMultipleFieldGroups(
                          groupNames
                     );
-               return res.status(201).json({success:true, message:'Field groups added successfully',groupNames});
+               return res.status(201).json({success:true, message:'Field groups added successfully',newFieldGroups});
           }
      } catch (error) {
           console.error(error);
