@@ -183,7 +183,7 @@ router.get('/', isLoggedIn, async (req, res) => {
 });
 
 // GET /members (Get members by roleName)
-router.get('/', isLoggedIn, async (req, res) => {
+router.get('/roles', isLoggedIn, async (req, res) => {
     try {
         const {teamRoleId} = req.query;
 
