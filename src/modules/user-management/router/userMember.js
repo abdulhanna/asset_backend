@@ -1,246 +1,247 @@
-import { Router } from 'express';
-import { memberService } from '../services/userMember.js';
-import { isLoggedIn } from '../../auth/router/passport.js';
-import { v2 as cloudinary } from 'cloudinary';
-import { secret } from '../../../config/secret.js';
+import {Router} from 'express';
+import {memberService} from '../services/userMember.js';
+import {isLoggedIn} from '../../auth/router/passport.js';
+import {v2 as cloudinary} from 'cloudinary';
+import {secret} from '../../../config/secret.js';
 import multer from 'multer';
 import ExcelJS from 'exceljs';
-import { stringify } from 'csv-stringify';
+import {stringify} from 'csv-stringify';
 import puppeteer from 'puppeteer';
 
 cloudinary.config(secret.cloudinary);
 
 const profileImg = multer.diskStorage({
-     destination: 'public/images/profileImage',
-     filename: (req, file, cb) => {
-          cb(null, file.fieldname + '_' + Date.now() + file.originalname);
-     },
+    destination: 'public/images/profileImage',
+    filename: (req, file, cb) => {
+        cb(null, file.fieldname + '_' + Date.now() + file.originalname);
+    },
 });
 
 const upload = multer({
-     storage: profileImg,
-     limits: { fileSize: 20 * 1024 * 1024 },
-     fileFilter(req, file, cb) {
-          if (!file.originalname.match(/\.(png|jpg|jpeg)$/)) {
-               cb(
-                    new Error(
-                         'Please upload an image file with .png, .jpg, or .jpeg extension.'
-                    )
-               );
-          }
-          // Only accept one file with the field name 'image'
-          if (req.files && req.files.length >= 1) {
-               cb(new Error('Only one file allowed.'));
-          }
-          cb(undefined, true);
-     },
+    storage: profileImg,
+    limits: {fileSize: 20 * 1024 * 1024},
+    fileFilter(req, file, cb) {
+        if (!file.originalname.match(/\.(png|jpg|jpeg)$/)) {
+            cb(
+                new Error(
+                    'Please upload an image file with .png, .jpg, or .jpeg extension.'
+                )
+            );
+        }
+        // Only accept one file with the field name 'image'
+        if (req.files && req.files.length >= 1) {
+            cb(new Error('Only one file allowed.'));
+        }
+        cb(undefined, true);
+    },
 });
 
 const router = Router();
 
 // Create a new member
 router.post(
-     '/createMember',
-     isLoggedIn,
-     upload.single('image'),
-     async (req, res) => {
-          try {
-               const parentId = req.user.data._id;
-               const organizationId = req.user.data.organizationId;
-               const dashboardPermission = req.user.data.dashboardPermission;
-               const role = req.user.data.role;
+    '/createMember',
+    isLoggedIn,
+    upload.single('image'),
+    async (req, res) => {
+        try {
+            const parentId = req.user.data._id;
+            const organizationId = req.user.data.organizationId;
+            const dashboardPermission = req.user.data.dashboardPermission;
+            const role = req.user.data.role;
 
-               // Retrieve the uploaded file using req.file
-               const profileImgFile = req.file;
+            // Retrieve the uploaded file using req.file
+            const profileImgFile = req.file;
 
-               const {
-                    email,
-                    password,
-                    userProfile,
-                    teamRoleId,
-                    userType,
-                    assignedLocationId,
-               } = req.body;
+            const {
+                email,
+                password,
+                userProfile,
+                teamRoleId,
+                userType,
+                assignedLocationId,
+            } = req.body;
 
-               // Check if the email already exists in the database
-               const existingMember = await memberService.getMemberByEmail(
-                    email
-               );
-               if (existingMember) {
-                    return res.status(400).json({
-                         success: false,
-                         error: 'Email already exists',
-                    });
-               }
-               // Upload the profile image to Cloudinary
-               let profileImgUrl = null;
-               let profileImgPublicId = null;
-               if (profileImgFile) {
-                    const result = await cloudinary.uploader.upload(
-                         profileImgFile.path, // Use the file path
-                         {
-                              folder: 'profile-images', // Change this to your desired folder name
-                         }
-                    );
-                    profileImgUrl = result.secure_url;
-                    profileImgPublicId = result.public_id;
-               }
-               const locationId =
-                    assignedLocationId || req.user.data.assignedLocationId;
+            // Check if the email already exists in the database
+            const existingMember = await memberService.getMemberByEmail(
+                email
+            );
+            if (existingMember) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Email already exists',
+                });
+            }
+            // Upload the profile image to Cloudinary
+            let profileImgUrl = null;
+            let profileImgPublicId = null;
+            if (profileImgFile) {
+                const result = await cloudinary.uploader.upload(
+                    profileImgFile.path, // Use the file path
+                    {
+                        folder: 'profile-images', // Change this to your desired folder name
+                    }
+                );
+                profileImgUrl = result.secure_url;
+                profileImgPublicId = result.public_id;
+            }
+            const locationId =
+                assignedLocationId || req.user.data.assignedLocationId;
 
-               const userData = {
-                    email,
-                    password,
-                    userProfile: {
-                         ...userProfile,
-                         organizationId,
-                         profileImg: profileImgUrl,
-                         profileImgPublicId: profileImgPublicId, // Store the public_id
-                    },
-                    teamRoleId,
-                    parentId,
-                    dashboardPermission,
+            const userData = {
+                email,
+                password,
+                userProfile: {
+                    ...userProfile,
                     organizationId,
-                    locationId,
-                    userType,
-                    role,
-               };
+                    profileImg: profileImgUrl,
+                    profileImgPublicId: profileImgPublicId, // Store the public_id
+                },
+                teamRoleId,
+                parentId,
+                dashboardPermission,
+                organizationId,
+                locationId,
+                userType,
+                role,
+            };
 
-               const member = await memberService.createMember(userData);
-               return res.status(201).json({ success: true, member });
-          } catch (error) {
-               return res
-                    .status(500)
-                    .json({ success: false, error: error.message });
-          }
-     }
+            const member = await memberService.createMember(userData);
+            return res.status(201).json({success: true, member});
+        } catch (error) {
+            return res
+                .status(500)
+                .json({success: false, error: error.message});
+        }
+    }
 );
 
 // Update member
 router.put('/updateMember/:id', upload.single('image'), async (req, res) => {
-     try {
-          const { id } = req.params;
-          const data = req.body;
+    try {
+        const {id} = req.params;
+        const data = req.body;
 
-          // Retrieve the uploaded file using req.file
-          const profileImgFile = req.file;
+        // Retrieve the uploaded file using req.file
+        const profileImgFile = req.file;
 
-          // Retrieve the existing member to check if an image exists
-          const existingMember = await memberService.getMemberById(id);
+        // Retrieve the existing member to check if an image exists
+        const existingMember = await memberService.getMemberById(id);
 
-          if (profileImgFile) {
-               // If an existing profile image exists, delete it from Cloudinary using the stored public_id
-               if (
-                    existingMember &&
-                    existingMember.userProfile &&
+        if (profileImgFile) {
+            // If an existing profile image exists, delete it from Cloudinary using the stored public_id
+            if (
+                existingMember &&
+                existingMember.userProfile &&
+                existingMember.userProfile.profileImgPublicId
+            ) {
+                await cloudinary.uploader.destroy(
                     existingMember.userProfile.profileImgPublicId
-               ) {
-                    await cloudinary.uploader.destroy(
-                         existingMember.userProfile.profileImgPublicId
-                    );
-               }
+                );
+            }
 
-               // Upload the new profile image
-               const result = await cloudinary.uploader.upload(
-                    profileImgFile.path,
-                    {
-                         folder: 'profile-images',
-                    }
-               );
+            // Upload the new profile image
+            const result = await cloudinary.uploader.upload(
+                profileImgFile.path,
+                {
+                    folder: 'profile-images',
+                }
+            );
 
-               // Update profileImgUrl and save the new public_id in the database
-               data.userProfile = {
-                    ...data.userProfile,
-                    profileImg: result.secure_url,
-                    profileImgPublicId: result.public_id,
-               };
-          }
+            // Update profileImgUrl and save the new public_id in the database
+            data.userProfile = {
+                ...data.userProfile,
+                profileImg: result.secure_url,
+                profileImgPublicId: result.public_id,
+            };
+        }
 
-          const updateMember = await memberService.updateMember(id, data);
-          return res.status(201).json({
-               success: true,
-               updateMember,
-          });
-     } catch (error) {
-          return res.status(500).json({
-               success: false,
-               error: error.message,
-          });
-     }
+        const updateMember = await memberService.updateMember(id, data);
+        return res.status(201).json({
+            success: true,
+            updateMember,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            error: error.message,
+        });
+    }
 });
 
 // Get all members of a superadmin
-router.get('/:parentId', isLoggedIn, async (req, res) => {
-     try {
-          const { parentId } = req.params;
-          const userType = req.query.userType;
-          const members = await memberService.getAllMembers(parentId, userType);
-          return res.status(200).json({ success: true, members });
-     } catch (error) {
-          return res.status(500).json({ success: false, error: error.message });
-     }
+router.get('/', isLoggedIn, async (req, res) => {
+    try {
+        // const { parentId } = req.params;
+        const parentId = req.user.data._id;
+        const userType = req.query.userType;
+        const members = await memberService.getAllMembers(parentId, userType);
+        return res.status(200).json({success: true, members});
+    } catch (error) {
+        return res.status(500).json({success: false, error: error.message});
+    }
 });
 
 // GET /members (Get members by roleName)
 router.get('/', isLoggedIn, async (req, res) => {
-     try {
-          const { teamRoleId } = req.query;
+    try {
+        const {teamRoleId} = req.query;
 
-          const assignedUsers = await memberService.getMembersByRole(
-               teamRoleId
-          );
+        const assignedUsers = await memberService.getMembersByRole(
+            teamRoleId
+        );
 
-          const assignedUserCounts = assignedUsers.length;
-          return res.json({ success: true, assignedUserCounts, assignedUsers });
-     } catch (error) {
-          console.log(error);
-          return res.status(500).json({ success: false, error: error.message });
-     }
+        const assignedUserCounts = assignedUsers.length;
+        return res.json({success: true, assignedUserCounts, assignedUsers});
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({success: false, error: error.message});
+    }
 });
 
 router.get('/member/:id', async (req, res) => {
-     try {
-          const memberId = req.params.id;
-          const member = await memberService.getMemberById(memberId);
+    try {
+        const memberId = req.params.id;
+        const member = await memberService.getMemberById(memberId);
 
-          if (!member) {
-               return res
-                    .status(404)
-                    .json({ success: false, message: 'Member not found' });
-          }
+        if (!member) {
+            return res
+                .status(404)
+                .json({success: false, message: 'Member not found'});
+        }
 
-          return res.status(200).json({ success: true, member });
-     } catch (error) {
-          return res.status(500).json({ success: false, error: error.message });
-     }
+        return res.status(200).json({success: true, member});
+    } catch (error) {
+        return res.status(500).json({success: false, error: error.message});
+    }
 });
 
 router.delete('/:userId', async (req, res) => {
-     try {
-          const { userId } = req.params;
+    try {
+        const {userId} = req.params;
 
-          // Call the service function to update the user's isDeleted field and set deletedAt to the current date
-          const updatedUser = await memberService.deleteUser(userId);
+        // Call the service function to update the user's isDeleted field and set deletedAt to the current date
+        const updatedUser = await memberService.deleteUser(userId);
 
-          if (!updatedUser) {
-               return res.status(404).json({
-                    success: false,
-                    error: 'User not found or not accessible.',
-               });
-          }
+        if (!updatedUser) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found or not accessible.',
+            });
+        }
 
-          return res.status(200).json({
-               success: true,
-               msg: 'User deleted successfully',
-               user: updatedUser,
-          });
-     } catch (error) {
-          console.log(error);
-          return res.status(500).json({
-               success: false,
-               error: 'Unable to delete user',
-          });
-     }
+        return res.status(200).json({
+            success: true,
+            msg: 'User deleted successfully',
+            user: updatedUser,
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            error: 'Unable to delete user',
+        });
+    }
 });
 
 //------------------------
@@ -292,16 +293,16 @@ router.delete('/:userId', async (req, res) => {
 // });
 
 const extractMembersData = (members) => {
-     return members.map((member, index) => ({
-          index: index + 1,
-          roleName: member.teamRoleId
-               ? member.teamRoleId.roleName || 'N/A'
-               : 'N/A',
-          name: member.userProfile ? member.userProfile.name || 'N/A' : 'N/A',
-          email: member.email || 'N/A',
-          phone: member.userProfile ? member.userProfile.phone || 'N/A' : 'N/A',
-          createdAt: member.createdAt || 'N/A',
-     }));
+    return members.map((member, index) => ({
+        index: index + 1,
+        roleName: member.teamRoleId
+            ? member.teamRoleId.roleName || 'N/A'
+            : 'N/A',
+        name: member.userProfile ? member.userProfile.name || 'N/A' : 'N/A',
+        email: member.email || 'N/A',
+        phone: member.userProfile ? member.userProfile.phone || 'N/A' : 'N/A',
+        createdAt: member.createdAt || 'N/A',
+    }));
 };
 
 // const generatePDF = async (members) => {
@@ -340,66 +341,66 @@ const extractMembersData = (members) => {
 // };
 
 const generateCSV = async (members) => {
-     const membersData = extractMembersData(members);
+    const membersData = extractMembersData(members);
 
-     return new Promise((resolve, reject) => {
-          const chunks = [];
-          const csvStringifier = stringify({ header: true });
+    return new Promise((resolve, reject) => {
+        const chunks = [];
+        const csvStringifier = stringify({header: true});
 
-          csvStringifier.on('readable', () => {
-               let chunk;
-               while ((chunk = csvStringifier.read())) {
-                    chunks.push(chunk);
-               }
-          });
+        csvStringifier.on('readable', () => {
+            let chunk;
+            while ((chunk = csvStringifier.read())) {
+                chunks.push(chunk);
+            }
+        });
 
-          csvStringifier.on('error', (error) => {
-               reject(error);
-          });
+        csvStringifier.on('error', (error) => {
+            reject(error);
+        });
 
-          csvStringifier.on('end', () => {
-               // Concatenate chunks into a single Buffer
-               const csvBuffer = Buffer.concat(chunks);
-               resolve(csvBuffer);
-          });
+        csvStringifier.on('end', () => {
+            // Concatenate chunks into a single Buffer
+            const csvBuffer = Buffer.concat(chunks);
+            resolve(csvBuffer);
+        });
 
-          membersData.forEach((member) => {
-               csvStringifier.write(member);
-          });
+        membersData.forEach((member) => {
+            csvStringifier.write(member);
+        });
 
-          csvStringifier.end();
-     });
+        csvStringifier.end();
+    });
 };
 
 const generateXLSX = async (members) => {
-     const membersData = extractMembersData(members);
-     return new Promise((resolve) => {
-          const workbook = new ExcelJS.Workbook();
-          const worksheet = workbook.addWorksheet('Members');
+    const membersData = extractMembersData(members);
+    return new Promise((resolve) => {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Members');
 
-          worksheet.columns = [
-               { header: 'Name', key: 'name', width: 20 },
-               { header: 'RoleName', key: 'roleName', width: 20 },
-               { header: 'Email', key: 'email', width: 20 },
-               { header: 'PhoneNumber', key: 'phone', width: 20 },
-          ];
+        worksheet.columns = [
+            {header: 'Name', key: 'name', width: 20},
+            {header: 'RoleName', key: 'roleName', width: 20},
+            {header: 'Email', key: 'email', width: 20},
+            {header: 'PhoneNumber', key: 'phone', width: 20},
+        ];
 
-          // membersData.forEach((member) => {
-          //      worksheet.addRow({ name: member.name });
-          //      worksheet.addRow({ name: member.roleName });
-          //      worksheet.addRow({ name: member.email });
-          //      worksheet.addRow({ name: member.phone });
-          // });
+        // membersData.forEach((member) => {
+        //      worksheet.addRow({ name: member.name });
+        //      worksheet.addRow({ name: member.roleName });
+        //      worksheet.addRow({ name: member.email });
+        //      worksheet.addRow({ name: member.phone });
+        // });
 
-          membersData.forEach((member) => {
-               // Add the entire member object as a single row
-               worksheet.addRow(member);
-          });
+        membersData.forEach((member) => {
+            // Add the entire member object as a single row
+            worksheet.addRow(member);
+        });
 
-          workbook.xlsx.writeBuffer().then((buffer) => {
-               resolve(buffer);
-          });
-     });
+        workbook.xlsx.writeBuffer().then((buffer) => {
+            resolve(buffer);
+        });
+    });
 };
 
 // const generateDynamicTable = (membersData) => {
@@ -422,9 +423,9 @@ const generateXLSX = async (members) => {
 // };
 
 const generatePDFWithDynamicTable = async (members) => {
-     const membersData = extractMembersData(members);
+    const membersData = extractMembersData(members);
 
-     const htmlContent = `
+    const htmlContent = `
      <html>
           <head>
                      
@@ -509,8 +510,8 @@ const generatePDFWithDynamicTable = async (members) => {
                             
                <tbody>
                                      ${membersData
-                         .map(
-                              (member) => `          
+        .map(
+            (member) => `          
                                    
                     <tr>
                                                       
@@ -537,8 +538,8 @@ const generatePDFWithDynamicTable = async (members) => {
                                                   
                     </tr>
                                          `
-                         )
-                         .join('')}              
+        )
+        .join('')}              
                </tbody>
                         
           </table>
@@ -550,82 +551,82 @@ const generatePDFWithDynamicTable = async (members) => {
 
      `;
 
-     try {
-          const browser = await puppeteer.launch();
-          const page = await browser.newPage();
-          await page.setContent(htmlContent);
+    try {
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
+        await page.setContent(htmlContent);
 
-          // Set the PDF options (e.g., format, margin, etc.)
-          // const pdfOptions = {
-          //      format: 'A4',
-          //      margin: {
-          //           top: '20px',
-          //           right: '20px',
-          //           bottom: '20px',
-          //           left: '20px',
-          //      },
-          // };
+        // Set the PDF options (e.g., format, margin, etc.)
+        // const pdfOptions = {
+        //      format: 'A4',
+        //      margin: {
+        //           top: '20px',
+        //           right: '20px',
+        //           bottom: '20px',
+        //           left: '20px',
+        //      },
+        // };
 
-          const pdfBuffer = await page.pdf({
-               format: 'A4',
-               printBackground: true,
-               scale: 0.75, // Adjust the scale factor to fit more content onto a single page
-          });
+        const pdfBuffer = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+            scale: 0.75, // Adjust the scale factor to fit more content onto a single page
+        });
 
-          await browser.close();
+        await browser.close();
 
-          return pdfBuffer;
-     } catch (error) {
-          console.error('PDF generation error:', error);
-          throw new Error('Failed to generate PDF.');
-     }
+        return pdfBuffer;
+    } catch (error) {
+        console.error('PDF generation error:', error);
+        throw new Error('Failed to generate PDF.');
+    }
 };
 
 router.get('/v2/:parentId/download', async (req, res) => {
-     try {
-          const { parentId } = req.params;
-          const members = await memberService.getAllMembers(parentId);
+    try {
+        const {parentId} = req.params;
+        const members = await memberService.getAllMembers(parentId);
 
-          // Get the desired format from query parameter (pdf, csv, xlsx)
-          const format = req.query.format;
+        // Get the desired format from query parameter (pdf, csv, xlsx)
+        const format = req.query.format;
 
-          if (format === 'pdf') {
-               // Generate and send PDF
-               const pdfBuffer = await generatePDFWithDynamicTable(members);
-               res.setHeader(
-                    'Content-Disposition',
-                    'attachment; filename=members.pdf'
-               );
-               res.setHeader('Content-Type', 'application/pdf');
-               res.send(pdfBuffer);
-          } else if (format === 'csv') {
-               // Generate and send CSV
-               const csvBuffer = await generateCSV(members);
+        if (format === 'pdf') {
+            // Generate and send PDF
+            const pdfBuffer = await generatePDFWithDynamicTable(members);
+            res.setHeader(
+                'Content-Disposition',
+                'attachment; filename=members.pdf'
+            );
+            res.setHeader('Content-Type', 'application/pdf');
+            res.send(pdfBuffer);
+        } else if (format === 'csv') {
+            // Generate and send CSV
+            const csvBuffer = await generateCSV(members);
 
-               res.setHeader(
-                    'Content-Disposition',
-                    'attachment; filename=members.csv'
-               );
-               res.setHeader('Content-Type', 'text/csv');
-               res.send(csvBuffer);
-          } else if (format === 'xlsx') {
-               // Generate and send XLSX
-               const xlsxBuffer = await generateXLSX(members);
-               res.setHeader(
-                    'Content-Disposition',
-                    'attachment; filename=members.xlsx'
-               );
-               res.setHeader(
-                    'Content-Type',
-                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-               );
-               res.send(xlsxBuffer);
-          } else {
-               throw new Error('Invalid format specified.');
-          }
-     } catch (error) {
-          res.status(500).json({ success: false, error: error.message });
-     }
+            res.setHeader(
+                'Content-Disposition',
+                'attachment; filename=members.csv'
+            );
+            res.setHeader('Content-Type', 'text/csv');
+            res.send(csvBuffer);
+        } else if (format === 'xlsx') {
+            // Generate and send XLSX
+            const xlsxBuffer = await generateXLSX(members);
+            res.setHeader(
+                'Content-Disposition',
+                'attachment; filename=members.xlsx'
+            );
+            res.setHeader(
+                'Content-Type',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            );
+            res.send(xlsxBuffer);
+        } else {
+            throw new Error('Invalid format specified.');
+        }
+    } catch (error) {
+        res.status(500).json({success: false, error: error.message});
+    }
 });
 
 export default router;
