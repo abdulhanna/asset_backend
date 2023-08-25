@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.post('/create', isLoggedIn, async (req, res) => {
      try {
-          let { moduleName, read, readWrite, actions } = req.body;
+          let { moduleName, read, readWrite, actions,dashboardType } = req.body;
 
           // Custom validation for the create permission request
           if (!moduleName || moduleName.trim() === '') {
@@ -39,6 +39,7 @@ router.post('/create', isLoggedIn, async (req, res) => {
                read,
                readWrite,
                actions,
+               dashboardType,
                createdAt: new Date(),
           };
 

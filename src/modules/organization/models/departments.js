@@ -2,7 +2,12 @@ import mongoose from 'mongoose';
 
 const departmentSchema = new mongoose.Schema(
      {
-          departmentId: {
+          codeGenerationType: {
+               type: String,
+               enum: ['auto', 'manual'],
+               default: 'auto',
+          },
+          departmentCodeId: {
                type: String,
                required: false,
           },
@@ -46,4 +51,3 @@ const departmentSchema = new mongoose.Schema(
 const departmentModel = mongoose.model('departments', departmentSchema);
 
 export default departmentModel;
-

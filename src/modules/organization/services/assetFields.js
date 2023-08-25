@@ -72,7 +72,6 @@ export const assetService = {
      updateAsset,
      updateDynamicField,
      getAllAssets,
-     getAllAssets,
      getAssetById,
      deleteAsset,
 };

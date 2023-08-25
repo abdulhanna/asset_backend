@@ -5,6 +5,11 @@ const permissionSchema = new mongoose.Schema(
           moduleName: {
                type: String,
           },
+         dashboardType: {
+              type: String,
+              enum: ['root', 'user'],
+              required: true
+         },
           read: {
                type: Boolean,
                default: false,
