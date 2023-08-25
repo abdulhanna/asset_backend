@@ -265,7 +265,6 @@ const deleteGroupAndFieldsById = async (groupId) => {
 
 const editFieldById = async (fieldId, updatedData) => {
     try {
-
         const document = await fieldManagementModel.findOne({
             $or: [
                 {'subgroups.fields._id': fieldId},
@@ -275,34 +274,38 @@ const editFieldById = async (fieldId, updatedData) => {
 
         if (!document) {
             console.error('Field not found');
-            return {nModified: 0};
+            return {nModified: 0, updatedData: null};
         }
 
-        const updatedDocument = document.toObject();
+        let updatedFields = [];
 
-        for (const subgroup of updatedDocument.subgroups) {
-            const fieldIndex = subgroup.fields.findIndex(field => field._id.toString() === fieldId);
-            if (fieldIndex !== -1) {
-                subgroup.fields[fieldIndex] = {...subgroup.fields[fieldIndex], ...updatedData};
-                break; // Assuming only one field matches the ID
+        for (const subgroup of document.subgroups) {
+            for (const field of subgroup.fields) {
+                if (field._id.toString() === fieldId) {
+                    Object.assign(field, updatedData);
+                    updatedFields.push(field);
+                }
             }
         }
 
-        const topLevelFieldIndex = updatedDocument.fields.findIndex(field => field._id.toString() === fieldId);
-        if (topLevelFieldIndex !== -1) {
-            updatedDocument.fields[topLevelFieldIndex] = {...updatedDocument.fields[topLevelFieldIndex], ...updatedData};
+        if (updatedFields.length === 0) {
+            for (const field of document.fields) {
+                if (field._id.toString() === fieldId) {
+                    Object.assign(field, updatedData);
+                    updatedFields.push(field);
+                }
+            }
         }
 
-        await fieldManagementModel.updateOne({_id: document._id}, updatedDocument);
+        await document.save();
 
-        console.log('Update successful');
-
-        return {nModified: 1};
+        return {nModified: 1, updatedData: updatedFields};
     } catch (error) {
         console.error('Error while updating field:', error);
         throw error;
     }
 };
+
 
 const updateFieldData = async (groupId, updatedData) => {
     try {
