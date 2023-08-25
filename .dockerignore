@@ -1,3 +1,4 @@
+# Patterns from .gitignore
 .idea
 .DS_Store
 .env
