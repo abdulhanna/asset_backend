@@ -85,10 +85,30 @@ const hardDeletePermissions = async (id) => {
     }
 };
 
+const getPermissionsByDashboardPermission = async (dashboardPermission) => {
+    try {
+        let dashboardType;
+
+        if (dashboardPermission === 'superadmin_dashboard') {
+            dashboardType = 'user';
+        } else if (dashboardPermission === 'root_dashboard') {
+            dashboardType = 'root';
+        } else {
+            throw new Error('Invalid dashboardPermission value');
+        }
+
+        const permissions = await permissionModel.find({dashboardType});
+
+        return permissions;
+    } catch (error) {
+        throw error;
+    }
+};
 export const permissionService = {
     createPermission,
     updatePermission,
     getAllPermissions,
     softDeletePermissions,
     hardDeletePermissions,
+    getPermissionsByDashboardPermission
 };

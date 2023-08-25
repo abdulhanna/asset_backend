@@ -180,4 +180,14 @@ router.delete('/v2/:id', async (req, res) => {
 });
 
 
+// Route to get permissions based on the user's dashboardPermission
+router.get('/dashboardPermission', isLoggedIn, async (req, res) => {
+    try {
+        const dashboardPermission = req.user.data.dashboardPermission.trim();
+        const permissions = await permissionService.getPermissionsByDashboardPermission(dashboardPermission);
+        res.status(200).json(permissions);
+    } catch (error) {
+        res.status(500).json({error: 'Internal server error'});
+    }
+});
 export default router;
