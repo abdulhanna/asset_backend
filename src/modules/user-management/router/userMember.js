@@ -199,7 +199,7 @@ router.get('/roles', isLoggedIn, async (req, res) => {
     }
 });
 
-router.get('/member/:id', async (req, res) => {
+router.get('/member/:id', isLoggedIn, async (req, res) => {
     try {
         const memberId = req.params.id;
         const member = await memberService.getMemberById(memberId);
