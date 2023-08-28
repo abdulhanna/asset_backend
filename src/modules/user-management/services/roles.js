@@ -177,36 +177,28 @@ const getAllRoles = async () => {
 const getRoleById = async (id) => {
     try {
         const role = await roleDefineModel.findById(id);
-        const firstModuleId = role.permissions[0].moduleId; // Get the first moduleId from the role
+        const firstModuleId = role.permissions[0].moduleId;
 
-        if (!firstModuleId) {
-            // Return the role without any changes if there are no permissions
-            return role.toObject();
-        }
+        if (firstModuleId) {
+            const firstModule = await permissionModel.findById(firstModuleId);
 
-        const firstModule = await permissionModel.findById(firstModuleId);
+            if (firstModule && ['user', 'root'].includes(firstModule.dashboardType)) {
+                const dashboardTypeToMatch = firstModule.dashboardType;
 
-        if (!firstModule || !['user', 'root'].includes(firstModule.dashboardType)) {
-            // Return the role without any changes if the first moduleId doesn't exist or the dashboardType is not 'user' or 'root'
-            return role.toObject();
-        }
+                const matchedModuleIds = await permissionModel.find({dashboardType: dashboardTypeToMatch}, '_id');
 
-        const dashboardTypeToMatch = firstModule.dashboardType;
+                matchedModuleIds.forEach(idObj => {
+                    const moduleId = idObj._id.toString();
 
-        // Get all permission moduleIds with the specified dashboardType
-        const matchedModuleIds = await permissionModel.find({dashboardType: dashboardTypeToMatch}, '_id');
-
-        // Add missing moduleIds to the role's permissions array
-        matchedModuleIds.forEach(idObj => {
-            const moduleId = idObj._id.toString();
-
-            if (!role.permissions.some(permission => permission.moduleId.toString() === moduleId)) {
-                role.permissions.push({
-                    moduleId: moduleId,
-                    // Set default values for other permission properties here
+                    if (!role.permissions.some(permission => permission.moduleId.toString() === moduleId)) {
+                        role.permissions.push({
+                            moduleId: moduleId,
+                            // Set default values for other permission properties here
+                        });
+                    }
                 });
             }
-        });
+        }
 
         return role.toObject();
     } catch (error) {
