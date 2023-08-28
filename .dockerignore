@@ -1,6 +1,8 @@
+# Patterns from .gitignore
 .idea
 .DS_Store
 .env
+.envrc
 node_modules
 mounts
 public
