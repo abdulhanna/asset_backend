@@ -93,7 +93,7 @@ authService.verifyUser = async (verificationToken) => {
        else
        {
           //set pass token for otherr user roles
-          const setpassstoken = await jwtService.generatePair(verifyEmail.email)
+          const setpassstoken = await jwtService.generatePair(getUser.email)
         const verifyEmail = await userModel.findOneAndUpdate(
           { verificationToken},
           { setPasswordToken: setpassstoken, verificationToken: null, is_email_verified: true, updatedAt : Date.now()},
