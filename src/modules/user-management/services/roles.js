@@ -193,7 +193,6 @@ const getRoleById = async (id) => {
                     if (!role.permissions.some(permission => permission.moduleId.toString() === moduleId)) {
                         role.permissions.push({
                             moduleId: moduleId,
-                            // Set default values for other permission properties here
                         });
                     }
                 });
