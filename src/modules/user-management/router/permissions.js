@@ -24,13 +24,14 @@ router.post('/create', isLoggedIn, async (req, res) => {
         // Check if the normalized moduleName already exists
         const existingModuleName = await permissionModel.findOne({
             moduleName,
+            dashboardType,
             isDeactivated: false,
         });
 
         if (existingModuleName) {
             return res.status(400).json({
                 success: false,
-                error: `Module with the name '${moduleName}' already exists.`,
+                error: `Module with the name '${moduleName}' and dashboardType '${dashboardType}' already exists.`,
             });
         }
 
