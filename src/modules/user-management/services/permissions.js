@@ -89,12 +89,10 @@ const getPermissionsByDashboardPermission = async (dashboardPermission) => {
     try {
         let dashboardType;
 
-        if (dashboardPermission === 'superadmin_dashboard') {
-            dashboardType = 'user';
-        } else if (dashboardPermission === 'root_dashboard') {
+        if (dashboardPermission === 'root_dashboard') {
             dashboardType = 'root';
         } else {
-            throw new Error('Invalid dashboardPermission value');
+            dashboardType = 'user';
         }
 
         const permissions = await permissionModel.find({dashboardType});
@@ -104,6 +102,7 @@ const getPermissionsByDashboardPermission = async (dashboardPermission) => {
         throw error;
     }
 };
+
 export const permissionService = {
     createPermission,
     updatePermission,
