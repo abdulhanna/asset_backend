@@ -89,6 +89,10 @@ authService.verifyUser = async (verificationToken) => {
           { verificationToken: null, is_email_verified: true, updatedAt : Date.now()},
           { new: true }
         );
+
+
+        const redirectURLlogin = `${secret.frontend_baseURL}/login`;
+         return redirectURLlogin;
        }
        else
        {
@@ -99,10 +103,9 @@ authService.verifyUser = async (verificationToken) => {
           { setPasswordToken: setpassstoken, verificationToken: null, is_email_verified: true, updatedAt : Date.now()},
           { new: true }
         );
+        const redirectURLlogin = `${secret.frontend_baseURL}/set-password?setPassword_Token?${setpassstoken}`;
+       return redirectURLlogin;
        }
-     
-    const redirectURLlogin = getUser.role == 'superadmin' ? `${secret.frontend_baseURL}/login` : `${secret.frontend_baseURL}/set-password?setPassword_Token?${setpassstoken}`;
-    return redirectURLlogin;
 }
 
 
