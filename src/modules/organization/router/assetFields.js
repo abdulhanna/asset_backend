@@ -11,7 +11,10 @@ router.post('/', isLoggedIn, async (req, res) => {
         const assetData = req.body;
         const organizationId = req.user.data.organizationId;
         const newAsset = await assetService.createAsset(organizationId, assetData);
-        res.status(201).json(newAsset);
+        res.status(201).json({
+            success: true,
+            newAsset
+        });
     } catch (error) {
         res.status(500).json({error: error.message});
     }
