@@ -337,10 +337,10 @@ const markFieldAsDeleted = async (fieldId) => {
             {$set: {'subgroups.$[subgroup].fields.$[field].isDeleted': true}},
             {
                 new: true,
-                arrayFilters: [
-                    {'subgroup.fields._id': fieldId},
-                    // {'field._id': fieldId}
-                ]
+                // arrayFilters: [
+                //     {'subgroup.fields._id': fieldId},
+                //     // {'field._id': fieldId}
+                // ]
             }
         );
 
