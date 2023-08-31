@@ -339,7 +339,7 @@ const markFieldAsDeleted = async (fieldId) => {
                 new: true,
                 arrayFilters: [
                     {'subgroup.fields._id': fieldId},
-                    {'field._id': fieldId}
+                    // {'field._id': fieldId}
                 ]
             }
         );
