@@ -231,6 +231,7 @@ const deleteFieldById = async (fieldId) => {
             {$pull: {'subgroups.$.fields': {_id: fieldId}}},
             {new: true}
         );
+        
 
         if (!updatedSubgroup) {
             throw new Error('Field not found');
@@ -334,7 +335,8 @@ const markFieldAsDeleted = async (fieldId) => {
     if (!updatedGroup) {
         const updatedSubgroup = await fieldManagementModel.findOneAndUpdate(
             {'subgroups.fields._id': fieldId},
-            {$set: {'subgroups.$[subgroup].fields.$[field].isDeleted': true}},
+            //{$set: {'subgroups.$[subgroup].fields.$[field].isDeleted': true}},
+            {$set: {'subgroups.$.fields.$.isDeleted': true}},
             {
                 new: true,
                 // arrayFilters: [
