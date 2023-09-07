@@ -89,9 +89,22 @@ router.put('/update/:id', async (req, res) => {
     }
 });
 
-router.get('/list', isLoggedIn, async (req, res) => {
+router.get('/listWithoutOrganizationId', isLoggedIn, async (req, res) => {
     try {
-        const fieldGroups = await fieldManagementService.getFieldGroups();
+        const fieldGroups = await fieldManagementService.getFieldGroupsByOrganizationIdNull();
+
+        return res.status(200).json({success: true, fieldGroups});
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({error: 'Unable to get field groups'});
+    }
+});
+
+router.get('/listWithOrganizationId', isLoggedIn, async (req, res) => {
+    try {
+        const organizationId = req.user.data.organizationId;
+       
+        const fieldGroups = await fieldManagementService.getFieldGroupsByOrganizationId(organizationId);
 
         return res.status(200).json({success: true, fieldGroups});
     } catch (error) {
@@ -161,6 +174,9 @@ router.delete('/groups/:groupId', isLoggedIn, async (req, res) => {
         return res.status(500).json({message: 'Internal server error'});
     }
 });
+
+
+//Organization level form-management
 
 
 //--------------Not in use

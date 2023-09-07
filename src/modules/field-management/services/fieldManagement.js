@@ -75,9 +75,28 @@ const updateFields = async (id, fields, organizationId) => {
 };
 
 
-const getFieldGroups = async () => {
+const getFieldGroupsByOrganizationIdNull = async () => {
     try {
         const fieldGroups = await fieldManagementModel.find();
+
+        // Remove fields with isDeleted: true from each subgroup
+        fieldGroups.forEach(group => {
+            group.subgroups.forEach(subgroup => {
+                subgroup.fields = subgroup.fields.filter(field => !field.isDeleted && (field.organizationId == null));
+            });
+
+            // Remove fields with isDeleted: true from the top-level fields array
+            group.fields = group.fields.filter(field => !field.isDeleted && (field.organizationId == null));
+        });
+
+        return fieldGroups;
+    } catch (error) {
+        throw new Error('Unable to get field groups');
+    }
+};
+const getFieldGroupsByOrganizationId = async (organizationId) => {
+    try {
+        const fieldGroups = await fieldManagementModel.find().lean();
 
         // Remove fields with isDeleted: true from each subgroup
         fieldGroups.forEach(group => {
@@ -85,12 +104,30 @@ const getFieldGroups = async () => {
                 subgroup.fields = subgroup.fields.filter(field => !field.isDeleted);
             });
 
-            // Remove fields with isDeleted: true from the top-level fields array
             group.fields = group.fields.filter(field => !field.isDeleted);
         });
 
-        return fieldGroups;
+        return fieldGroups.map(group => {
+            const matchingOrganizationFields = group.fields.filter(field => field.organizationId == organizationId);
+            const nullOrganizationFields = group.fields.filter(field => field.organizationId == null);
+            console.log('matchingOrganizationFields', matchingOrganizationFields);
+
+            return {
+                ...group,
+                fields: matchingOrganizationFields.concat(nullOrganizationFields),
+                subgroups: group.subgroups.map(subgroup => {
+                    const matchingOrganizationSubgroupFields = subgroup.fields.filter(field => field.organizationId === organizationId);
+                    const nullOrganizationSubgroupFields = subgroup.fields.filter(field => field.organizationId === null);
+
+                    return {
+                        ...subgroup,
+                        fields: matchingOrganizationSubgroupFields.concat(nullOrganizationSubgroupFields)
+                    };
+                })
+            };
+        });
     } catch (error) {
+        console.log(error);
         throw new Error('Unable to get field groups');
     }
 };
@@ -231,7 +268,7 @@ const deleteFieldById = async (fieldId) => {
             {$pull: {'subgroups.$.fields': {_id: fieldId}}},
             {new: true}
         );
-        
+
 
         if (!updatedSubgroup) {
             throw new Error('Field not found');
@@ -359,7 +396,7 @@ const markFieldAsDeleted = async (fieldId) => {
 export const fieldManagementService = {
     createMultipleFieldGroups,
     getFieldGroupsById,
-    getFieldGroups,
+    getFieldGroupsByOrganizationIdNull,
     addFieldToGroupV2,
     deleteFieldById,
     deleteGroupAndFieldsById,
@@ -370,7 +407,8 @@ export const fieldManagementService = {
     getFieldsBySubgroupId,
     editFieldById,
     updateFieldData,
-    markFieldAsDeleted
+    markFieldAsDeleted,
+    getFieldGroupsByOrganizationId
 };
 
 
