@@ -116,7 +116,7 @@ const getFieldGroupsByOrganizationId = async (organizationId) => {
                 ...group,
                 fields: matchingOrganizationFields.concat(nullOrganizationFields),
                 subgroups: group.subgroups.map(subgroup => {
-                    const matchingOrganizationSubgroupFields = subgroup.fields.filter(field => field.organizationId === organizationId);
+                    const matchingOrganizationSubgroupFields = subgroup.fields.filter(field => field.organizationId == organizationId);
                     const nullOrganizationSubgroupFields = subgroup.fields.filter(field => field.organizationId === null);
 
                     return {
