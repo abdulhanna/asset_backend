@@ -39,53 +39,6 @@ router.put('/:groupId/add-subgroups', isLoggedIn, async (req, res) => {
     }
 });
 
-// Update fields within a subgroup by subgroup ID
-router.put('/subgroups/:subgroupId', isLoggedIn, async (req, res) => {
-    try {
-        const {subgroupId} = req.params;
-        const {fields} = req.body;
-
-        const updatedFieldGroup =
-            await fieldManagementService.updateSubgroupFields(
-                subgroupId,
-                fields
-            );
-        return res.status(200).json(updatedFieldGroup);
-    } catch (error) {
-        console.log(error);
-        return res
-            .status(500)
-            .json({error: 'Unable to update subgroup fields'});
-    }
-});
-// Update fields within a group by group ID
-router.put('/groups/:groupId', isLoggedIn, async (req, res) => {
-    try {
-        const {groupId} = req.params;
-        const {fields} = req.body;
-
-        const updatedFieldGroup = await fieldManagementService.updateGroupFields(groupId, fields);
-        return res.status(200).json(updatedFieldGroup);
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({error: 'Unable to update group fields'});
-    }
-});
-router.get('/subgroups/:subgroupId', isLoggedIn, async (req, res) => {
-    try {
-        const {subgroupId} = req.params;
-        const fields = await fieldManagementService.getFieldsBySubgroupId(subgroupId);
-        return res.status(200).json({
-            success: true,
-            fields
-        });
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({error: 'Unable to fetch subgroup fields'});
-    }
-});
-
-
 router.put('/fields/:id', isLoggedIn, async (req, res) => {
     try {
         const organizationId = req.user.data.organizationId;
@@ -99,6 +52,7 @@ router.put('/fields/:id', isLoggedIn, async (req, res) => {
         return res.status(500).json({error: 'Unable to update fields'});
     }
 });
+
 
 router.put('/edit-field/:id', async (req, res) => {
     try {
@@ -161,25 +115,6 @@ router.get('/:groupId', isLoggedIn, async (req, res) => {
     }
 });
 
-router.put('/:groupId/update-fields', isLoggedIn, async (req, res) => {
-    try {
-        const {groupId} = req.params;
-        const {fields, groupName} = req.body;
-
-        const updatedFieldGroup =
-            await fieldManagementService.addFieldToGroupV2(
-                groupId,
-                fields,
-                groupName
-            );
-        return res.status(200).json(updatedFieldGroup);
-    } catch (error) {
-        console.log(error);
-        return res
-            .status(500)
-            .json({error: 'Unable to update field group'});
-    }
-});
 
 router.delete('/fields/:fieldId', isLoggedIn, async (req, res) => {
     try {
@@ -227,4 +162,74 @@ router.delete('/groups/:groupId', isLoggedIn, async (req, res) => {
     }
 });
 
+
+//--------------Not in use
+
+// Update fields within a subgroup by subgroup ID
+router.put('/subgroups/:subgroupId', isLoggedIn, async (req, res) => {
+    try {
+        const {subgroupId} = req.params;
+        const {fields} = req.body;
+
+        const updatedFieldGroup =
+            await fieldManagementService.updateSubgroupFields(
+                subgroupId,
+                fields
+            );
+        return res.status(200).json(updatedFieldGroup);
+    } catch (error) {
+        console.log(error);
+        return res
+            .status(500)
+            .json({error: 'Unable to update subgroup fields'});
+    }
+});
+// Update fields within a group by group ID
+router.put('/groups/:groupId', isLoggedIn, async (req, res) => {
+    try {
+        const {groupId} = req.params;
+        const {fields} = req.body;
+
+        const updatedFieldGroup = await fieldManagementService.updateGroupFields(groupId, fields);
+        return res.status(200).json(updatedFieldGroup);
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({error: 'Unable to update group fields'});
+    }
+});
+
+
+router.get('/subgroups/:subgroupId', isLoggedIn, async (req, res) => {
+    try {
+        const {subgroupId} = req.params;
+        const fields = await fieldManagementService.getFieldsBySubgroupId(subgroupId);
+        return res.status(200).json({
+            success: true,
+            fields
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({error: 'Unable to fetch subgroup fields'});
+    }
+});
+
+router.put('/:groupId/update-fields', isLoggedIn, async (req, res) => {
+    try {
+        const {groupId} = req.params;
+        const {fields, groupName} = req.body;
+
+        const updatedFieldGroup =
+            await fieldManagementService.addFieldToGroupV2(
+                groupId,
+                fields,
+                groupName
+            );
+        return res.status(200).json(updatedFieldGroup);
+    } catch (error) {
+        console.log(error);
+        return res
+            .status(500)
+            .json({error: 'Unable to update field group'});
+    }
+});
 export default router;
