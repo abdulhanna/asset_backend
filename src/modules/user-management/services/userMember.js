@@ -4,182 +4,184 @@ import userModel from '../../auth/models/index.js';
 import locationModel from '../../organization/models/locations';
 
 const getMemberByEmail = async (email) => {
-     try {
-          const member = await userModel.findOne({ email });
-          return member;
-     } catch (error) {
-          console.log(error);
-          throw new Error('Failed to get member by email');
-     }
+    try {
+        const member = await userModel.findOne({email});
+        return member;
+    } catch (error) {
+        console.log(error);
+        throw new Error('Failed to get member by email');
+    }
 };
 
 const createMember = async (userData) => {
-     try {
-          let dashboardPermission = null;
+    try {
+        let dashboardPermission = null;
 
-          if (userData.role === 'superadmin') {
-               if (userData.userType === 'team') {
-                    dashboardPermission = 'superadmin_dashboard';
-               } else if (userData.userType === 'admin') {
-                    dashboardPermission = 'admin_dashboard';
-               }
-          } else if (userData.role === 'root') {
-               dashboardPermission = 'root_dashboard';
-          } else {
-               dashboardPermission = 'admin_dashboard';
-          }
+        if (userData.role === 'superadmin') {
+            if (userData.userType === 'team') {
+                dashboardPermission = 'superadmin_dashboard';
+            } else if (userData.userType === 'admin') {
+                dashboardPermission = 'admin_dashboard';
+            }
+        } else if (userData.role === 'root') {
+            dashboardPermission = 'root_dashboard';
+        } else {
+            dashboardPermission = 'admin_dashboard';
+        }
 
-          // Generate a verification token
-          const verificationTokenPayload = await jwtService.generatePair(
-               userData.email
-          );
-          const verificationToken = verificationTokenPayload;
+        // Generate a verification token
+        const verificationTokenPayload = await jwtService.generatePair(
+            userData.email
+        );
+        const verificationToken = verificationTokenPayload;
 
-          // Save the member with the verification token to the database
-          const member = new userModel({
-               email: userData.email,
-               password: userData.password,
-               userProfile: {
-                    ...userData.userProfile,
-                    organizationId: userData.organizationId,
-               },
-               teamRoleId: userData.teamRoleId,
-               parentId: userData.parentId,
-               dashboardPermission: dashboardPermission,
-               verificationToken: verificationToken,
-               userType: userData.userType,
-          });
+        // Save the member with the verification token to the database
+        const member = new userModel({
+            email: userData.email,
+            password: userData.password,
+            userProfile: {
+                ...userData.userProfile,
+                organizationId: userData.organizationId,
+            },
+            teamRoleId: userData.teamRoleId,
+            parentId: userData.parentId,
+            dashboardPermission: dashboardPermission,
+            verificationToken: verificationToken,
+            userType: userData.userType,
+        });
 
-          const savedMember = await member.save();
+        const savedMember = await member.save();
 
-          // Send the invitation email to the member
-          await emailtemplate.sendInvitationEmail(
-               userData.email,
-               verificationToken
-          );
+        // Send the invitation email to the member
+        await emailtemplate.sendInvitationEmail(
+            userData.email,
+            verificationToken
+        );
 
-          // For assignedLocationId
-          if (userData.locationId) {
-               // Find the location by ID
-               const location = await locationModel.findById(
-                    userData.locationId
-               );
+        // For assignedLocationId
+        if (userData.locationId) {
+            // Find the location by ID
+            const location = await locationModel.findById(
+                userData.locationId
+            );
 
-               if (location) {
-                    // Push the current member's ID into the assignedUserId array of the location
-                    location.assignedUserId.push(savedMember._id);
-                    await location.save();
-               }
-          }
+            if (location) {
+                // Push the current member's ID into the assignedUserId array of the location
+                location.assignedUserId.push(savedMember._id);
+                await location.save();
+            }
+        }
 
-          return savedMember;
-     } catch (error) {
-          console.log(error);
-          throw new Error('Failed to create member');
-     }
+        return savedMember;
+    } catch (error) {
+        console.log(error);
+        throw new Error('Failed to create member');
+    }
 };
 
 const updateMember = async (id, data) => {
-     try {
-          const existingMember = await userModel.findById(id);
+    try {
+        const existingMember = await userModel.findById(id);
 
-          if (!existingMember) {
-               throw new Error('Member not found');
-          }
+        if (!existingMember) {
+            throw new Error('Member not found');
+        }
 
-          return await userModel.findByIdAndUpdate(
-               { _id: id },
-               { $set: data },
-               {
-                    new: true,
-               }
-          );
-     } catch (error) {
-          throw new Error(error.message);
-     }
+        return await userModel.findByIdAndUpdate(
+            {_id: id},
+            {$set: data},
+            {
+                new: true,
+            }
+        );
+    } catch (error) {
+        throw new Error(error.message);
+    }
 };
 
 const getAllMembers = async (parentId, userType) => {
-     try {
-          let query = { parentId, isDeleted: false };
+    try {
 
-          if (userType) {
-               query.userType = userType;
-          }
 
-          const members = await userModel
-               .find(query)
-               .populate('teamRoleId', 'roleName')
-               .select('-deletedAt');
+        let query = {parentId, isDeleted: false};
 
-          return members;
-     } catch (error) {
-          console.log(error);
-          throw new Error('Failed to fetch members');
-     }
+        if (userType) {
+            query.userType = userType;
+        }
+
+        const members = await userModel
+            .find(query)
+            .populate('teamRoleId', 'roleName')
+            .select('-deletedAt');
+
+        return members;
+    } catch (error) {
+        console.log(error);
+        throw new Error('Failed to fetch members');
+    }
 };
 
 // Function to get members by roleName and parentId
 const getMembersByRole = async (teamRoleId) => {
-     try {
-          const query = {
-               isDeleted: false,
-          };
+    try {
+        const query = {
+            isDeleted: false,
+        };
 
-          if (teamRoleId) {
-               query.teamRoleId = teamRoleId;
-          }
+        if (teamRoleId) {
+            query.teamRoleId = teamRoleId;
+        }
 
-          const members = await userModel
-               .find(query)
-               .populate('teamRoleId', '-permissions')
-               .select('-password')
-               .exec();
+        const members = await userModel
+            .find(query)
+            .populate('teamRoleId', '-permissions')
+            .select('-password')
+            .exec();
 
-          return members;
-     } catch (error) {
-          throw new Error('Failed to get members');
-     }
+        return members;
+    } catch (error) {
+        throw new Error('Failed to get members');
+    }
 };
 
 const getMemberById = async (memberId) => {
-     try {
-          const member = await userModel.findById(memberId);
-          return member;
-     } catch (error) {
-          console.log(error);
-          throw new Error('Failed to get member by ID');
-     }
+    try {
+        const member = await userModel.findById(memberId);
+        return member;
+    } catch (error) {
+        console.log(error);
+        throw new Error('Failed to get member by ID');
+    }
 };
 
 const deleteUser = async (userId) => {
-     try {
-          // Find the user by ID
-          const user = await userModel.findById(userId);
+    try {
+        // Find the user by ID
+        const user = await userModel.findById(userId);
 
-          if (!user) {
-               return null;
-          }
+        if (!user) {
+            return null;
+        }
 
-          // Update the isDeleted field to true and set deletedAt to the current date
-          user.isDeleted = true;
-          user.deletedAt = new Date();
+        // Update the isDeleted field to true and set deletedAt to the current date
+        user.isDeleted = true;
+        user.deletedAt = new Date();
 
-          // Save the updated user
-          const updatedUser = await user.save();
-          return updatedUser;
-     } catch (error) {
-          console.log(error);
-          throw new Error('Unable to delete user');
-     }
+        // Save the updated user
+        const updatedUser = await user.save();
+        return updatedUser;
+    } catch (error) {
+        console.log(error);
+        throw new Error('Unable to delete user');
+    }
 };
 
 export const memberService = {
-     createMember,
-     updateMember,
-     getAllMembers,
-     getMembersByRole,
-     getMemberByEmail,
-     getMemberById,
-     deleteUser,
+    createMember,
+    updateMember,
+    getAllMembers,
+    getMembersByRole,
+    getMemberByEmail,
+    getMemberById,
+    deleteUser,
 };
