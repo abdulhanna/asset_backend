@@ -3,7 +3,6 @@ export const attachCookie = (res, { access_token: accessToken }) => {
      res.cookie('access_token', accessToken, {
           httpOnly: true,
           secure: false,
-          samesite: 'strict',
           path: '/',
      });
 };
