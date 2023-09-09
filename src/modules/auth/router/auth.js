@@ -51,6 +51,7 @@ router.post(
     if(result.access_token)
     { 
       attachCookie(res,  {access_token: result.access_token});
+      res.setHeader("access_token", result.access_token);
     }
     res.redirect(result.redirectUrl);
   })
@@ -69,6 +70,7 @@ router.post(
     if(result.access_token)
     {
       attachCookie(res,  {access_token: result.access_token});
+      res.setHeader("access_token", result.access_token);
     }
     res.send(result);
   })
@@ -136,6 +138,7 @@ router.post(
 
 router.get('/logout', isLoggedIn, async (req, res) => {
   await revokeCookie(req, res);
+  res.removeHeader("access_token");
   res.sendStatus(StatusCodes.OK);
 });
 
