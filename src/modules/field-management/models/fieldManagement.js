@@ -55,6 +55,10 @@ const fieldSchema = new mongoose.Schema(
         isDeleted: {
             type: Boolean,
             default: false
+        },
+        fieldInfo: {
+            type: String,
+            default: 'Default field info'
         }
     },
     {_id: true}
