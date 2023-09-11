@@ -1,9 +1,10 @@
 import userModel from '../../src/modules/auth/models/';
 export const attachCookie = (res, { access_token: accessToken }) => {
      res.cookie('access_token', accessToken, {
+          maxAge: 1000 * 60 * 60 * 24,
           httpOnly: true,
           secure: false,
-          path: '/',
+          path: "/",
      });
 };
 
