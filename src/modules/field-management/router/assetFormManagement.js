@@ -27,4 +27,20 @@ router.get('/assetform', isLoggedIn, async (req, res) => {
 });
 
 
+// Define a route for updating fields in assetFormManagementSchema
+router.post('/modify-fields-in-assetform', isLoggedIn, async (req, res) => {
+    try {
+        const organizationId = req.user.data.organizationId;
+        const {subgroupIndex, fieldId, action, updatedField} = req.body;
+
+        const result = await assetFormManagementService.modifyFieldsInAssetForm(organizationId, subgroupIndex, fieldId, action, updatedField);
+
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('Error modifying fields in assetFormManagement');
+    }
+});
+
+
 export default router;

@@ -37,7 +37,81 @@ const getAssetFormManagementList = async (organizationId) => {
     return await assetFormManagementModel.find();
 };
 
+
+const modifyFieldsInAssetForm = async (organizationId, subgroupIndex, fieldId, action, updatedField) => {
+    try {
+        // Find the assetFormManagement document for the specified organizationId
+        let assetFormManagement = await assetFormManagementModel.findOne({organizationId});
+
+        if (!assetFormManagement) {
+            throw new Error('AssetFormManagement document not found');
+        }
+
+        // Find the field in either group or subgroup
+        const findField = (field) => field._id.toString() == fieldId;
+        console.log('helllooo', findField);
+        console.log(fieldId);
+
+        let group, subgroup;
+
+        for (const g of assetFormManagement.assetFormManagements) {
+            if (g.fields.some(findField)) {
+                group = g;
+                break;
+            }
+
+            for (const s of g.subgroups) {
+                if (s.fields.some(findField)) {
+                    subgroup = s;
+                    group = g;
+                    break;
+                }
+            }
+
+            if (group && subgroup) {
+                break;
+            }
+        }
+
+        if (group && subgroup) {
+            // Field found in subgroup
+            const subgroupIndex = group.subgroups.indexOf(subgroup);
+
+            if (action === 'add') {
+                subgroup.fields.push(updatedField);
+            } else if (action === 'remove') {
+                subgroup.fields = subgroup.fields.filter(field => field._id.toString() !== fieldId);
+            }
+
+            assetFormManagement.assetFormManagements[subgroupIndex] = group;
+        } else if (group) {
+            // Field found in group
+            const groupIndex = assetFormManagement.assetFormManagements.indexOf(group);
+
+            if (action === 'add') {
+                group.fields.push(updatedField);
+            } else if (action === 'remove') {
+                group.fields = group.fields.filter(field => field._id.toString() !== fieldId);
+            }
+
+            assetFormManagement.assetFormManagements[groupIndex] = group;
+        } else {
+            console.log('hello');
+            throw new Error('Field not found');
+        }
+
+        // Update assetFormManagementModel with the modified document
+        const result = await assetFormManagement.save();
+
+        return result;
+    } catch (error) {
+        console.error('Error:', error);
+    }
+};
+
+
 export const assetFormManagementService = {
     pushFieldsToAssetForm,
-    getAssetFormManagementList
+    getAssetFormManagementList,
+    modifyFieldsInAssetForm
 };
