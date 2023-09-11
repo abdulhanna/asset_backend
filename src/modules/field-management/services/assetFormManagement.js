@@ -1,5 +1,6 @@
 import assetFormManagementModel from '../models/assetFormManagement';
 import fieldManagementModel from '../models/fieldManagement';
+import mongoose from 'mongoose';
 
 
 const pushFieldsToAssetForm = async (organizationId) => {
@@ -77,6 +78,7 @@ const modifyFieldsInAssetForm = async (organizationId, groupOrSubgroupId, fieldI
 
 
             // Add organizationId to updatedField
+            updatedField._id = new mongoose.Types.ObjectId(); // Generate a new ObjectId
             updatedField.organizationId = organizationId;
 
             if (action === 'add') {
@@ -91,6 +93,7 @@ const modifyFieldsInAssetForm = async (organizationId, groupOrSubgroupId, fieldI
             const groupIndex = assetFormManagement.assetFormManagements.indexOf(group);
 
             // Add organizationId to updatedField
+            updatedField._id = new mongoose.Types.ObjectId(); // Generate a new ObjectId
             updatedField.organizationId = organizationId;
 
             if (action === 'add') {
