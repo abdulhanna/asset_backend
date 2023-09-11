@@ -14,10 +14,10 @@ router.post('/push-fields-to-assetform', isLoggedIn, async (req, res) => {
     }
 });
 
-router.get('/assetform', async (req, res) => {
+router.get('/assetform', isLoggedIn, async (req, res) => {
     try {
-        // const organizationId = req.user.data.organizationId;
-        const assetFormManagementList = await assetFormManagementService.getAssetFormManagementList();
+        const organizationId = req.user.data.organizationId;
+        const assetFormManagementList = await assetFormManagementService.getAssetFormManagementList(organizationId);
         return res.status(200).json(assetFormManagementList);
 
     } catch (error) {
