@@ -26,7 +26,18 @@ const pushFieldsToAssetForm = async (organizationId) => {
     }
 };
 
+const getAssetFormManagementList = async () => {
+    try {
+        const data = await assetFormManagementModel.find();
+        return data;
+
+    } catch (error) {
+        throw new Error('Error in getting asset form list');
+    }
+    return await assetFormManagementModel.find();
+};
 
 export const assetFormManagementService = {
-    pushFieldsToAssetForm
+    pushFieldsToAssetForm,
+    getAssetFormManagementList
 };

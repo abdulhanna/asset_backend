@@ -1,13 +1,18 @@
 import mongoose from 'mongoose';
 
-const assetFormManagementSchema = new mongoose.Schema({
-    organizationId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'organizations',
-        required: true,
+const assetFormManagementSchema = new mongoose.Schema(
+    {
+        organizationId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'organizations',
+            required: true,
+        },
+        assetFormManagements: [],
     },
-    assetFormManagements: [{}],
-});
+    {
+        timestamps: true
+    }
+);
 
 const assetFormManagementModel = mongoose.model('assetformmanagements', assetFormManagementSchema);
 
