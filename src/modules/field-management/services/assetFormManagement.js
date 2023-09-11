@@ -75,6 +75,10 @@ const modifyFieldsInAssetForm = async (organizationId, groupOrSubgroupId, fieldI
             // Field found in subgroup
             const subgroupIndex = group.subgroups.indexOf(subgroup);
 
+
+            // Add organizationId to updatedField
+            updatedField.organizationId = organizationId;
+
             if (action === 'add') {
                 subgroup.fields.push(updatedField);
             } else if (action === 'remove') {
@@ -85,6 +89,9 @@ const modifyFieldsInAssetForm = async (organizationId, groupOrSubgroupId, fieldI
         } else if (group) {
             // Field found in group
             const groupIndex = assetFormManagement.assetFormManagements.indexOf(group);
+
+            // Add organizationId to updatedField
+            updatedField.organizationId = organizationId;
 
             if (action === 'add') {
                 group.fields.push(updatedField);
