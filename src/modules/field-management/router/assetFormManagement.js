@@ -31,9 +31,9 @@ router.get('/assetform', isLoggedIn, async (req, res) => {
 router.put('/modify-fields-in-assetform', isLoggedIn, async (req, res) => {
     try {
         const organizationId = req.user.data.organizationId;
-        const {subgroupIndex, fieldId, action, updatedField} = req.body;
+        const {fieldId, action, updatedField} = req.body;
 
-        const result = await assetFormManagementService.modifyFieldsInAssetForm(organizationId, subgroupIndex, fieldId, action, updatedField);
+        const result = await assetFormManagementService.modifyFieldsInAssetForm(organizationId, fieldId, action, updatedField);
 
         res.status(200).json(result);
     } catch (error) {
