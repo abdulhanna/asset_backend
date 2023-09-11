@@ -38,8 +38,9 @@ const getAssetFormManagementList = async (organizationId) => {
 };
 
 
-const modifyFieldsInAssetForm = async (organizationId, fieldId, action, updatedField) => {
+const modifyFieldsInAssetForm = async (organizationId, groupOrSubgroupId, fieldId, action, updatedField) => {
     try {
+        
         // Find the assetFormManagement document for the specified organizationId
         let assetFormManagement = await assetFormManagementModel.findOne({organizationId});
 
@@ -49,8 +50,7 @@ const modifyFieldsInAssetForm = async (organizationId, fieldId, action, updatedF
 
         // Find the field in either group or subgroup
         const findField = (field) => field._id.toString() == fieldId;
-        console.log('helllooo', findField);
-        console.log(fieldId);
+
 
         let group, subgroup;
 
@@ -95,8 +95,6 @@ const modifyFieldsInAssetForm = async (organizationId, fieldId, action, updatedF
             }
 
             assetFormManagement.assetFormManagements[groupIndex] = group;
-        } else {
-            throw new Error('Field not found');
         }
 
         // Update assetFormManagementModel with the modified document
