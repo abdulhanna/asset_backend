@@ -56,4 +56,19 @@ router.put('/update-fields-assetform', isLoggedIn, async (req, res) => {
 });
 
 
+router.get('/fields/:groupOrSubgroupId', isLoggedIn, async (req, res) => {
+    try {
+        const organizationId = req.user.data.organizationId; // Assuming you have user authentication middleware
+        const {groupOrSubgroupId} = req.params;
+
+        const fields = await assetFormManagementService.getFields(organizationId, groupOrSubgroupId);
+
+        res.json(fields);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('Error fetching fields');
+    }
+});
+
+
 export default router;
