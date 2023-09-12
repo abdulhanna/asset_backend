@@ -165,7 +165,7 @@ const getFields = async (organizationId, groupOrSubgroupId) => {
             };
         } else if (subgroup) {
             return {
-                groupName: subgroup.subgroupName,
+                subgroupName: subgroup.subgroupName,
                 _id: subgroup._id,
                 fields: subgroup.fields
             };
