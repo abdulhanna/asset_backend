@@ -47,6 +47,7 @@ const addFieldToAssetForm = async (organizationId, groupOrSubgroupId, updatedFie
             throw new Error('AssetFormManagement document not found');
         }
 
+        /*
         let group, subgroup;
 
         for (const g of assetFormManagement.assetFormManagements) {
@@ -67,7 +68,15 @@ const addFieldToAssetForm = async (organizationId, groupOrSubgroupId, updatedFie
                 break;
             }
         }
+         */
 
+        const group = assetFormManagement.assetFormManagements.find(g => g._id.toString() === groupOrSubgroupId);
+
+        let subgroup;
+        if (!group) {
+            subgroup = assetFormManagement.assetFormManagements.flatMap(g => g.subgroups).find(s => s._id.toString() === groupOrSubgroupId);
+        }
+        
         if (subgroup) {
             subgroup.fields.push(updatedField);
         } else if (group) {
