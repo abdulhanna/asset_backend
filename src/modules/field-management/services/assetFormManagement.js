@@ -69,18 +69,8 @@ const addFieldToAssetForm = async (organizationId, groupOrSubgroupId, updatedFie
         }
 
         if (subgroup) {
-            updatedField = {
-                ...updatedField,
-                _id: new mongoose.Types.ObjectId(),
-                organizationId: organizationId
-            };
             subgroup.fields.push(updatedField);
         } else if (group) {
-            updatedField = {
-                ...updatedField,
-                _id: new mongoose.Types.ObjectId(),
-                organizationId: organizationId
-            };
             group.fields.push(updatedField);
         } else {
             throw new Error('Group or subgroup not found');
@@ -92,7 +82,7 @@ const addFieldToAssetForm = async (organizationId, groupOrSubgroupId, updatedFie
             {new: true} // This option ensures that the updated document is returned
         );
 
-        return result; // Return the updated document
+        return result;
     } catch (error) {
         console.error('Error:', error);
     }
