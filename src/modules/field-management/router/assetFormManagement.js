@@ -41,18 +41,17 @@ router.put('/add-field-in-assetform', isLoggedIn, async (req, res) => {
     }
 });
 
-
-router.put('/remove-field-in-assetform', isLoggedIn, async (req, res) => {
+router.put('/update-fields-assetform', isLoggedIn, async (req, res) => {
     try {
-        const organizationId = req.user.data.organizationId;
-        const {groupOrSubgroupId, fieldId} = req.body;
+        const organizationId = req.user.data.organizationId; // Assuming you have user authentication middleware
+        const {groupOrSubgroupId, fields} = req.body;
 
-        const result = await assetFormManagementService.removeFieldFromAssetForm(organizationId, groupOrSubgroupId, fieldId);
+        const updatedFields = await assetFormManagementService.updateFieldsToAssetForm(organizationId, groupOrSubgroupId, fields);
 
-        res.status(200).json(result);
+        res.json(updatedFields);
     } catch (error) {
         console.error('Error:', error);
-        res.status(500).send('Error removing field from assetFormManagement');
+        res.status(500).send('Error updating fields');
     }
 });
 

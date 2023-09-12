@@ -76,7 +76,7 @@ const addFieldToAssetForm = async (organizationId, groupOrSubgroupId, updatedFie
         if (!group) {
             subgroup = assetFormManagement.assetFormManagements.flatMap(g => g.subgroups).find(s => s._id.toString() === groupOrSubgroupId);
         }
-        
+
         if (subgroup) {
             subgroup.fields.push(updatedField);
         } else if (group) {
@@ -97,57 +97,38 @@ const addFieldToAssetForm = async (organizationId, groupOrSubgroupId, updatedFie
     }
 };
 
-
-const removeFieldFromAssetForm = async (organizationId, groupOrSubgroupId, fieldId) => {
+const updateFieldsToAssetForm = async (organizationId, groupOrSubgroupId, fields) => {
     try {
-        let assetFormManagement = await assetFormManagementModel.findOne({organizationId});
+        const assetFormManagement = await assetFormManagementModel.findOne({organizationId});
 
         if (!assetFormManagement) {
             throw new Error('AssetFormManagement document not found');
         }
 
-        const findField = (field) => field._id.toString() == groupOrSubgroupId;
+        const group = assetFormManagement.assetFormManagements.find(g => g._id.toString() === groupOrSubgroupId);
+        let subgroup;
 
-        let group, subgroup;
-
-        for (const g of assetFormManagement.assetFormManagements) {
-            if (g._id.toString() === groupOrSubgroupId) {
-                group = g;
-                break;
-            }
-
-            for (const s of g.subgroups) {
-                if (s._id.toString() === groupOrSubgroupId) {
-                    subgroup = s;
-                    group = g;
-                    break;
-                }
-            }
-
-            if (group && subgroup) {
-                break;
-            }
+        if (!group) {
+            subgroup = assetFormManagement.assetFormManagements.flatMap(g => g.subgroups).find(s => s._id.toString() === groupOrSubgroupId);
         }
 
-        if (group && subgroup) {
-            const subgroupIndex = group.subgroups.indexOf(subgroup);
-
-            subgroup.fields = subgroup.fields.filter(field => field._id.toString() !== fieldId);
-
-            assetFormManagement.assetFormManagements[subgroupIndex] = group;
-        } else if (group) {
-            const groupIndex = assetFormManagement.assetFormManagements.indexOf(group);
-
-            group.fields = group.fields.filter(field => field._id.toString() !== fieldId);
-
-            assetFormManagement.assetFormManagements[groupIndex] = group;
+        if (group) {
+            group.fields = fields;
+        } else if (subgroup) {
+            subgroup.fields = fields;
+        } else {
+            throw new Error('Group or subgroup not found');
         }
 
-        const result = await assetFormManagement.save();
+        const result = await assetFormManagementModel.findOneAndUpdate(
+            {organizationId},
+            assetFormManagement,
+            {new: true} // This option ensures that the updated document is returned
+        );
 
         return result;
     } catch (error) {
-        console.error('Error:', error);
+        throw error;
     }
 };
 
@@ -155,6 +136,7 @@ const removeFieldFromAssetForm = async (organizationId, groupOrSubgroupId, field
 export const assetFormManagementService = {
     pushFieldsToAssetForm,
     getAssetFormManagementList,
-    addFieldToAssetForm
+    addFieldToAssetForm,
+    updateFieldsToAssetForm
 
 };
