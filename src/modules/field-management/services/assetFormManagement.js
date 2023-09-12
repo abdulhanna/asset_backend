@@ -39,17 +39,150 @@ const getAssetFormManagementList = async (organizationId) => {
 };
 
 
-const modifyFieldsInAssetForm = async (organizationId, groupOrSubgroupId, fieldId, action, updatedField) => {
+// const modifyFieldsInAssetForm = async (organizationId, groupOrSubgroupId, fieldId, action, updatedField) => {
+//     try {
+//         // Find the assetFormManagement document for the specified organizationId
+//         let assetFormManagement = await assetFormManagementModel.findOne({organizationId});
+//
+//         if (!assetFormManagement) {
+//             throw new Error('AssetFormManagement document not found');
+//         }
+//
+//         // Find the field in either group or subgroup
+//         const findField = (field) => field._id.toString() == fieldId;
+//
+//         let group, subgroup;
+//
+//         for (const g of assetFormManagement.assetFormManagements) {
+//             if (g._id.toString() === groupOrSubgroupId) {
+//                 group = g;
+//                 break;
+//             }
+//
+//             for (const s of g.subgroups) {
+//                 if (s._id.toString() === groupOrSubgroupId) {
+//                     subgroup = s;
+//                     group = g;
+//                     break;
+//                 }
+//             }
+//
+//             if (group && subgroup) {
+//                 break;
+//             }
+//         }
+//
+//         if (group && subgroup) {
+//             // Field found in subgroup
+//             const subgroupIndex = group.subgroups.indexOf(subgroup);
+//
+//
+//             // Add organizationId to updatedField
+//             updatedField._id = new mongoose.Types.ObjectId(); // Generate a new ObjectId
+//             updatedField.organizationId = organizationId;
+//
+//             if (action === 'add') {
+//                 subgroup.fields.push(updatedField);
+//             } else if (action === 'remove') {
+//                 subgroup.fields = subgroup.fields.filter(field => field._id.toString() !== fieldId);
+//             }
+//
+//             assetFormManagement.assetFormManagements[subgroupIndex] = group;
+//         } else if (group) {
+//             // Field found in group
+//             const groupIndex = assetFormManagement.assetFormManagements.indexOf(group);
+//
+//             // Add organizationId to updatedField
+//             updatedField._id = new mongoose.Types.ObjectId(); // Generate a new ObjectId
+//             updatedField.organizationId = organizationId;
+//
+//             if (action === 'add') {
+//                 group.fields.push(updatedField);
+//             } else if (action === 'remove') {
+//                 group.fields = group.fields.filter(field => field._id.toString() !== fieldId);
+//             }
+//
+//             assetFormManagement.assetFormManagements[groupIndex] = group;
+//         }
+//
+//         // Update assetFormManagementModel with the modified document
+//         const result = await assetFormManagement.save();
+//
+//         return result;
+//     } catch (error) {
+//         console.error('Error:', error);
+//     }
+// };
+
+const addFieldToAssetForm = async (organizationId, groupOrSubgroupId, updatedField) => {
     try {
-        // Find the assetFormManagement document for the specified organizationId
+        const assetFormManagement = await assetFormManagementModel.findOne({organizationId});
+
+        if (!assetFormManagement) {
+            throw new Error('AssetFormManagement document not found');
+        }
+
+        let group, subgroup;
+
+        for (const g of assetFormManagement.assetFormManagements) {
+            if (g._id.toString() === groupOrSubgroupId) {
+                group = g;
+                break;
+            }
+
+            for (const s of g.subgroups) {
+                if (s._id.toString() === groupOrSubgroupId) {
+                    subgroup = s;
+                    group = g;
+                    break;
+                }
+            }
+
+            if (group && subgroup) {
+                break;
+            }
+        }
+
+        if (subgroup) {
+            updatedField = {
+                ...updatedField,
+                _id: new mongoose.Types.ObjectId(),
+                organizationId: organizationId
+            };
+            subgroup.fields.push(updatedField);
+        } else if (group) {
+            updatedField = {
+                ...updatedField,
+                _id: new mongoose.Types.ObjectId(),
+                organizationId: organizationId
+            };
+            group.fields.push(updatedField);
+        } else {
+            throw new Error('Group or subgroup not found');
+        }
+
+        const result = await assetFormManagementModel.findOneAndUpdate(
+            {organizationId},
+            assetFormManagement,
+            {new: true} // This option ensures that the updated document is returned
+        );
+
+        return result; // Return the updated document
+    } catch (error) {
+        console.error('Error:', error);
+    }
+};
+
+
+const removeFieldFromAssetForm = async (organizationId, groupOrSubgroupId, fieldId) => {
+    try {
         let assetFormManagement = await assetFormManagementModel.findOne({organizationId});
 
         if (!assetFormManagement) {
             throw new Error('AssetFormManagement document not found');
         }
 
-        // Find the field in either group or subgroup
-        const findField = (field) => field._id.toString() == fieldId;
+        const findField = (field) => field._id.toString() == groupOrSubgroupId;
 
         let group, subgroup;
 
@@ -73,39 +206,19 @@ const modifyFieldsInAssetForm = async (organizationId, groupOrSubgroupId, fieldI
         }
 
         if (group && subgroup) {
-            // Field found in subgroup
             const subgroupIndex = group.subgroups.indexOf(subgroup);
 
-
-            // Add organizationId to updatedField
-            updatedField._id = new mongoose.Types.ObjectId(); // Generate a new ObjectId
-            updatedField.organizationId = organizationId;
-
-            if (action === 'add') {
-                subgroup.fields.push(updatedField);
-            } else if (action === 'remove') {
-                subgroup.fields = subgroup.fields.filter(field => field._id.toString() !== fieldId);
-            }
+            subgroup.fields = subgroup.fields.filter(field => field._id.toString() !== fieldId);
 
             assetFormManagement.assetFormManagements[subgroupIndex] = group;
         } else if (group) {
-            // Field found in group
             const groupIndex = assetFormManagement.assetFormManagements.indexOf(group);
 
-            // Add organizationId to updatedField
-            updatedField._id = new mongoose.Types.ObjectId(); // Generate a new ObjectId
-            updatedField.organizationId = organizationId;
-
-            if (action === 'add') {
-                group.fields.push(updatedField);
-            } else if (action === 'remove') {
-                group.fields = group.fields.filter(field => field._id.toString() !== fieldId);
-            }
+            group.fields = group.fields.filter(field => field._id.toString() !== fieldId);
 
             assetFormManagement.assetFormManagements[groupIndex] = group;
         }
 
-        // Update assetFormManagementModel with the modified document
         const result = await assetFormManagement.save();
 
         return result;
@@ -118,5 +231,6 @@ const modifyFieldsInAssetForm = async (organizationId, groupOrSubgroupId, fieldI
 export const assetFormManagementService = {
     pushFieldsToAssetForm,
     getAssetFormManagementList,
-    modifyFieldsInAssetForm
+    addFieldToAssetForm
+
 };
