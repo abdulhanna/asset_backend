@@ -36,7 +36,7 @@ const updateGroupFields = async (groupId, fields) => {
         {new: true}
     );
 };
-const updateFields = async (id, fields, organizationId) => {
+const updateFields = async (id, fields) => {
     try {
         const group = await fieldManagementModel.findById(id);
 
@@ -47,7 +47,7 @@ const updateFields = async (id, fields, organizationId) => {
                 {
                     $push: {
                         'subgroups.$.fields': {
-                            $each: fields.map(field => ({...field, organizationId})),
+                            $each: fields.map(field => ({...field})),
                         },
                     },
                 },
@@ -62,7 +62,7 @@ const updateFields = async (id, fields, organizationId) => {
             {
                 $push: {
                     fields: {
-                        $each: fields.map(field => ({...field, organizationId})),
+                        $each: fields.map(field => ({...field})),
                     },
                 },
             },
