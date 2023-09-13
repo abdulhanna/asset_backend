@@ -177,12 +177,48 @@ const getFields = async (organizationId, groupOrSubgroupId) => {
     }
 };
 
+const getNonMandatoryFields = async (organizationId, groupOrSubgroupId) => {
+    try {
+        const assetFormManagement = await assetFormManagementModel.findOne({organizationId});
+
+        if (!assetFormManagement) {
+            throw new Error('AssetFormManagement document not found');
+        }
+
+        const group = assetFormManagement.assetFormManagements.find(g => g._id.toString() === groupOrSubgroupId);
+        let subgroup;
+
+        if (!group) {
+            subgroup = assetFormManagement.assetFormManagements.flatMap(g => g.subgroups).find(s => s._id.toString() === groupOrSubgroupId);
+        }
+
+        if (group) {
+            return {
+                groupName: group.groupName,
+                _id: group._id,
+                fields: group.fields.filter(field => !field.isMandatory)
+            };
+        } else if (subgroup) {
+            return {
+                subgroupName: subgroup.subgroupName,
+                _id: subgroup._id,
+                fields: subgroup.fields.filter(field => !field.isMandatory)
+            };
+        } else {
+            throw new Error('Group or subgroup not found');
+        }
+    } catch (error) {
+        throw error;
+    }
+};
+
 
 export const assetFormManagementService = {
     pushFieldsToAssetForm,
     getAssetFormManagementList,
     addFieldToAssetForm,
     updateFieldsToAssetForm,
-    getFields
+    getFields,
+    getNonMandatoryFields
 
 };

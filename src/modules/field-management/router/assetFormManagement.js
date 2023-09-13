@@ -70,5 +70,20 @@ router.get('/fields/:groupOrSubgroupId', isLoggedIn, async (req, res) => {
     }
 });
 
+// Route to get non-mandatory fields by groupOrSubgroupId
+router.get('/non-mandatory-fields/:groupOrSubgroupId', isLoggedIn, async (req, res) => {
+    try {
+        const organizationId = req.user.data.organizationId;
+        const {groupOrSubgroupId} = req.params;
+
+        const nonMandatoryFields = await assetFormManagementService.getNonMandatoryFields(organizationId, groupOrSubgroupId);
+
+        res.json(nonMandatoryFields);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('Error fetching non-mandatory fields');
+    }
+});
+
 
 export default router;
