@@ -86,12 +86,12 @@ authService.verifyUser = async (verificationToken) => {
        {
         const verifyEmail = await userModel.findOneAndUpdate(
           { verificationToken},
-          { verificationToken: null, is_email_verified: true, updatedAt : Date.now()},
+          { is_email_verified: true, updatedAt : Date.now()},
           { new: true }
         );
 
 
-        const redirectURLlogin = `${secret.frontend_baseURL}/login`;
+        const redirectURLlogin = `${secret.frontend_baseURL}/auth/login`;
          return redirectURLlogin;
        }
        else
@@ -100,7 +100,7 @@ authService.verifyUser = async (verificationToken) => {
           const setpassstoken = await jwtService.generatePair(getUser.email)
         const verifyEmail = await userModel.findOneAndUpdate(
           { verificationToken},
-          { setPasswordToken: setpassstoken, verificationToken: null, is_email_verified: true, updatedAt : Date.now()},
+          { setPasswordToken: setpassstoken, is_email_verified: true, updatedAt : Date.now()},
           { new: true }
         );
         const redirectURLlogin = `${secret.frontend_baseURL}/set-password?setPassword_Token?${setpassstoken}`;
