@@ -32,46 +32,33 @@ const syncFields = async () => {
         // Fetch fields from fieldManagementModel
         const fields = await fieldManagementModel.find();
 
-        // Filter out organization-specific fields (fields with organizationId)
-        const rootFields = fields.filter(field => !field.organizationId);
-
         // Fetch existing assetFormManagement
         const assetFormManagement = await assetFormManagementModel.findOne();
 
-        // Preserve organization-specific fields
-        const orgSpecificFields = assetFormManagement.assetFormManagements
-            .filter(field => field.organizationId)
-            .reduce((acc, field) => {
-                acc[field._id.toString()] = field;
-                return acc;
-            }, {});
+        // Identify the fields that were added at the root level
+        const addedRootFields = fields.filter(rootField => {
+            return !assetFormManagement.assetFormManagements.some(field => field.organizationId && field._id.equals(rootField._id));
+        });
 
-        // Update only the root fields in assetFormManagement
-        const updatedAssetFormManagements = assetFormManagement.assetFormManagements
-            .map(field => {
-                if (!field.organizationId) {
-                    return field;
-                }
-                return orgSpecificFields[field._id.toString()] || field;
-            });
+        // Identify the fields that were added at the organization level
+        const orgSpecificFields = assetFormManagement.assetFormManagements.filter(field => field.organizationId);
 
+        // Combine rootFields with organization-specific fields inside groups
+        const updatedFields = [...addedRootFields, ...orgSpecificFields];
 
         // Update all organization documents with the updated fieldList
-        await assetFormManagementModel.updateMany(
+        await assetFormManagementModel.updateOne(
             {},
             {
-                $push: {
-                    assetFormManagements: {
-                        $each: updatedAssetFormManagements,
-                        $position: 0 // Add the fields at the beginning
-                    }
+                $set: {
+                    'assetFormManagements': updatedFields
                 }
             },
             {upsert: true}
         );
 
         // Return the updated fields
-        return updatedAssetFormManagements;
+        return updatedFields;
     } catch (error) {
         console.error('Error:', error);
         throw new Error('Error syncing fields with organizations.');
