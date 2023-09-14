@@ -1,4 +1,5 @@
 import fieldManagementModel from '../models/fieldManagement';
+import assetFormManagementModel from '../models/assetFormManagement';
 import mongoose from 'mongoose';
 
 const createMultipleFieldGroups = async (groupNames) => {
@@ -69,6 +70,81 @@ const updateFields = async (id, fields) => {
             {new: true}
         );
         return updatedGroup;
+    } catch (error) {
+        throw error;
+    }
+};
+
+const addFieldAndUpdateAssetForm = async (id, fields) => {
+    try {
+        // Step 1: Add fields to fieldManagementModel
+        let updatedGroup;
+
+        const group = await fieldManagementModel.findById(id);
+
+        if (!group) {
+            updatedGroup = await fieldManagementModel.findOneAndUpdate(
+                {'subgroups._id': id},
+                {
+                    $push: {
+                        'subgroups.$.fields': {
+                            $each: fields.map(field => ({...field})),
+                        },
+                    },
+                },
+                {new: true}
+            );
+        } else {
+            updatedGroup = await fieldManagementModel.findByIdAndUpdate(
+                id,
+                {
+                    $push: {
+                        fields: {
+                            $each: fields.map(field => ({...field})),
+                        },
+                    },
+                },
+                {new: true}
+            );
+        }
+
+        // Step 2: Update assetFormManagementModel
+        const assetFormManagement = await assetFormManagementModel.find();
+        console.log('assetFormma', assetFormManagement);
+
+        if (!assetFormManagement) {
+            throw new Error('AssetFormManagement document not found');
+        }
+
+        for (const doc of assetFormManagement) {
+            const group = doc.assetFormManagements.find(g => g._id.toString() === id);
+            let subgroup;
+
+            if (!group) {
+                subgroup = doc.assetFormManagements.flatMap(g => g.subgroups).find(s => s._id.toString() === id);
+            }
+
+            if (subgroup) {
+                updatedField = {
+                    ...fields,
+                    _id: new mongoose.Types.ObjectId(),
+                };
+                subgroup.fields.push(updatedField);
+            } else if (group) {
+                updatedField = {
+                    ...fields,
+                    _id: new mongoose.Types.ObjectId(),
+                };
+                group.fields.push(updatedField);
+            } else {
+                throw new Error('Group or subgroup not found');
+            }
+
+            await doc.save();
+        }
+
+
+        // return fields;
     } catch (error) {
         throw error;
     }
@@ -408,7 +484,8 @@ export const fieldManagementService = {
     editFieldById,
     updateFieldData,
     markFieldAsDeleted,
-    getFieldGroupsByOrganizationId
+    getFieldGroupsByOrganizationId,
+    addFieldAndUpdateAssetForm
 };
 
 
