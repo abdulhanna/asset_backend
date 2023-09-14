@@ -27,6 +27,49 @@ const pushFieldsToAssetForm = async (organizationId) => {
     }
 };
 
+const syncFields = async () => {
+    try {
+        // Fetch fields from fieldManagementModel
+        const fields = await fieldManagementModel.find();
+
+        // Filter out organization-specific fields (fields with organizationId)
+        const rootFields = fields.filter(field => !field.organizationId);
+
+        // Fetch existing assetFormManagement
+        const assetFormManagement = await assetFormManagementModel.findOne();
+
+        // Preserve organization-specific fields
+        const orgSpecificFields = assetFormManagement.assetFormManagements
+            .filter(field => field.organizationId)
+            .reduce((acc, field) => {
+                acc[field._id.toString()] = field;
+                return acc;
+            }, {});
+
+        // Update only the root fields in assetFormManagement
+        const updatedAssetFormManagements = assetFormManagement.assetFormManagements
+            .map(field => {
+                if (!field.organizationId) {
+                    return field;
+                }
+                return orgSpecificFields[field._id.toString()] || field;
+            });
+
+        // Update all organization documents with the updated fieldList
+        await assetFormManagementModel.updateMany(
+            {},
+            {
+                $set: {assetFormManagements: updatedAssetFormManagements}
+            },
+            {upsert: true}
+        );
+    } catch (error) {
+        console.error('Error:', error);
+        throw new Error('Error syncing fields with organizations.');
+    }
+};
+
+
 const getAssetFormManagementList = async (organizationId) => {
     try {
         const data = await assetFormManagementModel.find({organizationId: organizationId});
@@ -219,6 +262,7 @@ export const assetFormManagementService = {
     addFieldToAssetForm,
     updateFieldsToAssetForm,
     getFields,
-    getNonMandatoryFields
+    getNonMandatoryFields,
+    syncFields
 
 };
