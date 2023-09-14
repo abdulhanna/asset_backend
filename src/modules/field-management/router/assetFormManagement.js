@@ -16,13 +16,14 @@ router.post('/push-fields-to-assetform', isLoggedIn, async (req, res) => {
 
 router.post('/sync-fields', isLoggedIn, async (req, res) => {
     try {
-        await assetFormManagementService.syncFields();
-        res.status(200).json({message: 'Fields synced with organizations.'});
+        const updatedFields = await assetFormManagementService.syncFields();
+        res.status(200).json({message: 'Fields synced with organizations.', updatedFields});
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({message: 'Internal Server Error'});
     }
 });
+
 
 router.get('/assetform', isLoggedIn, async (req, res) => {
     try {

@@ -55,14 +55,23 @@ const syncFields = async () => {
                 return orgSpecificFields[field._id.toString()] || field;
             });
 
+
         // Update all organization documents with the updated fieldList
         await assetFormManagementModel.updateMany(
             {},
             {
-                $set: {assetFormManagements: updatedAssetFormManagements}
+                $push: {
+                    assetFormManagements: {
+                        $each: updatedAssetFormManagements,
+                        $position: 0 // Add the fields at the beginning
+                    }
+                }
             },
             {upsert: true}
         );
+
+        // Return the updated fields
+        return updatedAssetFormManagements;
     } catch (error) {
         console.error('Error:', error);
         throw new Error('Error syncing fields with organizations.');
