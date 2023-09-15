@@ -108,7 +108,7 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
             );
         }
 
-// Step 2: Update assetFormManagementModel
+        // Step 2: Update assetFormManagementModel
         const assetFormManagement = await assetFormManagementModel.find();
 
         if (!assetFormManagement || assetFormManagement.length === 0) {
@@ -126,7 +126,8 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
             if (subgroup) {
                 const updatedFields = fields.map(field => ({
                     ...field,
-                    _id: new mongoose.Types.ObjectId()
+                    _id: new mongoose.Types.ObjectId(),
+                    organizationId: null
                 }));
 
                 await assetFormManagementModel.updateOne(
@@ -137,7 +138,8 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
             } else if (group) {
                 const updatedFields = fields.map(field => ({
                     ...field,
-                    _id: new mongoose.Types.ObjectId()
+                    _id: new mongoose.Types.ObjectId(),
+                    organizationId: null
                 }));
 
                 await assetFormManagementModel.updateOne(
