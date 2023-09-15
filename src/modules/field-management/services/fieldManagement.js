@@ -108,7 +108,7 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
             );
         }
 
-        // Step 2: Update assetFormManagementModel
+// Step 2: Update assetFormManagementModel
         const assetFormManagement = await assetFormManagementModel.find();
 
         if (!assetFormManagement || assetFormManagement.length === 0) {
@@ -116,46 +116,41 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
         }
 
         const updatePromises = assetFormManagement.map(async (doc) => {
-
             const group = doc.assetFormManagements.find(g => g._id.toString() === id);
             let subgroup;
-
 
             if (!group) {
                 subgroup = doc.assetFormManagements.flatMap(g => g.subgroups).find(s => s._id.toString() === id);
             }
 
             if (subgroup) {
-                fields.forEach(field => {
-                    fields = {
-                        ...field,
-                        _id: new mongoose.Types.ObjectId(),
-                        // organizationId: null
-                    };
-                    subgroup.fields.push(fields);
-                });
+                const updatedFields = fields.map(field => ({
+                    ...field,
+                    _id: new mongoose.Types.ObjectId()
+                }));
+
+                await assetFormManagementModel.updateOne(
+                    {_id: doc._id, 'assetFormManagements.subgroups._id': mongoose.Types.ObjectId(id)},
+                    {$push: {'assetFormManagements.$.subgroups.$[s].fields': {$each: updatedFields}}},
+                    {arrayFilters: [{'s._id': mongoose.Types.ObjectId(id)}]}
+                );
             } else if (group) {
+                const updatedFields = fields.map(field => ({
+                    ...field,
+                    _id: new mongoose.Types.ObjectId()
+                }));
 
-                fields.forEach(field => {
-                    const updatedField = {
-                        ...field,
-                        _id: new mongoose.Types.ObjectId(),
-                        //  organizationId: null
-                    };
-
-                    group.fields.push(updatedField);
-                });
-
+                await assetFormManagementModel.updateOne(
+                    {_id: doc._id, 'assetFormManagements._id': mongoose.Types.ObjectId(id)},
+                    {$push: {'assetFormManagements.$.fields': {$each: updatedFields}}}
+                );
             } else {
                 throw new Error('Group or subgroup not found');
             }
-
-            const updatedDoc = await doc.save({new: true});
-            
         });
 
-
         const updatedDocs = await Promise.all(updatePromises);
+
         return updatedDocs;
 
 
