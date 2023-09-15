@@ -116,10 +116,10 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
         }
 
         const updatePromises = assetFormManagement.map(async (doc) => {
- 
+
             const group = doc.assetFormManagements.find(g => g._id.toString() === id);
             let subgroup;
-            let updatedField;
+
 
             if (!group) {
                 subgroup = doc.assetFormManagements.flatMap(g => g.subgroups).find(s => s._id.toString() === id);
@@ -127,31 +127,35 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
 
             if (subgroup) {
                 fields.forEach(field => {
-                    updatedField = {
+                    fields = {
                         ...field,
                         _id: new mongoose.Types.ObjectId(),
-                        organizationId: null
+                        // organizationId: null
                     };
-                    subgroup.fields.push(updatedField);
+                    subgroup.fields.push(fields);
                 });
             } else if (group) {
+
                 fields.forEach(field => {
-                    updatedField = {
+                    const updatedField = {
                         ...field,
                         _id: new mongoose.Types.ObjectId(),
-                        organizationId: null
+                        //  organizationId: null
                     };
+
                     group.fields.push(updatedField);
                 });
+
             } else {
                 throw new Error('Group or subgroup not found');
             }
 
-            return doc.save({new: true}); // Use new: true option
+            const updatedDoc = await doc.save({new: true});
+            
         });
 
-        const updatedDocs = await Promise.all(updatePromises);
 
+        const updatedDocs = await Promise.all(updatePromises);
         return updatedDocs;
 
 
