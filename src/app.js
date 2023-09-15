@@ -23,7 +23,7 @@ export const createApp = () => {
     app.use(
         cors({
             credentials: true,
-            origin: '*'g
+            origin: '*'
         })
     );
     app.use(express.json({limit: '250mb'}));
