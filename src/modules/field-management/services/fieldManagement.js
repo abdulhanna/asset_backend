@@ -110,41 +110,51 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
 
         // Step 2: Update assetFormManagementModel
         const assetFormManagement = await assetFormManagementModel.find();
-        console.log('assetFormma', assetFormManagement);
 
-        if (!assetFormManagement) {
+        if (!assetFormManagement || assetFormManagement.length === 0) {
             throw new Error('AssetFormManagement document not found');
         }
 
-        for (const doc of assetFormManagement) {
+        const updatePromises = assetFormManagement.map(async (doc) => {
+ 
             const group = doc.assetFormManagements.find(g => g._id.toString() === id);
             let subgroup;
+            let updatedField;
 
             if (!group) {
                 subgroup = doc.assetFormManagements.flatMap(g => g.subgroups).find(s => s._id.toString() === id);
             }
 
             if (subgroup) {
-                updatedField = {
-                    ...fields,
-                    _id: new mongoose.Types.ObjectId(),
-                };
-                subgroup.fields.push(updatedField);
+                fields.forEach(field => {
+                    updatedField = {
+                        ...field,
+                        _id: new mongoose.Types.ObjectId(),
+                        organizationId: null
+                    };
+                    subgroup.fields.push(updatedField);
+                });
             } else if (group) {
-                updatedField = {
-                    ...fields,
-                    _id: new mongoose.Types.ObjectId(),
-                };
-                group.fields.push(updatedField);
+                fields.forEach(field => {
+                    updatedField = {
+                        ...field,
+                        _id: new mongoose.Types.ObjectId(),
+                        organizationId: null
+                    };
+                    group.fields.push(updatedField);
+                });
             } else {
                 throw new Error('Group or subgroup not found');
             }
 
-            await doc.save();
-        }
+            return doc.save({new: true}); // Use new: true option
+        });
+
+        const updatedDocs = await Promise.all(updatePromises);
+
+        return updatedDocs;
 
 
-        // return fields;
     } catch (error) {
         throw error;
     }
