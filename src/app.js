@@ -15,7 +15,7 @@ const modules = [
     fieldManagementModule,
 ];
 
-const origins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:4000', 'https://api.asset.dev.client.kloudlite.io'];
+// const origins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:4000', 'https://api.asset.dev.client.kloudlite.io'];
 
 export const createApp = () => {
     const app = express();
@@ -23,15 +23,7 @@ export const createApp = () => {
     app.use(
         cors({
             credentials: true,
-            origin: (origin, callback) => {
-                const valid = origins.find((o) => o === origin);
-                console.log('valid', valid);
-                if (valid) {
-                    callback(undefined, valid);
-                } else {
-                    callback(new Error('no valid origin'), undefined);
-                }
-            }
+            origin: '*'g
         })
     );
     app.use(express.json({limit: '250mb'}));
