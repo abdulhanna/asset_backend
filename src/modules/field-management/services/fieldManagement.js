@@ -22,21 +22,24 @@ const updateSubgroups = async (groupId, subgroups) => {
     );
 };
 
-const updateSubgroupFields = async (subgroupId, fields) => {
-    const updatedSubgroup = await fieldManagementModel.findOneAndUpdate(
-        {'subgroups._id': subgroupId},
-        {$push: {'subgroups.$.fields': {$each: fields}}},
-        {new: true}
-    );
-    return updatedSubgroup;
-};
-const updateGroupFields = async (groupId, fields) => {
-    return fieldManagementModel.findByIdAndUpdate(
-        groupId,
-        {$push: {fields: {$each: fields}}},
-        {new: true}
-    );
-};
+// const updateSubgroupFields = async (subgroupId, fields) => {
+//     const updatedSubgroup = await fieldManagementModel.findOneAndUpdate(
+//         {'subgroups._id': subgroupId},
+//         {$push: {'subgroups.$.fields': {$each: fields}}},
+//         {new: true}
+//     );
+//     return updatedSubgroup;
+// };
+
+
+// const updateGroupFields = async (groupId, fields) => {
+//     return fieldManagementModel.findByIdAndUpdate(
+//         groupId,
+//         {$push: {fields: {$each: fields}}},
+//         {new: true}
+//     );
+// };
+
 const updateFields = async (id, fields) => {
     try {
         const group = await fieldManagementModel.findById(id);
@@ -488,8 +491,6 @@ export const fieldManagementService = {
     deleteFieldById,
     deleteGroupAndFieldsById,
     updateSubgroups,
-    updateSubgroupFields,
-    updateGroupFields,
     updateFields,
     getFieldsBySubgroupId,
     editFieldById,
