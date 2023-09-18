@@ -137,10 +137,10 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
                     {_id: doc._id, 'assetFormManagements.subgroups._id': mongoose.Types.ObjectId(id)},
                     {
                         $push: {
-                            [`assetFormManagements.$.subgroups.${subgroupIndex}.fields`]: {$each: updatedFields}
+                            ['assetFormManagements.$.subgroups.$[s].fields']: {$each: updatedFields}
                         }
                     },
-                    // {arrayFilters: [{'subgroupIndex._id': mongoose.Types.ObjectId(id)}]}
+                    {arrayFilters: [{'s._id': mongoose.Types.ObjectId(id)}]}
                 );
             } else if (group) {
                 const updatedFields = fields.map(field => ({
