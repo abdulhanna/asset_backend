@@ -121,20 +121,23 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
         const updatePromises = assetFormManagement.map(async (doc) => {
             for (const subgroup of doc.assetFormManagements.flatMap(g => g.subgroups)) {
                 if (subgroup._id.toString() === id) {
-                    console.log(subgroup);
                     subgroup.fields.push(...fields.map(field => ({
                         ...field,
                         _id: new mongoose.Types.ObjectId(),
                         organizationId: null
                     })));
 
-                    await doc.save();
-                    console.log('Fields added to subgroup successfully');
-                    return;
+                    try {
+                        await doc.save();
+                        console.log('Fields added to subgroup successfully');
+                        return;
+                    } catch (error) {
+                        console.error('Error saving document:', error);
+                        throw error;
+                    }
                 }
             }
 
-            // If subgroup not found, try to update the group
             const group = doc.assetFormManagements.find(g => g._id.toString() === id);
 
             if (group) {
