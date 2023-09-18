@@ -135,9 +135,7 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
                         console.log('New Field:', newField);
                         subgroup.fields.push(newField);
                     }
-
-
-                    console.log('Attempting to save document...');
+                    
                     try {
                         await doc.save();
                         console.log('Fields added to subgroup successfully');
