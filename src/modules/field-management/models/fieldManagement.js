@@ -91,3 +91,4 @@ const groupSchema = new mongoose.Schema({
 const fieldManagementModel = mongoose.model('fieldmanagements', groupSchema);
 
 export default fieldManagementModel;
+

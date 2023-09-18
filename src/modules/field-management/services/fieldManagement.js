@@ -81,35 +81,36 @@ const updateFields = async (id, fields) => {
 const addFieldAndUpdateAssetForm = async (id, fields) => {
     try {
         // Step 1: Add fields to fieldManagementModel
-        let updatedGroup;
+        let updatedSubgroups = [];
+        let updatedGroups = [];
 
-        const group = await fieldManagementModel.findById(id);
-
-        if (!group) {
-            updatedGroup = await fieldManagementModel.findOneAndUpdate(
-                {'subgroups._id': id},
-                {
-                    $push: {
-                        'subgroups.$.fields': {
-                            $each: fields.map(field => ({...field})),
-                        },
-                    },
-                },
-                {new: true}
-            );
-        } else {
-            updatedGroup = await fieldManagementModel.findByIdAndUpdate(
-                id,
-                {
-                    $push: {
-                        fields: {
-                            $each: fields.map(field => ({...field})),
-                        },
-                    },
-                },
-                {new: true}
-            );
-        }
+        // const group = await fieldManagementModel.findById(id);
+        //
+        // if (!group) {
+        //     updatedGroup = await fieldManagementModel.findOneAndUpdate(
+        //         {'subgroups._id': id},
+        //         {
+        //             $push: {
+        //                 'subgroups.$.fields': {
+        //                     $each: fields.map(field => ({...field})),
+        //                 },
+        //             },
+        //         },
+        //         {new: true}
+        //     );
+        // } else {
+        //     updatedGroup = await fieldManagementModel.findByIdAndUpdate(
+        //         id,
+        //         {
+        //             $push: {
+        //                 fields: {
+        //                     $each: fields.map(field => ({...field})),
+        //                 },
+        //             },
+        //         },
+        //         {new: true}
+        //     );
+        // }
 
         // Step 2: Update assetFormManagementModel
         const assetFormManagement = await assetFormManagementModel.find();
@@ -130,6 +131,7 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
                     try {
                         await doc.save();
                         console.log('Fields added to subgroup successfully');
+                        updatedSubgroups.push(subgroup);
                         return;
                     } catch (error) {
                         console.error('Error saving document:', error);
@@ -151,15 +153,20 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
                     {_id: doc._id, 'assetFormManagements._id': mongoose.Types.ObjectId(id)},
                     {$push: {'assetFormManagements.$.fields': {$each: updatedFields}}}
                 );
+
                 console.log('Fields added to group successfully');
+                updatedGroups.push(group);
             } else {
-                throw new Error('Group or subgroup not found');
+                console.error('Group or subgroup not found');
             }
         });
 
         await Promise.all(updatePromises);
 
-        return updatedGroup;
+        return {
+            updatedSubgroups,
+            updatedGroups,
+        };
 
     } catch (error) {
         throw error;
