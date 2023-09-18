@@ -119,30 +119,25 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
         }
 
         const updatePromises = assetFormManagement.map(async (doc) => {
-            const group = doc.assetFormManagements.find(g => g._id.toString() === id);
-            let subgroup;
+            for (const subgroup of doc.assetFormManagements.flatMap(g => g.subgroups)) {
+                if (subgroup._id.toString() === id) {
+                    console.log(subgroup);
+                    subgroup.fields.push(...fields.map(field => ({
+                        ...field,
+                        _id: new mongoose.Types.ObjectId(),
+                        organizationId: null
+                    })));
 
-            if (!group) {
-                subgroup = doc.assetFormManagements.flatMap(g => g.subgroups).find(s => s._id.toString() === id);
+                    await doc.save();
+                    console.log('Fields added to subgroup successfully');
+                    return;
+                }
             }
 
-            if (subgroup) {
-                const updatedFields = fields.map(field => ({
-                    ...field,
-                    _id: new mongoose.Types.ObjectId(),
-                    organizationId: null
-                }));
+            // If subgroup not found, try to update the group
+            const group = doc.assetFormManagements.find(g => g._id.toString() === id);
 
-                await assetFormManagementModel.updateOne(
-                    {_id: doc._id, 'assetFormManagements.subgroups._id': mongoose.Types.ObjectId(id)},
-                    {
-                        $push: {
-                            ['assetFormManagements.$.subgroups.$[s].fields']: {$each: updatedFields}
-                        }
-                    },
-                    {arrayFilters: [{'s._id': mongoose.Types.ObjectId(id)}]}
-                );
-            } else if (group) {
+            if (group) {
                 const updatedFields = fields.map(field => ({
                     ...field,
                     _id: new mongoose.Types.ObjectId(),
@@ -153,21 +148,20 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
                     {_id: doc._id, 'assetFormManagements._id': mongoose.Types.ObjectId(id)},
                     {$push: {'assetFormManagements.$.fields': {$each: updatedFields}}}
                 );
+                console.log('Fields added to group successfully');
             } else {
                 throw new Error('Group or subgroup not found');
             }
         });
 
-        const updatedDocs = await Promise.all(updatePromises);
+        await Promise.all(updatePromises);
 
-        return updatedDocs;
-
+        return updatedGroup;
 
     } catch (error) {
         throw error;
     }
 };
-
 
 const getFieldGroupsByOrganizationIdNull = async () => {
     try {
