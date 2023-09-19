@@ -1,4 +1,5 @@
 import fieldManagementModel from '../models/fieldManagement';
+import assetFormManagementModel from '../models/assetFormManagement';
 import mongoose from 'mongoose';
 
 const createMultipleFieldGroups = async (groupNames) => {
@@ -21,22 +22,25 @@ const updateSubgroups = async (groupId, subgroups) => {
     );
 };
 
-const updateSubgroupFields = async (subgroupId, fields) => {
-    const updatedSubgroup = await fieldManagementModel.findOneAndUpdate(
-        {'subgroups._id': subgroupId},
-        {$push: {'subgroups.$.fields': {$each: fields}}},
-        {new: true}
-    );
-    return updatedSubgroup;
-};
-const updateGroupFields = async (groupId, fields) => {
-    return fieldManagementModel.findByIdAndUpdate(
-        groupId,
-        {$push: {fields: {$each: fields}}},
-        {new: true}
-    );
-};
-const updateFields = async (id, fields, organizationId) => {
+// const updateSubgroupFields = async (subgroupId, fields) => {
+//     const updatedSubgroup = await fieldManagementModel.findOneAndUpdate(
+//         {'subgroups._id': subgroupId},
+//         {$push: {'subgroups.$.fields': {$each: fields}}},
+//         {new: true}
+//     );
+//     return updatedSubgroup;
+// };
+
+
+// const updateGroupFields = async (groupId, fields) => {
+//     return fieldManagementModel.findByIdAndUpdate(
+//         groupId,
+//         {$push: {fields: {$each: fields}}},
+//         {new: true}
+//     );
+// };
+
+const updateFields = async (id, fields) => {
     try {
         const group = await fieldManagementModel.findById(id);
 
@@ -47,7 +51,7 @@ const updateFields = async (id, fields, organizationId) => {
                 {
                     $push: {
                         'subgroups.$.fields': {
-                            $each: fields.map(field => ({...field, organizationId})),
+                            $each: fields.map(field => ({...field})),
                         },
                     },
                 },
@@ -62,7 +66,7 @@ const updateFields = async (id, fields, organizationId) => {
             {
                 $push: {
                     fields: {
-                        $each: fields.map(field => ({...field, organizationId})),
+                        $each: fields.map(field => ({...field})),
                     },
                 },
             },
@@ -74,6 +78,108 @@ const updateFields = async (id, fields, organizationId) => {
     }
 };
 
+const addFieldAndUpdateAssetForm = async (id, fields) => {
+    try {
+        // Step 1: Add fields to fieldManagementModel
+        let updatedSubgroups = [];
+        let updatedGroups = [];
+        let updatedGroup;
+
+        const group = await fieldManagementModel.findById(id);
+
+        if (!group) {
+            updatedGroup = await fieldManagementModel.findOneAndUpdate(
+                {'subgroups._id': id},
+                {
+                    $push: {
+                        'subgroups.$.fields': {
+                            $each: fields.map(field => ({...field})),
+                        },
+                    },
+                },
+                {new: true}
+            );
+        } else {
+            updatedGroup = await fieldManagementModel.findByIdAndUpdate(
+                id,
+                {
+                    $push: {
+                        fields: {
+                            $each: fields.map(field => ({...field})),
+                        },
+                    },
+                },
+                {new: true}
+            );
+        }
+
+        // Step 2: Update assetFormManagementModel
+        const assetFormManagement = await assetFormManagementModel.find();
+
+        if (!assetFormManagement || assetFormManagement.length === 0) {
+            throw new Error('AssetFormManagement document not found');
+        }
+
+        const updatePromises = assetFormManagement.map(async (doc) => {
+            for (const subgroup of doc.assetFormManagements.flatMap(g => g.subgroups)) {
+                console.log('subgroup', subgroup);
+                if (subgroup._id.toString() === id) {
+
+                    for (const field of fields) {
+                        const newField = {
+                            ...field,
+                            _id: new mongoose.Types.ObjectId(),
+                            organizationId: null
+                        };
+                        console.log('fields', fields);
+                        console.log('New Field:', newField);
+                        subgroup.fields.push(newField);
+                    }
+                    
+                    try {
+                        await doc.save();
+                        console.log('Fields added to subgroup successfully');
+                        updatedSubgroups.push(subgroup);
+                        return;
+                    } catch (error) {
+                        console.error('Error saving document:', error);
+                        throw error;
+                    }
+                }
+            }
+
+            const group = doc.assetFormManagements.find(g => g._id.toString() === id);
+
+            if (group) {
+                const updatedFields = fields.map(field => ({
+                    ...field,
+                    _id: new mongoose.Types.ObjectId(),
+                    organizationId: null
+                }));
+
+                await assetFormManagementModel.updateOne(
+                    {_id: doc._id, 'assetFormManagements._id': mongoose.Types.ObjectId(id)},
+                    {$push: {'assetFormManagements.$.fields': {$each: updatedFields}}}
+                );
+
+                console.log('Fields added to group successfully');
+                updatedGroups.push(group);
+            } else {
+                console.error('Group or subgroup not found');
+            }
+        });
+
+        await Promise.all(updatePromises);
+
+        return {
+            updatedSubgroups,
+            updatedGroups,
+        };
+
+    } catch (error) {
+        throw error;
+    }
+};
 
 const getFieldGroupsByOrganizationIdNull = async () => {
     try {
@@ -401,14 +507,13 @@ export const fieldManagementService = {
     deleteFieldById,
     deleteGroupAndFieldsById,
     updateSubgroups,
-    updateSubgroupFields,
-    updateGroupFields,
     updateFields,
     getFieldsBySubgroupId,
     editFieldById,
     updateFieldData,
     markFieldAsDeleted,
-    getFieldGroupsByOrganizationId
+    getFieldGroupsByOrganizationId,
+    addFieldAndUpdateAssetForm
 };
 
 
