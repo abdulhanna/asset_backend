@@ -14,5 +14,87 @@ router.post('/push-fields-to-assetform', isLoggedIn, async (req, res) => {
     }
 });
 
+router.post('/sync-fields', isLoggedIn, async (req, res) => {
+    try {
+        const updatedFields = await assetFormManagementService.syncFields();
+        res.status(200).json({message: 'Fields synced with organizations.', updatedFields});
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({message: 'Internal Server Error'});
+    }
+});
+
+
+router.get('/assetform', isLoggedIn, async (req, res) => {
+    try {
+        const organizationId = req.user.data.organizationId;
+        const assetFormManagementList = await assetFormManagementService.getAssetFormManagementList(organizationId);
+        return res.status(200).json(assetFormManagementList);
+
+    } catch (error) {
+        res.status(500).send('Error in list  assetFormManagements');
+    }
+
+});
+
+
+router.put('/add-field-in-assetform', isLoggedIn, async (req, res) => {
+    try {
+        const organizationId = req.user.data.organizationId;
+        const {groupOrSubgroupId, updatedField} = req.body;
+
+        const result = await assetFormManagementService.addFieldToAssetForm(organizationId, groupOrSubgroupId, updatedField);
+
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('Error adding field to assetFormManagement');
+    }
+});
+
+router.put('/update-fields-assetform', isLoggedIn, async (req, res) => {
+    try {
+        const organizationId = req.user.data.organizationId; // Assuming you have user authentication middleware
+        const {groupOrSubgroupId, fields} = req.body;
+
+        const updatedFields = await assetFormManagementService.updateFieldsToAssetForm(organizationId, groupOrSubgroupId, fields);
+
+        res.json(updatedFields);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('Error updating fields');
+    }
+});
+
+
+router.get('/fields/:groupOrSubgroupId', isLoggedIn, async (req, res) => {
+    try {
+        const organizationId = req.user.data.organizationId; // Assuming you have user authentication middleware
+        const {groupOrSubgroupId} = req.params;
+
+        const fields = await assetFormManagementService.getFields(organizationId, groupOrSubgroupId);
+
+        res.json(fields);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('Error fetching fields');
+    }
+});
+
+// Route to get non-mandatory fields by groupOrSubgroupId
+router.get('/non-mandatory-fields/:groupOrSubgroupId', isLoggedIn, async (req, res) => {
+    try {
+        const organizationId = req.user.data.organizationId;
+        const {groupOrSubgroupId} = req.params;
+
+        const nonMandatoryFields = await assetFormManagementService.getNonMandatoryFields(organizationId, groupOrSubgroupId);
+
+        res.json(nonMandatoryFields);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('Error fetching non-mandatory fields');
+    }
+});
+
 
 export default router;

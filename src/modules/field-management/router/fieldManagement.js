@@ -41,11 +41,26 @@ router.put('/:groupId/add-subgroups', isLoggedIn, async (req, res) => {
 
 router.put('/fields/:id', isLoggedIn, async (req, res) => {
     try {
-        const organizationId = req.user.data.organizationId;
+        // const organizationId = req.user.data.organizationId;
         const {id} = req.params;
         const {fields} = req.body;
 
-        const updatedFieldGroup = await fieldManagementService.updateFields(id, fields, organizationId);
+        const updatedFieldGroup = await fieldManagementService.updateFields(id, fields);
+        return res.status(200).json(updatedFieldGroup);
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({error: 'Unable to update fields'});
+    }
+});
+
+
+router.put('/v2/field/:id', isLoggedIn, async (req, res) => {
+    try {
+        // const organizationId = req.user.data.organizationId;
+        const {id} = req.params;
+        const {fields} = req.body;
+    
+        const updatedFieldGroup = await fieldManagementService.addFieldAndUpdateAssetForm(id, fields);
         return res.status(200).json(updatedFieldGroup);
     } catch (error) {
         console.log(error);
@@ -103,7 +118,7 @@ router.get('/listWithoutOrganizationId', isLoggedIn, async (req, res) => {
 router.get('/listWithOrganizationId', isLoggedIn, async (req, res) => {
     try {
         const organizationId = req.user.data.organizationId;
-       
+
         const fieldGroups = await fieldManagementService.getFieldGroupsByOrganizationId(organizationId);
 
         return res.status(200).json({success: true, fieldGroups});
