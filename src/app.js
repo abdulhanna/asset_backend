@@ -20,7 +20,7 @@ export const createApp = () => {
      app.set('trust proxy', true);
      app.use(
           cors({
-               origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:4000', 'https://api.asset.dev.client.kloudlite.io'],
+               origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:4000', 'https://api.asset.dev.client.kloudlite.io', 'https://asset.dev.client.kloudlite.io'],
                methods: ['POST', 'PUT', 'GET', 'OPTIONS', 'HEAD'],
                credentials: true,
           })
