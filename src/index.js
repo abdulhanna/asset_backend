@@ -29,7 +29,7 @@ import {initPassport} from './modules/auth/router/passport';
     initPassport();
     finishApp(app);
     try {
-        const PORT = process.env.PORT || 3000;
+        const PORT = process.env.PORT || 4000;
         const server = http.createServer(app);
         await server.listen(PORT);
         Logger.info({

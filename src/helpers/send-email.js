@@ -59,7 +59,7 @@ emailtemplate.accountVerificationEmail = async (toemail, token) => {
         </tr>
         <tr>
           <td align="center" style="padding: 52px 0;">
-              <a href="${secret.frontend_baseURL}/confirm?confirmation_token=${token}" style="background-color: #F97316; padding: 16px 26px 16px 26px; border-radius: 8px; font-weight: 400;
+              <a href="${secret.frontend_baseURL}/auth/profile?confirmation_token=${token}" style="background-color: #F97316; padding: 16px 26px 16px 26px; border-radius: 8px; font-weight: 400;
                color: #fff; font-size: 18px; text-decoration: none;">Confirm your email</a>
           </td>
         </tr>
@@ -87,7 +87,7 @@ emailtemplate.sendInvitationEmail = async (email, verificationToken) => {
                from: secret.sendgrid.from_user, // Change to your verified sender
                subject: 'Invitation to Set Password',
                html: `<p>Hello,</p><p>You have been invited to set your password. Click the following link to set your password:</p>
-        <a href="${secret.frontend_baseURL}/set-password/${verificationToken}">Set Password</a>`,
+        <a href="${secret.frontend_baseURL}/auth/setPassword?setPassword_token=${verificationToken}">Set Password</a>`,
           };
 
           await sgMail.send(message);
@@ -155,7 +155,7 @@ emailtemplate.sendForgetpassEmail = async (email, resetToken) => {
         </tr>
         <tr>
           <td align="center" style="padding: 52px 0;">
-              <a href="${secret.frontend_baseURL}/forgot-password?resetToken=${resetToken}" style="background-color: #F97316; padding: 16px 26px 16px 26px; border-radius: 8px; font-weight: 400;
+              <a href="${secret.frontend_baseURL}/auth/resetPassword?resetToken=${resetToken}" style="background-color: #F97316; padding: 16px 26px 16px 26px; border-radius: 8px; font-weight: 400;
                color: #fff; font-size: 18px; text-decoration: none;">Reset Password</a>
           </td>
         </tr>
