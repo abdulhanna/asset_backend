@@ -78,6 +78,7 @@ const updateFields = async (id, fields) => {
     }
 };
 
+
 const addFieldAndUpdateAssetForm = async (id, fields) => {
     try {
         // Step 1: Add fields to fieldManagementModel
@@ -89,15 +90,15 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
 
         if (!group) {
             updatedGroup = await fieldManagementModel.findOneAndUpdate(
-                {'subgroups._id': id},
+                { 'subgroups._id': id },
                 {
                     $push: {
                         'subgroups.$.fields': {
-                            $each: fields.map(field => ({...field})),
+                            $each: fields.map(field => ({ ...field })),
                         },
                     },
                 },
-                {new: true}
+                { new: true }
             );
         } else {
             updatedGroup = await fieldManagementModel.findByIdAndUpdate(
@@ -105,13 +106,16 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
                 {
                     $push: {
                         fields: {
-                            $each: fields.map(field => ({...field})),
+                            $each: fields.map(field => ({ ...field })),
                         },
                     },
                 },
-                {new: true}
+                { new: true }
             );
         }
+
+        // Retrieve only the last pushed field from updatedGroup
+        const pushedFields = updatedGroup.fields[updatedGroup.fields.length - 1];
 
         // Step 2: Update assetFormManagementModel
         const assetFormManagement = await assetFormManagementModel.find();
@@ -121,50 +125,62 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
         }
 
         const updatePromises = assetFormManagement.map(async (doc) => {
-            for (const subgroup of doc.assetFormManagements.flatMap(g => g.subgroups)) {
-                console.log('subgroup', subgroup);
-                if (subgroup._id.toString() === id) {
+            // for (const subgroup of doc.assetFormManagements.flatMap(g => g.subgroups)) {
+            //     if (subgroup._id.toString() === id) {
+            //         const newField = {
+            //             ...pushedFields.toObject(), // Convert Mongoose document to plain object
+            //             organizationId: null,
+            //         };
+            //         subgroup.fields.push(newField);
 
-                    for (const field of fields) {
-                        const newField = {
-                            ...field,
-                            _id: new mongoose.Types.ObjectId(),
-                            organizationId: null
-                        };
-                        console.log('fields', fields);
-                        console.log('New Field:', newField);
-                        subgroup.fields.push(newField);
-                    }
-                    
-                    try {
-                        await doc.save();
-                        console.log('Fields added to subgroup successfully');
-                        updatedSubgroups.push(subgroup);
-                        return;
-                    } catch (error) {
-                        console.error('Error saving document:', error);
-                        throw error;
-                    }
-                }
-            }
+            //         try {
+            //             await doc.save();
+            //             updatedSubgroups.push(subgroup);
+            //             return;
+            //         } catch (error) {
+            //             console.error('Error saving document:', error);
+            //             throw error;
+            //         }
+            //     }
+            // }
 
             const group = doc.assetFormManagements.find(g => g._id.toString() === id);
+           const subGroup = doc.assetFormManagements.find(g => g.subgroups.some(sub => sub._id.toString() === id));
+          
 
             if (group) {
-                const updatedFields = fields.map(field => ({
-                    ...field,
-                    _id: new mongoose.Types.ObjectId(),
-                    organizationId: null
-                }));
-
+                console.log(doc._id+'grp Id');
                 await assetFormManagementModel.updateOne(
-                    {_id: doc._id, 'assetFormManagements._id': mongoose.Types.ObjectId(id)},
-                    {$push: {'assetFormManagements.$.fields': {$each: updatedFields}}}
+                    { _id: doc._id, 'assetFormManagements._id': mongoose.Types.ObjectId(id) },
+                    { $push: { 'assetFormManagements.$.fields': { $each: [pushedFields] } } }
                 );
 
-                console.log('Fields added to group successfully');
                 updatedGroups.push(group);
-            } else {
+            }
+            else if(subGroup){
+
+                const RealsubGroup = subGroup.subgroups.find(sub => sub._id.toString() === id);
+                   if(RealsubGroup)
+                   {
+                    console.log(mongoose.Types.ObjectId(id)+'mongo id')
+
+                  const findData =   await assetFormManagementModel.findOne(
+                    { _id: doc._id, 'assetFormManagements.subgroups._id': mongoose.Types.ObjectId(id) }
+                );
+
+                
+                   await assetFormManagementModel.updateOne(
+                    { _id: doc._id, 'assetFormManagements.subgroups._id': mongoose.Types.ObjectId(id) },
+                    { $push: { 'subgroups.$.fields': { $each: [pushedFields] } } }
+                );
+
+                // updatedGroups.push(group);
+
+
+                   }
+
+            }
+             else {
                 console.error('Group or subgroup not found');
             }
         });
@@ -175,11 +191,13 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
             updatedSubgroups,
             updatedGroups,
         };
-
     } catch (error) {
         throw error;
     }
 };
+
+
+
 
 const getFieldGroupsByOrganizationIdNull = async () => {
     try {
