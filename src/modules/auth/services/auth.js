@@ -251,32 +251,37 @@ authService.doLogin = async ({ email, password }) => {
   {
     
      // profile not completed
-  // if(existingUser.is_profile_completed == false)
-  // {
+  if(existingUser.is_profile_completed == false)
+  {
 
-  //   // set token for authorization
-  //   getToken = await jwtService.generatePair({
-  //     _id:existingUser._id,
-  //     role:existingUser.role,
-  //     dashboardPermission:existingUser.dashboardPermission,
-  //     organizationId:null,
-  //     assignedLocationId:null
-  //   });
+    // set token for authorization
+    getToken = await jwtService.generatePair({
+      _id:existingUser._id,
+      role:existingUser.role,
+      dashboardPermission:existingUser.dashboardPermission,
+      organizationId:null,
+      assignedLocationId:null
+    });
 
-  //    await userModel.findOneAndUpdate(
-  //      { email},
-  //      { token: getToken, updatedAt : Date.now()},
-  //      { new: true }
-  //    );
-  //   const redirectURLcompany = `${secret.frontend_baseURL}/company-profile`;
-  //   const userData = {
-  //     msg: "Company Profile is not completed, please complete your company profile", 
-  //     errorstatus:"5",
-  //     redirectUrl:redirectURLcompany,
-  //     access_token: getToken
-  //   }
-  //   return userData;
-  // }
+     await userModel.findOneAndUpdate(
+       { email},
+       { token: getToken, updatedAt : Date.now()},
+       { new: true }
+     );
+    // const redirectURLcompany = `${secret.frontend_baseURL}/company-profile`;
+    const getUserData = await userModel.findOne({ email})
+    .select('email role teamRoleId dashboardPermission token is_profile_completed');
+
+    const userData = {
+      email: getUserData.email,
+      role: getUserData.role,
+      is_profile_completed: getUserData.is_profile_completed,
+      dashboardPermission: getUserData.dashboardPermission,
+      permissions:{},
+      access_token: getToken
+    }
+    return userData;
+  }
   const getOrganization = await organizationModel.findOne({
     userId:existingUser._id
   })
