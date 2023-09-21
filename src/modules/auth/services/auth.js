@@ -27,25 +27,18 @@ authService.doRegister = async (data) => {
      assert(
           data.password == data.confirmPassword,
           createError(
-               StatusCodes.UNAUTHORIZED,
+               StatusCodes.BAD_REQUEST,
                "Password and confirm Password don't match"
           )
      );
 
-     assert(
-          data.password == data.confirmPassword,
-          createError(
-               StatusCodes.UNAUTHORIZED,
-               "Password and confirm Password don't match"
-          )
-     );
 
      const existingUser = await userModel.findOne({
           email: data.email,
           isDeleted: false,
      });
-
-     assert(!existingUser, 'Account already exists');
+    
+     assert(!existingUser, createError(StatusCodes.CONFLICT, 'Account already exists'));
 
      const token = await jwtService.generatePair(data.email);
      const hashedPassword = bcrypt.hashSync(data.password, 8);
@@ -129,7 +122,7 @@ authService.setPassword = async (data) =>
   assert(
     check,
     createError(
-      StatusCodes.CONFLICT,
+      StatusCodes.BAD_REQUEST,
       "password and confirmPassword don't match"
     )
   );
@@ -183,7 +176,7 @@ authService.setPassword = async (data) =>
         organizationName
       })
 
-      assert(!existingCompanyname, createError(StatusCodes.BAD_REQUEST, "Company Name already exists"))
+      assert(!existingCompanyname, createError(StatusCodes.CONFLICT, "Company Name already exists"))
 
       
       const newOrganization = new organizationModel({
@@ -405,7 +398,7 @@ authService.changePassword = async (id, data) => {
   assert(
     check,
     createError(
-      StatusCodes.CONFLICT,
+      StatusCodes.BAD_REQUEST,
       "password and confirm password don't match"
     )
   );
@@ -438,7 +431,7 @@ authService.changePassword = async (id, data) => {
 /////// Password Forget /////////
 
 authService.forgetPass = async (data) => {
-  assert(data.email, createError(StatusCodes.UNAUTHORIZED, "email required"));
+  assert(data.email, createError(StatusCodes.BAD_REQUEST, "email required"));
   const userData = await userModel.findOne({ email: data.email, isDeleted: false });
 
     // user does not exist
@@ -495,7 +488,7 @@ authService.resetPass = async (data) => {
   assert(
     password == confirmPassword,
     createError(
-      StatusCodes.UNAUTHORIZED,
+      StatusCodes.BAD_REQUEST,
       "Password and confirm Password don't match"
     )
   );
