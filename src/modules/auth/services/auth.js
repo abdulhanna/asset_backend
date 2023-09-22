@@ -69,7 +69,7 @@ authService.verifyUser = async (verificationToken) => {
      });
 
      if (usercheckVerify) {
-          const redirectURL = `${secret.frontend_baseURL}/login`;
+          const redirectURL = `${secret.frontend_baseURL}/auth/login`;
           return redirectURL;
      }
  
@@ -268,11 +268,16 @@ authService.doLogin = async ({ email, password }) => {
        { token: getToken, updatedAt : Date.now()},
        { new: true }
      );
-    const redirectURLcompany = `${secret.frontend_baseURL}/company-profile`;
+    // const redirectURLcompany = `${secret.frontend_baseURL}/company-profile`;
+    const getUserData = await userModel.findOne({ email})
+    .select('email role teamRoleId dashboardPermission token is_profile_completed');
+
     const userData = {
-      msg: "Company Profile is not completed, please complete your company profile", 
-      errorstatus:"5",
-      redirectUrl:redirectURLcompany,
+      email: getUserData.email,
+      role: getUserData.role,
+      is_profile_completed: getUserData.is_profile_completed,
+      dashboardPermission: getUserData.dashboardPermission,
+      permissions:{},
       access_token: getToken
     }
     return userData;
@@ -320,7 +325,7 @@ authService.doLogin = async ({ email, password }) => {
       assert(updateToken, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"));
 
       const getUserData = await userModel.findOne({ email})
-      .select('email role teamRoleId dashboardPermission token')
+      .select('email role teamRoleId dashboardPermission token is_profile_completed')
       .populate({
        path: 'teamRoleId',
        select: 'roleName permissions',
@@ -348,6 +353,7 @@ authService.doLogin = async ({ email, password }) => {
       const userData = {
         email: getUserData.email,
         role,
+        is_profile_completed: getUserData.is_profile_completed,
         dashboardPermission: getUserData.dashboardPermission,
         permissions,
         access_token: getUserData.token
