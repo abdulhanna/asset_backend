@@ -69,7 +69,7 @@ authService.verifyUser = async (verificationToken) => {
      });
 
      if (usercheckVerify) {
-          const redirectURL = `${secret.frontend_baseURL}/login`;
+          const redirectURL = `${secret.frontend_baseURL}/auth/login`;
           return redirectURL;
      }
  
