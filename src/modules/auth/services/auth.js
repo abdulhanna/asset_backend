@@ -70,11 +70,16 @@ authService.verifyUser = async (verificationToken) => {
 
      if (usercheckVerify) {
           const redirectURL = `${secret.frontend_baseURL}/auth/login`;
-          return redirectURL;
+          return {"redirectUrl":redirectURL};
      }
  
        await jwtService.verifyAccessToken(verificationToken);
        const getUser = await userModel.findOne({verificationToken});
+       assert(
+        getUser,
+        createError(StatusCodes.UNAUTHORIZED, "Invalid Token")
+      );
+
        if(getUser.role == 'superadmin')
        {
         const verifyEmail = await userModel.findOneAndUpdate(
@@ -85,7 +90,7 @@ authService.verifyUser = async (verificationToken) => {
 
 
         const redirectURLlogin = `${secret.frontend_baseURL}/auth/login`;
-         return redirectURLlogin;
+         return {"redirectUrl":redirectURLlogin};
        }
        else
        {
@@ -97,7 +102,7 @@ authService.verifyUser = async (verificationToken) => {
           { new: true }
         );
         const redirectURLlogin = `${secret.frontend_baseURL}/set-password?setPassword_Token?${setpassstoken}`;
-       return redirectURLlogin;
+        return {"redirectUrl":redirectURLlogin};
        }
 }
 
@@ -113,8 +118,9 @@ authService.setPassword = async (data) =>
 
   assert(
     tokenchecksetPass,
-    createError(StatusCodes.UNAUTHORIZED, "Token Invalid or Expired")
+    createError(StatusCodes.UNAUTHORIZED, "invalid token")
   );
+  await jwtService.verifyAccessToken(setPasswordToken);
   const pass = data.password;
   const confirmPass = data.confirmPassword;
 
@@ -141,7 +147,10 @@ authService.setPassword = async (data) =>
    }},
     { new: true }
   )
-  return {"msg":"Password updaated successfully"}
+
+  const redirectUrl = `${secret.frontend_baseURL}/auth/login`;
+
+  return {"msg":"Password updated successfully","redirectUrl":redirectUrl}
 }
 
 
@@ -268,7 +277,7 @@ authService.doLogin = async ({ email, password }) => {
        { token: getToken, updatedAt : Date.now()},
        { new: true }
      );
-    // const redirectURLcompany = `${secret.frontend_baseURL}/company-profile`;
+   
     const getUserData = await userModel.findOne({ email})
     .select('email role teamRoleId dashboardPermission token is_profile_completed');
 
@@ -484,7 +493,7 @@ authService.resetPass = async (data) => {
   });
   assert(
     tokencheckreset,
-    createError(StatusCodes.UNAUTHORIZED, "Link Invalid or Expired")
+    createError(StatusCodes.UNAUTHORIZED, "invalid token")
   );
  
   await jwtService.verifyResetToken(token1); 
