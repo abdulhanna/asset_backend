@@ -53,7 +53,7 @@ router.post(
       attachCookie(res,  {access_token: result.access_token});
       res.setHeader("access_token", result.access_token);
     }
-    res.send(result.redirectUrl);
+    res.send(result);
   })
 )
 
