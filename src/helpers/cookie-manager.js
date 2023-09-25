@@ -1,10 +1,12 @@
 import userModel from '../../src/modules/auth/models/';
+import { config } from '../config/config'
 export const attachCookie = (res, { access_token: accessToken }) => {
      res.cookie('access_token', accessToken, {
-          maxAge: 1000 * 60 * 60 * 24,
-          httpOnly: true,
-          secure: false,
-          path: "/",
+          domain: config.cookie.domain,
+          maxAge: config.cookie.max_age,
+          httpOnly: config.cookie.http_only,
+          secure: config.cookie.secure,
+          path: config.cookie.path,
      });
 };
 
