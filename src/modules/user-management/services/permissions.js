@@ -57,11 +57,21 @@ const getAllPermissions = async () => {
     try {
         const permissions = await permissionModel
             .find({isDeleted: false, isDeactivated: false})
-            .select('moduleName read readWrite actions allAccess removeAccess dashboardType _id');
+            .select('moduleName read readWrite actions allAccess removeAccess dashboardType _id createdAt');
         return permissions;
     } catch (error) {
         throw new Error(error.message);
     }
+};
+
+const getPermissionById = async (id) => {
+    try {
+        const permission = await permissionModel.findById({_id: id});
+        return permission;
+    } catch (error) {
+        throw new Error(error.message);
+    }
+
 };
 
 const softDeletePermissions = async (id) => {
@@ -109,5 +119,6 @@ export const permissionService = {
     getAllPermissions,
     softDeletePermissions,
     hardDeletePermissions,
-    getPermissionsByDashboardPermission
+    getPermissionsByDashboardPermission,
+    getPermissionById
 };
