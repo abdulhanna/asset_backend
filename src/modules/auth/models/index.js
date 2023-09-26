@@ -165,6 +165,7 @@ userModel.findOne({ role: 'root' }, (findErr, findRes) => {
                dashboardPermission: 'root_dashboard',
                password: bcrypt.hashSync('finbit', 10),
                is_email_verified: true,
+               is_profile_completed: true,
                createdAt: Date.now(),
           };
           userModel.create(obj, (error, result) => {

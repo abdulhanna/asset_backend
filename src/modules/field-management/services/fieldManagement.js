@@ -118,6 +118,7 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
         let pushedFields;
          pushedFields = updatedGroup.fields[updatedGroup.fields.length - 1];
         const lastUpdatedSubgroup = updatedGroup.subgroups.find(subgroup => subgroup._id.toString() === id);
+
         if(lastUpdatedSubgroup)
         {
         const fields = lastUpdatedSubgroup.fields;
@@ -148,51 +149,25 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
             }
             else if(subGroup){
                         
-            //         for (const subgroup of doc.assetFormManagements.flatMap(g => g.subgroups)) {
-            //     if (subgroup._id.toString() === id) {
+                    for (const subgroup of doc.assetFormManagements.flatMap(g => g.subgroups)) {
+                if (subgroup._id.toString() === id) {
                     
-            //         const newField = {
-            //             ...pushedFields.toObject() // Convert Mongoose document to plain object
-            //         };
+                    const newField = {
+                        ...pushedFields.toObject() // Convert Mongoose document to plain object
+                    };
 
-
-                    
-            //         subgroup.fields.push(newField);
-            //         try {
-            //            const savesub =  await doc.save();
-            //            console.log(JSON.stringify(savesub)+'sub group save/not save')
-            //             updatedSubgroups.push(subgroup);
-            //             return;
-            //         } catch (error) {
-            //             console.error('Error saving document:', error);
-            //             throw error;
-            //         }
-            //     }
-            // }
-
-                   
-            const subgroupIndex = subGroup.subgroups.findIndex(sub => sub._id.toString() === id);
-            if (subgroupIndex !== -1) {
-                subGroup.subgroups[subgroupIndex].fields.push(pushedFields);
-
-                const findsubg = await assetFormManagementModel.findOne()
-                console.log(pushedFields+'field to push');
-                try {
-                    const saveSubgroup = await doc.save();
-                    updatedSubgroups.push(subGroup.subgroups[subgroupIndex]);
-                    return;
-                } catch (error) {
-                    console.error('Error saving document:', error);
-                    throw error;
+                    subgroup.fields.push(newField);
+                    try {
+                       const savesub =  await doc.save();
+                        updatedSubgroups.push(subgroup);
+                        return;
+                    } catch (error) {
+                        console.error('Error saving document:', error);
+                        throw error;
+                    }
                 }
-
-
-
-
-
-
-                
             }
+
 
             }
 
@@ -214,6 +189,16 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
 };
 
 
+
+const addfieldSub = async (id) => {
+     const updatedgroup = await fieldManagementModel.findById({ 'subgroups._id': id });
+     return updatedgroup
+    console.log(updatedgroup+'updatedgrp');
+    // const updatedsub = updatedgroup.subgroups.find(subgroup => subgroup._id.toString() === id);
+    // const fields = lastUpdatedSubgroup.fields;
+    // const pushedFields = fields[fields.length - 1];
+
+}
 
 
 const getFieldGroupsByOrganizationIdNull = async () => {
@@ -548,7 +533,8 @@ export const fieldManagementService = {
     updateFieldData,
     markFieldAsDeleted,
     getFieldGroupsByOrganizationId,
-    addFieldAndUpdateAssetForm
+    addFieldAndUpdateAssetForm,
+    addfieldSub
 };
 
 
