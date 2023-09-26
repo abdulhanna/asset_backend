@@ -137,7 +137,7 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
             const group = doc.assetFormManagements.find(g => g._id.toString() === id);
            const subGroup = doc.assetFormManagements.find(g => g.subgroups.some(sub => sub._id.toString() === id));
           
-
+              console.log(JSON.stringify(subGroup)+'subgroup');
             if (group) {
                 await assetFormManagementModel.updateOne(
                     { _id: doc._id, 'assetFormManagements._id': mongoose.Types.ObjectId(id) },
@@ -174,6 +174,8 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
             const subgroupIndex = subGroup.subgroups.findIndex(sub => sub._id.toString() === id);
             if (subgroupIndex !== -1) {
                 subGroup.subgroups[subgroupIndex].fields.push(pushedFields);
+
+                const findsubg = await assetFormManagementModel.findOne()
                 console.log(pushedFields+'field to push');
                 try {
                     const saveSubgroup = await doc.save();
@@ -183,6 +185,13 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
                     console.error('Error saving document:', error);
                     throw error;
                 }
+
+
+
+
+
+
+                
             }
 
             }
