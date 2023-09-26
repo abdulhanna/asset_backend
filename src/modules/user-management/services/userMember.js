@@ -48,6 +48,7 @@ const createMember = async (userData) => {
             dashboardPermission: dashboardPermission,
             verificationToken: verificationToken,
             userType: userData.userType,
+            is_profile_completed: true,
         });
 
         const savedMember = await member.save();
