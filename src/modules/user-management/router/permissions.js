@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.post('/create', isLoggedIn, async (req, res) => {
     try {
-        let {moduleName, read, readWrite, actions, dashboardType} = req.body;
+        let {moduleName, read, readWrite, actions, allAccess, dashboardType} = req.body;
 
         // Custom validation for the create permission request
         if (!moduleName || moduleName.trim() === '') {
@@ -40,6 +40,7 @@ router.post('/create', isLoggedIn, async (req, res) => {
             read,
             readWrite,
             actions,
+            allAccess,
             dashboardType,
             createdAt: new Date(),
         };
@@ -109,6 +110,15 @@ router.get('/all', async (req, res) => {
     }
 });
 
+router.get('/list/:id', async (req, res) => {
+    try {
+        const {id} = req.params;
+        const permission = await permissionService.getPermissionById(id);
+        return res.status(200).json({success: true, permission});
+    } catch (error) {
+        return res.status(500).json({success: false, error: error.message});
+    }
+});
 router.delete('/v1/:id', async (req, res) => {
     try {
         const {id} = req.params;
