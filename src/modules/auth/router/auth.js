@@ -22,7 +22,7 @@ router.get(
   httpHandler(async (req, res) => {
     const { token } = req.params;
     const result = await authService.verifyUser(token);
-    res.redirect(result);
+    res.send(result);
   })
 );
 
@@ -53,7 +53,7 @@ router.post(
       attachCookie(res,  {access_token: result.access_token});
       res.setHeader("access_token", result.access_token);
     }
-    res.redirect(result.redirectUrl);
+    res.send(result);
   })
 )
 
@@ -103,11 +103,6 @@ router.post(
   '/request-forgot-password',
   httpHandler(async (req, res) => {
     const result = await authService.forgetPass(req.body);
-    if(result.status == '1')
-    {
-      res.redirect(result.redirectUrl); 
-    }
-
     res.send(result);
   })
 )

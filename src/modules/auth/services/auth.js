@@ -27,25 +27,18 @@ authService.doRegister = async (data) => {
      assert(
           data.password == data.confirmPassword,
           createError(
-               StatusCodes.UNAUTHORIZED,
+               StatusCodes.BAD_REQUEST,
                "Password and confirm Password don't match"
           )
      );
 
-     assert(
-          data.password == data.confirmPassword,
-          createError(
-               StatusCodes.UNAUTHORIZED,
-               "Password and confirm Password don't match"
-          )
-     );
 
      const existingUser = await userModel.findOne({
           email: data.email,
           isDeleted: false,
      });
-
-     assert(!existingUser, 'Account already exists');
+    
+     assert(!existingUser, createError(StatusCodes.CONFLICT, 'Account already exists'));
 
      const token = await jwtService.generatePair(data.email);
      const hashedPassword = bcrypt.hashSync(data.password, 8);
@@ -76,12 +69,17 @@ authService.verifyUser = async (verificationToken) => {
      });
 
      if (usercheckVerify) {
-          const redirectURL = `${secret.frontend_baseURL}/login`;
-          return redirectURL;
+          const redirectURL = `${secret.frontend_baseURL}/auth/login`;
+          return {"redirectUrl":redirectURL};
      }
  
        await jwtService.verifyAccessToken(verificationToken);
        const getUser = await userModel.findOne({verificationToken});
+       assert(
+        getUser,
+        createError(StatusCodes.UNAUTHORIZED, "Invalid Token")
+      );
+
        if(getUser.role == 'superadmin')
        {
         const verifyEmail = await userModel.findOneAndUpdate(
@@ -92,7 +90,7 @@ authService.verifyUser = async (verificationToken) => {
 
 
         const redirectURLlogin = `${secret.frontend_baseURL}/auth/login`;
-         return redirectURLlogin;
+         return {"redirectUrl":redirectURLlogin};
        }
        else
        {
@@ -104,7 +102,7 @@ authService.verifyUser = async (verificationToken) => {
           { new: true }
         );
         const redirectURLlogin = `${secret.frontend_baseURL}/set-password?setPassword_Token?${setpassstoken}`;
-       return redirectURLlogin;
+        return {"redirectUrl":redirectURLlogin};
        }
 }
 
@@ -120,8 +118,9 @@ authService.setPassword = async (data) =>
 
   assert(
     tokenchecksetPass,
-    createError(StatusCodes.UNAUTHORIZED, "Token Invalid or Expired")
+    createError(StatusCodes.UNAUTHORIZED, "invalid token")
   );
+  await jwtService.verifyAccessToken(setPasswordToken);
   const pass = data.password;
   const confirmPass = data.confirmPassword;
 
@@ -129,7 +128,7 @@ authService.setPassword = async (data) =>
   assert(
     check,
     createError(
-      StatusCodes.CONFLICT,
+      StatusCodes.BAD_REQUEST,
       "password and confirmPassword don't match"
     )
   );
@@ -148,7 +147,10 @@ authService.setPassword = async (data) =>
    }},
     { new: true }
   )
-  return {"msg":"Password updaated successfully"}
+
+  const redirectUrl = `${secret.frontend_baseURL}/auth/login`;
+
+  return {"msg":"Password updated successfully","redirectUrl":redirectUrl}
 }
 
 
@@ -183,7 +185,7 @@ authService.setPassword = async (data) =>
         organizationName
       })
 
-      assert(!existingCompanyname, createError(StatusCodes.BAD_REQUEST, "Company Name already exists"))
+      assert(!existingCompanyname, createError(StatusCodes.CONFLICT, "Company Name already exists"))
 
       
       const newOrganization = new organizationModel({
@@ -275,11 +277,16 @@ authService.doLogin = async ({ email, password }) => {
        { token: getToken, updatedAt : Date.now()},
        { new: true }
      );
-    const redirectURLcompany = `${secret.frontend_baseURL}/company-profile`;
+   
+    const getUserData = await userModel.findOne({ email})
+    .select('email role teamRoleId dashboardPermission token is_profile_completed');
+
     const userData = {
-      msg: "Company Profile is not completed, please complete your company profile", 
-      errorstatus:"5",
-      redirectUrl:redirectURLcompany,
+      email: getUserData.email,
+      role: getUserData.role,
+      is_profile_completed: getUserData.is_profile_completed,
+      dashboardPermission: getUserData.dashboardPermission,
+      permissions:{},
       access_token: getToken
     }
     return userData;
@@ -327,7 +334,7 @@ authService.doLogin = async ({ email, password }) => {
       assert(updateToken, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"));
 
       const getUserData = await userModel.findOne({ email})
-      .select('email role teamRoleId dashboardPermission token')
+      .select('email role teamRoleId dashboardPermission token is_profile_completed')
       .populate({
        path: 'teamRoleId',
        select: 'roleName permissions',
@@ -355,6 +362,7 @@ authService.doLogin = async ({ email, password }) => {
       const userData = {
         email: getUserData.email,
         role,
+        is_profile_completed: getUserData.is_profile_completed,
         dashboardPermission: getUserData.dashboardPermission,
         permissions,
         access_token: getUserData.token
@@ -405,7 +413,7 @@ authService.changePassword = async (id, data) => {
   assert(
     check,
     createError(
-      StatusCodes.CONFLICT,
+      StatusCodes.BAD_REQUEST,
       "password and confirm password don't match"
     )
   );
@@ -438,7 +446,7 @@ authService.changePassword = async (id, data) => {
 /////// Password Forget /////////
 
 authService.forgetPass = async (data) => {
-  assert(data.email, createError(StatusCodes.UNAUTHORIZED, "email required"));
+  assert(data.email, createError(StatusCodes.BAD_REQUEST, "email required"));
   const userData = await userModel.findOne({ email: data.email, isDeleted: false });
 
     // user does not exist
@@ -485,7 +493,7 @@ authService.resetPass = async (data) => {
   });
   assert(
     tokencheckreset,
-    createError(StatusCodes.UNAUTHORIZED, "Link Invalid or Expired")
+    createError(StatusCodes.UNAUTHORIZED, "invalid token")
   );
  
   await jwtService.verifyResetToken(token1); 
@@ -495,7 +503,7 @@ authService.resetPass = async (data) => {
   assert(
     password == confirmPassword,
     createError(
-      StatusCodes.UNAUTHORIZED,
+      StatusCodes.BAD_REQUEST,
       "Password and confirm Password don't match"
     )
   );
