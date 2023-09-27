@@ -45,47 +45,6 @@ router.post('/', isLoggedIn, upload.any(), async (req, res) => {
     }
 });
 
-
-// Create a new asset
-// router.post('/', isLoggedIn, upload.fields([
-//     {name: 'assetIdentification[attachments][uploadAssetImages]', maxCount: 10},
-//     {name: 'ownershipDetails[attachments][uploadOwnershipReceipt]', maxCount: 10},
-//     // {name: 'ownershipDetails[attachments][uploadLegalDocument]', maxCount: 10},
-//     // {name: 'assetAcquisition[futureAddition][attachments]', maxCount: 10}
-// ]), async (req, res) => {
-//     try {
-//         const assetData = req.body;
-//         const organizationId = req.user.data.organizationId;
-//
-//         const uploadImagesToCloudinary = async (files) => {
-//             const uploadedImages = await Promise.all(files.map(async (file) => {
-//                 const result = await cloudinary.uploader.upload(file.path);
-//                 return result.secure_url;
-//             }));
-//             return uploadedImages;
-//         };
-//
-//         const assetImages = await uploadImagesToCloudinary(req.files['assetIdentification[attachments][uploadAssetImages]']);
-//         const ownershipReceiptImages = await uploadImagesToCloudinary(req.files['ownershipDetails[attachments][uploadOwnershipReceipt]']);
-//         // const legalDocumentImages = await uploadImagesToCloudinary(req.files['ownershipDetails[attachments][uploadLegalDocument]']);
-//         // const futureAdditionImages = await uploadImagesToCloudinary(req.files['assetAcquisition[futureAddition][attachments]']);
-//
-//         assetData.assetIdentification.attachments.uploadAssetImages = assetImages;
-//         assetData.ownershipDetails.attachments.uploadOwnershipReceipt = ownershipReceiptImages;
-//         // assetData.ownershipDetails.attachments.uploadLegalDocument = legalDocumentImages;
-//         // assetData.assetAcquisition.futureAddition.attachments = futureAdditionImages;
-//
-//         const newAsset = await assetService.createAsset(organizationId, assetData);
-//         res.status(201).json({
-//             success: true,
-//             newAsset
-//         });
-//     } catch (error) {
-//         res.status(500).json({error: error.message});
-//     }
-// });
-
-
 // Get assets for the organization
 router.get('/list', isLoggedIn, async (req, res) => {
     try {
