@@ -21,6 +21,7 @@ const uploadImagesToCloudinary = async (files) => {
     console.log('uploadedImages', uploadedImages);
     return uploadedImages;
 };
+
 router.post('/', isLoggedIn, upload.any(), async (req, res) => {
     try {
         const assetData = req.body;
@@ -32,8 +33,24 @@ router.post('/', isLoggedIn, upload.any(), async (req, res) => {
         }
 
         const assetImages = await uploadImagesToCloudinary(req.files);
-        assetData.assetIdentification.attachments.uploadAssetImages = assetImages;
-        assetData.assetIdentification.attachments.uploadDocuments = assetImages;
+
+        const assetImagesForCloudinary = [];
+        const documentImagesForCloudinary = [];
+
+        // Separate images for assetImages and uploadDocuments based on field names
+        req.files.forEach(file => {
+            if (file.fieldname.startsWith('uploadAssetImages')) {
+                assetImagesForCloudinary.push(file);
+            } else if (file.fieldname.startsWith('uploadDocuments')) {
+                documentImagesForCloudinary.push(file);
+            }
+        });
+
+        const assetUrls = await uploadImagesToCloudinary(assetImagesForCloudinary);
+        const documentUrls = await uploadImagesToCloudinary(documentImagesForCloudinary);
+
+        assetData.assetIdentification.attachments.uploadAssetImages = assetUrls;
+        assetData.assetIdentification.attachments.uploadDocuments = documentUrls;
 
         const newAsset = await assetService.createAsset(organizationId, assetData);
         res.status(201).json({
@@ -44,6 +61,7 @@ router.post('/', isLoggedIn, upload.any(), async (req, res) => {
         res.status(500).json({error: error.message});
     }
 });
+
 
 // Get assets for the organization
 router.get('/list', isLoggedIn, async (req, res) => {
