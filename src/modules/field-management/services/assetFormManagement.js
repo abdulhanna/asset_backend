@@ -1,5 +1,6 @@
 import assetFormManagementModel from '../models/assetFormManagement';
 import fieldManagementModel from '../models/fieldManagement';
+import locationModel from '../../organization/models/locations';
 import mongoose from 'mongoose';
 
 
@@ -69,12 +70,13 @@ const syncFields = async () => {
 const getAssetFormManagementList = async (organizationId) => {
     try {
         const data = await assetFormManagementModel.find({organizationId: organizationId});
+        const getLocations = await locationModel.find({organizationId:organizationId});
+        console.log(getLocations+'all locations');
         return data;
 
     } catch (error) {
         throw new Error('Error in getting asset form list');
     }
-    return await assetFormManagementModel.find();
 };
 
 
@@ -85,29 +87,6 @@ const addFieldToAssetForm = async (organizationId, groupOrSubgroupId, updatedFie
         if (!assetFormManagement) {
             throw new Error('AssetFormManagement document not found');
         }
-
-        /*
-        let group, subgroup;
-
-        for (const g of assetFormManagement.assetFormManagements) {
-            if (g._id.toString() === groupOrSubgroupId) {
-                group = g;
-                break;
-            }
-
-            for (const s of g.subgroups) {
-                if (s._id.toString() === groupOrSubgroupId) {
-                    subgroup = s;
-                    group = g;
-                    break;
-                }
-            }
-
-            if (group && subgroup) {
-                break;
-            }
-        }
-         */
 
         const group = assetFormManagement.assetFormManagements.find(g => g._id.toString() === groupOrSubgroupId);
 

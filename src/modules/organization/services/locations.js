@@ -38,6 +38,7 @@ const createLocation = async (
                address,
                parentId: isParent ? null : parentId,
                isParent,
+               createdAt: Date.now()
           });
 
           return await newLocation.save();
@@ -202,6 +203,8 @@ const updateLocation = async (
           if (locationCodeId !== undefined) {
                updateObject.locationCodeId = locationCodeId;
           }
+
+          updateObject.updatedAt = Date.now();
 
           const location = await locationModel
                .findByIdAndUpdate(
