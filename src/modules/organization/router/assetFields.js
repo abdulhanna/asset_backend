@@ -37,13 +37,12 @@ router.post('/', isLoggedIn, upload.any(), async (req, res) => {
         const assetImagesForCloudinary = [];
         const documentImagesForCloudinary = [];
 
-
         console.log('files', req.files);
         // Separate images for assetImages and uploadDocuments based on field names
         req.files.forEach(file => {
-            if (file.fieldname.startsWith('uploadAssetImages')) {
+            if (file.fieldname.startsWith('assetIdentification[attachments][uploadAssetImages]')) {
                 assetImagesForCloudinary.push(file);
-            } else if (file.fieldname.startsWith('uploadDocuments')) {
+            } else if (file.fieldname.startsWith('assetIdentification[attachments][uploadDocuments]')) {
                 documentImagesForCloudinary.push(file);
             }
         });
