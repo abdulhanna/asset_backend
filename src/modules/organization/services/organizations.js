@@ -49,7 +49,6 @@ const getOrganiztionById = async (id) => {
 
 const addOrganization = async (id, data) => {
    try {
-   console.log(data);
      const token = await jwtService.generatePair(data.email);
      const hashedPassword = bcrypt.hashSync(data.password, 8);
      const result = await userModel.create({
@@ -74,7 +73,9 @@ const addOrganization = async (id, data) => {
           pan:data.pan,
           gstin:data.gstin,
           contactNo:data.contactNo,
-          mainAddress:{
+          contactPersonName:data.contactPersonName,
+          contactPersonEmail:data.contactPersonEmail,
+           mainAddress:{
               address1:data.mainAddress.address1,
               address2:data.mainAddress.address2,
               city:data.mainAddress.city,
