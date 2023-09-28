@@ -68,7 +68,6 @@ router.put('/v2/field/:id', isLoggedIn, async (req, res) => {
     }
 });
 
-
 router.put('/edit-field/:id', async (req, res) => {
     try {
         const {id} = req.params;

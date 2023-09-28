@@ -22,23 +22,6 @@ const updateSubgroups = async (groupId, subgroups) => {
     );
 };
 
-// const updateSubgroupFields = async (subgroupId, fields) => {
-//     const updatedSubgroup = await fieldManagementModel.findOneAndUpdate(
-//         {'subgroups._id': subgroupId},
-//         {$push: {'subgroups.$.fields': {$each: fields}}},
-//         {new: true}
-//     );
-//     return updatedSubgroup;
-// };
-
-
-// const updateGroupFields = async (groupId, fields) => {
-//     return fieldManagementModel.findByIdAndUpdate(
-//         groupId,
-//         {$push: {fields: {$each: fields}}},
-//         {new: true}
-//     );
-// };
 
 const updateFields = async (id, fields) => {
     try {
@@ -78,27 +61,25 @@ const updateFields = async (id, fields) => {
     }
 };
 
-
 const addFieldAndUpdateAssetForm = async (id, fields) => {
     try {
         // Step 1: Add fields to fieldManagementModel
-        let updatedSubgroups = [];
-        let updatedGroups = [];
+
         let updatedGroup;
 
-        const group = await fieldManagementModel.findById(id);
+      const group = await fieldManagementModel.findById(id);
 
         if (!group) {
             updatedGroup = await fieldManagementModel.findOneAndUpdate(
-                { 'subgroups._id': id },
+                {'subgroups._id': id},
                 {
                     $push: {
                         'subgroups.$.fields': {
-                            $each: fields.map(field => ({ ...field })),
+                            $each: fields.map(field => ({...field})),
                         },
                     },
                 },
-                { new: true }
+                {new: true}
             );
         } else {
             updatedGroup = await fieldManagementModel.findByIdAndUpdate(
@@ -106,23 +87,24 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
                 {
                     $push: {
                         fields: {
-                            $each: fields.map(field => ({ ...field })),
+                            $each: fields.map(field => ({...field})),
                         },
                     },
                 },
-                { new: true }
+                {new: true}
             );
         }
 
         // Retrieve only the last pushed field from updatedGroup
         let pushedFields;
-         pushedFields = updatedGroup.fields[updatedGroup.fields.length - 1];
+        pushedFields = updatedGroup.fields[updatedGroup.fields.length - 1];
         const lastUpdatedSubgroup = updatedGroup.subgroups.find(subgroup => subgroup._id.toString() === id);
-        if(lastUpdatedSubgroup)
-        {
-        const fields = lastUpdatedSubgroup.fields;
-        pushedFields = fields[fields.length - 1];
-      }
+
+        if (lastUpdatedSubgroup) {
+            const fields = lastUpdatedSubgroup.fields;
+            pushedFields = fields[fields.length - 1];
+        }
+
 
         // Step 2: Update assetFormManagementModel
         const assetFormManagement = await assetFormManagementModel.find();
@@ -131,81 +113,40 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
             throw new Error('AssetFormManagement document not found');
         }
 
-        const updatePromises = assetFormManagement.map(async (doc) => {
-        
+        assetFormManagement.map(async (doc) => {
 
-            const group = doc.assetFormManagements.find(g => g._id.toString() === id);
-           const subGroup = doc.assetFormManagements.find(g => g.subgroups.some(sub => sub._id.toString() === id));
-          
+       const group = doc.assetFormManagements.find(g => g._id.toString() === id);
 
-            if (group) {
-                await assetFormManagementModel.updateOne(
-                    { _id: doc._id, 'assetFormManagements._id': mongoose.Types.ObjectId(id) },
-                    { $push: { 'assetFormManagements.$.fields': { $each: [pushedFields] } } }
-                );
+        let subgroup;
+        if (!group) {
+            subgroup = doc.assetFormManagements.flatMap(g => g.subgroups).find(s => s._id.toString() === id);
+        }
 
-                updatedGroups.push(group);
-            }
-            else if(subGroup){
-                        
-            //         for (const subgroup of doc.assetFormManagements.flatMap(g => g.subgroups)) {
-            //     if (subgroup._id.toString() === id) {
-                    
-            //         const newField = {
-            //             ...pushedFields.toObject() // Convert Mongoose document to plain object
-            //         };
+        if (group) {
+            await assetFormManagementModel.updateOne(
+                {_id: doc._id, 'assetFormManagements._id': mongoose.Types.ObjectId(id)},
+                {$push: {'assetFormManagements.$.fields': {$each: [pushedFields]}}}
+            );
 
+        } else if (subgroup) {
+            subgroup.fields.push(pushedFields);
 
-                    
-            //         subgroup.fields.push(newField);
-            //         try {
-            //            const savesub =  await doc.save();
-            //            console.log(JSON.stringify(savesub)+'sub group save/not save')
-            //             updatedSubgroups.push(subgroup);
-            //             return;
-            //         } catch (error) {
-            //             console.error('Error saving document:', error);
-            //             throw error;
-            //         }
-            //     }
-            // }
+          await assetFormManagementModel.updateOne(
+              {_id: doc._id},
+                doc,
+                {new: true}
+            );
 
-                   
-            const subgroupIndex = subGroup.subgroups.findIndex(sub => sub._id.toString() === id);
-            if (subgroupIndex !== -1) {
-                subGroup.subgroups[subgroupIndex].fields.push(pushedFields);
-                console.log(pushedFields+'field to push');
-                try {
-                    const saveSubgroup = await doc.save();
-                    updatedSubgroups.push(subGroup.subgroups[subgroupIndex]);
-                    return;
-                } catch (error) {
-                    console.error('Error saving document:', error);
-                    throw error;
-                }
-            }
+        } else {
+            console.error('Group or subgroup not found');
+        }
+    });
 
-            }
-
-
-             else {
-                console.error('Group or subgroup not found');
-            }
-        });
-
-        await Promise.all(updatePromises);
-
-        return {
-            updatedSubgroups,
-            updatedGroups,
-        };
+        return {'msg':'field updated successfully'};
     } catch (error) {
         throw error;
     }
 };
-
-
-
 
 const getFieldGroupsByOrganizationIdNull = async () => {
     try {
