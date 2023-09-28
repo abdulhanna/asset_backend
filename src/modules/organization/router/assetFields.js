@@ -18,7 +18,6 @@ const uploadImagesToCloudinary = async (files) => {
         const result = await cloudinary.uploader.upload(file.path);
         return result.secure_url;
     }));
-    console.log('uploadedImages', uploadedImages);
     return uploadedImages;
 };
 
@@ -32,29 +31,35 @@ router.post('/', isLoggedIn, upload.any(), async (req, res) => {
             assetData.assetIdentification.attachments = {};
         }
 
+        if (!assetData.ownershipDetails.attachments) {
+            assetData.ownershipDetails.attachments = {};
+
+        }
+
         const assetImages = await uploadImagesToCloudinary(req.files);
 
         const assetImagesForCloudinary = [];
         const documentImagesForCloudinary = [];
+        const uploadOwnershipReceiptImagesForCloudinary = [];
 
-        console.log('files', req.files);
         // Separate images for assetImages and uploadDocuments based on field names
         req.files.forEach(file => {
             if (file.fieldname.startsWith('assetIdentification[attachments][uploadAssetImages]')) {
                 assetImagesForCloudinary.push(file);
             } else if (file.fieldname.startsWith('assetIdentification[attachments][uploadDocuments]')) {
                 documentImagesForCloudinary.push(file);
+            } else if (file.fieldname.startsWith('ownershipDetails[attachments][uploadOwnershipReceipt]')) {
+                uploadOwnershipReceiptImagesForCloudinary.push((file));
             }
         });
 
         const assetUrls = await uploadImagesToCloudinary(assetImagesForCloudinary);
         const documentUrls = await uploadImagesToCloudinary(documentImagesForCloudinary);
-
-        console.log(assetUrls, 'assetUrls');
-        console.log(documentUrls, 'documentUrls');
+        const ownershipReceiptUrls = await uploadImagesToCloudinary(uploadOwnershipReceiptImagesForCloudinary);
 
         assetData.assetIdentification.attachments.uploadAssetImages = assetUrls;
         assetData.assetIdentification.attachments.uploadDocuments = documentUrls;
+        assetData.ownershipDetails.attachments.uploadOwnershipReceipt = ownershipReceiptUrls;
 
         const newAsset = await assetService.createAsset(organizationId, assetData);
         res.status(201).json({
