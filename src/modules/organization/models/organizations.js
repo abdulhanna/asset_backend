@@ -31,6 +31,14 @@ const organizationSchema = new mongoose.Schema(
                type: String,
                required: true,
           },
+         contactPersonName:{
+              type: String,
+             default: null,
+         },
+         contactPersonEmail:{
+              type: String,
+              default: null
+         },
           mainAddress: {
                type: {
                     address1: {
