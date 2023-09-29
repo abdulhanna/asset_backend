@@ -110,7 +110,8 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
         const assetFormManagement = await assetFormManagementModel.find();
 
         if (!assetFormManagement || assetFormManagement.length === 0) {
-            throw new Error('AssetFormManagement document not found');
+            console.error('AssetFormManagement document not found');
+
         }
 
         assetFormManagement.map(async (doc) => {
