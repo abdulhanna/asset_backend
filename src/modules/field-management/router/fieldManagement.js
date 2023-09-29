@@ -116,6 +116,9 @@ router.put('/update-group/:id', async (req, res) => {
 // get all groups with subgroup and fields
 router.get('/allGroups', isLoggedIn, async (req, res) => {
     try {
+
+        const organizationId = req.user.data.organizationId;
+             console.log(organizationId+'id of org')
         const fieldGroups = await fieldManagementService.getFieldGroupsByOrganizationIdNull();
 
         return res.status(200).json({success: true, fieldGroups});
