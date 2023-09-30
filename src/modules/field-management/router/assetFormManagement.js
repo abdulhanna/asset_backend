@@ -1,6 +1,12 @@
 import express from 'express';
 import {assetFormManagementService} from '../services/assetFormManagement.js';
 import {isLoggedIn} from '../../auth/router/passport.js';
+import {assetFormManagementModel} from '../models';
+
+import path from 'path';
+import {promises as fs} from 'fs';
+import Excel from 'exceljs';
+
 
 const router = express.Router();
 
@@ -93,6 +99,67 @@ router.get('/non-mandatory-fields/:groupOrSubgroupId', isLoggedIn, async (req, r
     } catch (error) {
         console.error('Error:', error);
         res.status(500).send('Error fetching non-mandatory fields');
+    }
+});
+
+
+//Set asset form management - .xlsx
+
+router.get('/export-excel/:organizationId', async (req, res) => {
+    try {
+        const organizationId = req.params.organizationId;
+        const assetFormManagement = await assetFormManagementModel.findOne({organizationId});
+
+        if (!assetFormManagement) {
+            return res.status(404).send('No assetFormManagement found for the provided organizationId.');
+        }
+
+        const workbook = new Excel.Workbook();
+        const worksheet = workbook.addWorksheet('Sheet1');
+
+        assetFormManagement.assetFormManagements.forEach((group) => {
+            group.fields.forEach((field) => {
+                if (field.name) {
+                    if (worksheet && worksheet.columns) {
+                        worksheet.columns.push({header: field.name, key: field.name, width: 25});
+                    }
+                }
+            });
+
+            group.subgroups.forEach((subgroup) => {
+                if (subgroup.fields && subgroup.fields.length > 0) {
+                    subgroup.fields.forEach((field) => {
+                        if (field.name) {
+                            if (worksheet && worksheet.columns) {
+                                worksheet.columns.push({header: field.name, key: field.name, width: 25});
+                            }
+                        }
+                    });
+                }
+            });
+        });
+
+        const exportsDir = path.join(__dirname, 'exports');
+
+        try {
+            await fs.access(exportsDir);
+        } catch (error) {
+            await fs.mkdir(exportsDir);
+        }
+
+        const filePath = path.join(exportsDir, `export_${organizationId}.xlsx`);
+        await workbook.xlsx.writeFile(filePath);
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename=export_${organizationId}.xlsx`);
+
+        const fileContent = await fs.readFile(filePath);
+        res.send(fileContent);
+
+        console.log('Excel file sent successfully');
+    } catch (error) {
+        console.error('Error exporting Excel:', error);
+        res.status(500).send('Internal Server Error');
     }
 });
 
