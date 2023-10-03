@@ -2,9 +2,8 @@ import express from 'express';
 import {assetFormManagementService} from '../services/assetFormManagement.js';
 import {isLoggedIn} from '../../auth/router/passport.js';
 import {assetFormManagementModel} from '../models';
-
 import path from 'path';
-import {promises as fs} from 'fs';
+import fs from 'fs';
 import Excel from 'exceljs';
 
 
@@ -117,12 +116,12 @@ router.get('/export-excel/:organizationId', async (req, res) => {
         const workbook = new Excel.Workbook();
         const worksheet = workbook.addWorksheet('Sheet1');
 
+        const headers = [];
+
         assetFormManagement.assetFormManagements.forEach((group) => {
             group.fields.forEach((field) => {
                 if (field.name) {
-                    if (worksheet && worksheet.columns) {
-                        worksheet.columns.push({header: field.name, key: field.name, width: 25});
-                    }
+                    headers.push({header: field.name, key: field.name, width: 40});
                 }
             });
 
@@ -130,21 +129,22 @@ router.get('/export-excel/:organizationId', async (req, res) => {
                 if (subgroup.fields && subgroup.fields.length > 0) {
                     subgroup.fields.forEach((field) => {
                         if (field.name) {
-                            if (worksheet && worksheet.columns) {
-                                worksheet.columns.push({header: field.name, key: field.name, width: 25});
-                            }
+                            headers.push({header: field.name, key: field.name, width: 40});
                         }
                     });
                 }
             });
         });
 
+        console.log('headers', headers);
+
+        // Set the columns of the worksheet using the headers array
+        worksheet.columns = headers;
+
         const exportsDir = path.join(__dirname, 'exports');
 
-        try {
-            await fs.access(exportsDir);
-        } catch (error) {
-            await fs.mkdir(exportsDir);
+        if (!fs.existsSync(exportsDir)) {
+            fs.mkdirSync(exportsDir, {recursive: true});
         }
 
         const filePath = path.join(exportsDir, `export_${organizationId}.xlsx`);
@@ -153,8 +153,9 @@ router.get('/export-excel/:organizationId', async (req, res) => {
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename=export_${organizationId}.xlsx`);
 
-        const fileContent = await fs.readFile(filePath);
-        res.send(fileContent);
+        const fileStream = fs.createReadStream(filePath);
+
+        fileStream.pipe(res);
 
         console.log('Excel file sent successfully');
     } catch (error) {
