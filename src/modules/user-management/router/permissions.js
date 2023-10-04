@@ -25,7 +25,8 @@ router.post('/create', isLoggedIn, async (req, res) => {
         const existingModuleName = await permissionModel.findOne({
             moduleName,
             dashboardType,
-            isDeactivated: false,
+            // isDeactivated: false,
+            isDeleted: false
         });
 
         if (existingModuleName) {
@@ -42,6 +43,7 @@ router.post('/create', isLoggedIn, async (req, res) => {
             actions,
             allAccess,
             dashboardType,
+            isDeactivated: false,
             createdAt: new Date(),
         };
 
@@ -119,7 +121,7 @@ router.get('/list/:id', async (req, res) => {
         return res.status(500).json({success: false, error: error.message});
     }
 });
-router.delete('/v1/:id', async (req, res) => {
+router.delete('/delete/:id', async (req, res) => {
     try {
         const {id} = req.params;
 
@@ -154,7 +156,7 @@ router.delete('/v1/:id', async (req, res) => {
     }
 });
 
-router.delete('/v2/:id', async (req, res) => {
+router.put('/deactivate/:id', async (req, res) => {
     try {
         const {id} = req.params;
 
@@ -196,7 +198,7 @@ router.get('/dashboardPermission', isLoggedIn, async (req, res) => {
     try {
         const dashboardPermission = req.user.data.dashboardPermission.trim();
         const permissions = await permissionService.getPermissionsByDashboardPermission(dashboardPermission);
-        res.status(200).json(permissions);
+        return res.status(200).json(permissions);
     } catch (error) {
         res.status(500).json({error: 'Internal server error'});
     }
