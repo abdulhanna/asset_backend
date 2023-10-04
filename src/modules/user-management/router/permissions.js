@@ -25,7 +25,7 @@ router.post('/create', isLoggedIn, async (req, res) => {
         const existingModuleName = await permissionModel.findOne({
             moduleName,
             dashboardType,
-            isDeactivated: false,
+            // isDeactivated: false,
             isDeleted: false
         });
 
@@ -198,7 +198,7 @@ router.get('/dashboardPermission', isLoggedIn, async (req, res) => {
     try {
         const dashboardPermission = req.user.data.dashboardPermission.trim();
         const permissions = await permissionService.getPermissionsByDashboardPermission(dashboardPermission);
-        res.status(200).json(permissions);
+        return res.status(200).json(permissions);
     } catch (error) {
         res.status(500).json({error: 'Internal server error'});
     }

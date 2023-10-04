@@ -56,8 +56,8 @@ const updatePermission = async (id, updateData) => {
 const getAllPermissions = async () => {
     try {
         const permissions = await permissionModel
-            .find({isDeleted: false, isDeactivated: false})
-            .select('moduleName read readWrite actions allAccess removeAccess dashboardType _id createdAt');
+            .find({isDeleted: false})
+            .select('moduleName read readWrite actions allAccess removeAccess dashboardType _id createdAt isDeactivated');
         return permissions;
     } catch (error) {
         throw new Error(error.message);
