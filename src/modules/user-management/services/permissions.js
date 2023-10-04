@@ -105,7 +105,7 @@ const getPermissionsByDashboardPermission = async (dashboardPermission) => {
             dashboardType = 'user';
         }
 
-        const permissions = await permissionModel.find({dashboardType});
+        const permissions = await permissionModel.find({dashboardType, isDeactivated: false});
 
         return permissions;
     } catch (error) {

@@ -26,6 +26,7 @@ router.post('/create', isLoggedIn, async (req, res) => {
             moduleName,
             dashboardType,
             isDeactivated: false,
+            isDeleted: false
         });
 
         if (existingModuleName) {
@@ -42,6 +43,7 @@ router.post('/create', isLoggedIn, async (req, res) => {
             actions,
             allAccess,
             dashboardType,
+            isDeactivated: false,
             createdAt: new Date(),
         };
 
@@ -119,7 +121,7 @@ router.get('/list/:id', async (req, res) => {
         return res.status(500).json({success: false, error: error.message});
     }
 });
-router.delete('/v1/:id', async (req, res) => {
+router.delete('/delete/:id', async (req, res) => {
     try {
         const {id} = req.params;
 
@@ -154,7 +156,7 @@ router.delete('/v1/:id', async (req, res) => {
     }
 });
 
-router.delete('/v2/:id', async (req, res) => {
+router.put('/deactivate/:id', async (req, res) => {
     try {
         const {id} = req.params;
 
