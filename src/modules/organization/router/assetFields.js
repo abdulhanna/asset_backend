@@ -5,6 +5,7 @@ import multer from 'multer';
 import {v2 as cloudinary} from 'cloudinary';
 import {secret} from '../../../config/secret.js';
 import Excel from 'exceljs';
+import assetFormManagementModel from '../../field-management/models/assetFormManagement';
 
 
 cloudinary.config(secret.cloudinary);
@@ -132,43 +133,58 @@ const parseExcel = (filePath) => {
 };
 
 
+const getAssetFormManagement = async (organizationId) => {
+    try {
+        const assetFormManagement = await assetFormManagementModel.findOne({organizationId});
+        return assetFormManagement;
+    } catch (error) {
+        throw new Error('Error retrieving assetFormManagement');
+    }
+};
+
 router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) => {
     try {
         const excelData = await parseExcel(req.file.path);
+        const organizationId = req.user.data.organizationId;
+        const assetFormManagement = await getAssetFormManagement(organizationId);
+
+        const subgroups = assetFormManagement.assetFormManagements.map(group => ({
+            // groupName: group.groupName,
+            subgroups: group.subgroups.map(subgroup => ({
+                subgroupName: subgroup.subgroupName,
+                fields: subgroup.fields.map(field => field.name),
+            })),
+        }));
 
         const assets = [];
 
-        // Assuming excelData is a 2D array as mentioned in your example
         for (let i = 3; i < excelData.length; i++) {
             const asset = {
-                assetIdentification: {
-                    basicAssetDetails: {
-                        name: excelData[i][0],
-                        assetSerialNo: excelData[i][1],
-                        assetId: excelData[i][2],
-                    },
-                    assetMeasurementsQuantity: {
-                        unitOfMeasurements: excelData[i][3],
-                        separateIdentification: excelData[i][4],
-                    },
-                },
-                ownershipDetails: {
-                    leaseDetails: {
-                        leaseType: excelData[i][5],
-                        lessorName: excelData[i][6],
-                        leasePeriod: excelData[i][7],
-                        leaseStartDate: excelData[i][8],
-                    },
-                    ownershipType: excelData[i][9],
-                    lessorName: excelData[i][10],
-                    installHireAmount: excelData[i][11],
-                },
+                assetIdentification: {},
+                ownershipDetails: {},
             };
+
+            console.log(subgroups, 'subgrups');
+            for (const subgroup of subgroups) {
+                if (subgroup.length > 0) {
+                    for (const field of subgroup.fields) {
+                        const fieldValue = excelData[i][excelData[2].indexOf(field)];
+                        console.log('fieldValue', fieldValue);
+
+                        if (!asset.assetIdentification[subgroup.groupName]) {
+                            asset.assetIdentification[subgroup.groupName] = {};
+                        }
+                        if (!asset.assetIdentification[subgroup.groupName][subgroup.subgroupName]) {
+                            asset.assetIdentification[subgroup.groupName][subgroup.subgroupName] = {};
+                        }
+                        asset.assetIdentification[subgroup.groupName][subgroup.subgroupName][field] = fieldValue;
+                    }
+                }
+            }
+
             assets.push(asset);
         }
 
-
-        const organizationId = req.user.data.organizationId;
         await assetService.saveAssetsToDatabase(organizationId, assets);
 
         return res.json({message: 'Upload successful'});
