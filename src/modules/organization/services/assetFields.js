@@ -16,14 +16,24 @@ const createAsset = async (organizationId, assetData) => {
 const getAssetsByOrganization = async (organizationId) => {
     try {
         return await assetsModel.findOne({organizationId});
-        
+
     } catch (error) {
         throw new Error('Error fetching assets');
     }
 };
 
 
+const saveAssetsToDatabase = async (organizationId, assets) => {
+    try {
+        const result = await assetsModel.create({organizationId, assets});
+        return result;
+    } catch (error) {
+        throw new Error('Error saving assets to database');
+    }
+};
+
 export const assetService = {
     createAsset,
-    getAssetsByOrganization
+    getAssetsByOrganization,
+    saveAssetsToDatabase
 };

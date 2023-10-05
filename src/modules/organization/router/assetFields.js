@@ -4,6 +4,8 @@ import {isLoggedIn} from '../../auth/router/passport';
 import multer from 'multer';
 import {v2 as cloudinary} from 'cloudinary';
 import {secret} from '../../../config/secret.js';
+import Excel from 'exceljs';
+
 
 cloudinary.config(secret.cloudinary);
 
@@ -105,6 +107,73 @@ router.get('/list', isLoggedIn, async (req, res) => {
         res.status(200).json(assets);
     } catch (error) {
         res.status(500).json({error: error.message});
+    }
+});
+
+
+//------------------------------
+const uploadTwo = multer({dest: 'uploads/'});
+const parseExcel = (filePath) => {
+    const workbook = new Excel.Workbook();
+    return workbook.xlsx.readFile(filePath).then(() => {
+        const worksheet = workbook.getWorksheet(1);
+        const data = [];
+
+        worksheet.eachRow((row) => {
+            const rowData = [];
+            row.eachCell({includeEmpty: true}, (cell) => {
+                rowData.push(cell.value);
+            });
+            data.push(rowData);
+        });
+
+        return data;
+    });
+};
+
+
+router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) => {
+    try {
+        const excelData = await parseExcel(req.file.path);
+
+        const assets = [];
+
+        // Assuming excelData is a 2D array as mentioned in your example
+        for (let i = 3; i < excelData.length; i++) {
+            const asset = {
+                assetIdentification: {
+                    basicAssetDetails: {
+                        name: excelData[i][0],
+                        assetSerialNo: excelData[i][1],
+                        assetId: excelData[i][2],
+                    },
+                    assetMeasurementsQuantity: {
+                        unitOfMeasurements: excelData[i][3],
+                        separateIdentification: excelData[i][4],
+                    },
+                },
+                ownershipDetails: {
+                    leaseDetails: {
+                        leaseType: excelData[i][5],
+                        lessorName: excelData[i][6],
+                        leasePeriod: excelData[i][7],
+                        leaseStartDate: excelData[i][8],
+                    },
+                    ownershipType: excelData[i][9],
+                    lessorName: excelData[i][10],
+                    installHireAmount: excelData[i][11],
+                },
+            };
+            assets.push(asset);
+        }
+
+
+        const organizationId = req.user.data.organizationId;
+        await assetService.saveAssetsToDatabase(organizationId, assets);
+
+        return res.json({message: 'Upload successful'});
+    } catch (error) {
+        return res.status(500).json({message: 'Error uploading data', error: error.message});
     }
 });
 
