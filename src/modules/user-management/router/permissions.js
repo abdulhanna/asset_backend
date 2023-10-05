@@ -103,7 +103,7 @@ router.put('/update/:id', async (req, res) => {
     }
 });
 
-router.get('/all', async (req, res) => {
+router.get('/all', isLoggedIn, async (req, res) => {
     try {
         const permissions = await permissionService.getAllPermissions();
         return res.status(200).json({success: true, permissions});
