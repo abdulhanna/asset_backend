@@ -142,43 +142,46 @@ const getAssetFormManagement = async (organizationId) => {
     }
 };
 
+
 router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) => {
     try {
         const excelData = await parseExcel(req.file.path);
         const organizationId = req.user.data.organizationId;
         const assetFormManagement = await getAssetFormManagement(organizationId);
 
-        const subgroups = assetFormManagement.assetFormManagements.map(group => ({
-            // groupName: group.groupName,
-            subgroups: group.subgroups.map(subgroup => ({
-                subgroupName: subgroup.subgroupName,
-                fields: subgroup.fields.map(field => field.name),
-            })),
-        }));
+        const headers = excelData[0]; // Assuming headers are in the first row
+
+        const fieldsMapping = assetFormManagement.assetFormManagements.flatMap(group =>
+            group.subgroups.flatMap(subgroup =>
+                subgroup.fields.map(field => ({
+                    excelHeader: field.name,  // Assuming field.name is the field name in your assetFormManagementModel
+                    assetFieldName: field.name
+                }))
+            )
+        );
 
         const assets = [];
 
-        for (let i = 3; i < excelData.length; i++) {
+        for (let i = 1; i < excelData.length; i++) {
             const asset = {
                 assetIdentification: {},
                 ownershipDetails: {},
             };
 
-            console.log(subgroups, 'subgrups');
-            for (const subgroup of subgroups) {
-                if (subgroup.length > 0) {
-                    for (const field of subgroup.fields) {
-                        const fieldValue = excelData[i][excelData[2].indexOf(field)];
-                        console.log('fieldValue', fieldValue);
+            for (const mapping of fieldsMapping) {
+                const excelHeader = mapping.excelHeader;
+                const assetFieldName = mapping.assetFieldName;
+                const fieldValue = excelData[i][headers.indexOf(excelHeader)];
 
-                        if (!asset.assetIdentification[subgroup.groupName]) {
-                            asset.assetIdentification[subgroup.groupName] = {};
-                        }
-                        if (!asset.assetIdentification[subgroup.groupName][subgroup.subgroupName]) {
-                            asset.assetIdentification[subgroup.groupName][subgroup.subgroupName] = {};
-                        }
-                        asset.assetIdentification[subgroup.groupName][subgroup.subgroupName][field] = fieldValue;
+                if (assetFieldName) {
+                    const [groupName, subgroupName, fieldName] = assetFieldName.split('.');
+                    if (!asset.assetIdentification[groupName]) {
+                        asset.assetIdentification[groupName] = {};
                     }
+                    if (!asset.assetIdentification[groupName][subgroupName]) {
+                        asset.assetIdentification[groupName][subgroupName] = {};
+                    }
+                    asset.assetIdentification[groupName][subgroupName][fieldName] = fieldValue;
                 }
             }
 
