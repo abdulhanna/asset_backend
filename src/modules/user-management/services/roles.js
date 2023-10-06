@@ -156,7 +156,7 @@ const getAllRoles = async (loggedInUserId) => {
                 isDeactivated: false
 
             })
-            .select('-isDeactivated -deletedAt')
+            .select('-deletedAt')
             .populate('addedByUserId', 'email')
             .populate('permissions', 'moduleName read readWrite actions')
             .exec();
