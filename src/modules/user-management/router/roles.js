@@ -25,7 +25,7 @@ router.post('/', isLoggedIn, async (req, res) => {
         roleName = roleName.toLowerCase();
 
         // Check if the roleName already exists
-        const existingRole = await roleDefineModel.findOne({roleName});
+        const existingRole = await roleDefineModel.findOne({roleName, addedByUserId: userId});
         if (existingRole) {
             return res.status(400).json({
                 success: false,
