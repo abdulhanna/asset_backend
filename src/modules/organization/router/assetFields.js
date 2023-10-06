@@ -155,6 +155,7 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
             group.subgroups.flatMap(subgroup =>
                 subgroup.fields.map(field => ({
                     assetFieldName: field.name,
+                    groupName: group.groupName, // Add groupName
                     subgroupName: subgroup.subgroupName
                 }))
             )
@@ -163,26 +164,23 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
         const assets = [];
 
         for (let i = 1; i < excelData.length; i++) {
-            const asset = {
-                assetIdentification: {},
-                ownershipDetails: {},
-            };
+            const asset = {};
 
             for (const mapping of fieldsMapping) {
                 const assetFieldName = mapping.assetFieldName;
+                const groupName = mapping.groupName;
                 const subgroupName = mapping.subgroupName;
 
                 const fieldValue = excelData[i][headers.indexOf(assetFieldName)];
 
                 if (assetFieldName) {
-                    const [groupName, fieldName] = assetFieldName.split('.');
-                    if (!asset.assetIdentification[groupName]) {
-                        asset.assetIdentification[groupName] = {};
+                    if (!asset[groupName]) {
+                        asset[groupName] = {};
                     }
-                    if (!asset.assetIdentification[groupName][subgroupName]) {
-                        asset.assetIdentification[groupName][subgroupName] = {};
+                    if (!asset[groupName][subgroupName]) {
+                        asset[groupName][subgroupName] = {};
                     }
-                    asset.assetIdentification[groupName][subgroupName][fieldName] = fieldValue;
+                    asset[groupName][subgroupName][assetFieldName] = fieldValue;
                 }
             }
 
