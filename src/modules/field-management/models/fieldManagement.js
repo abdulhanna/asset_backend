@@ -31,7 +31,7 @@ const fieldSchema = new mongoose.Schema(
         },
         fieldType: {
             type: String,
-            enum: ['Input text', 'Select', 'Radio Button'],
+            enum: ['Input text', 'Input number', 'Textarea', 'Dropdown', 'Radio button', 'Uploads', 'Date'],
             required: true,
         },
         fieldRelation: {
