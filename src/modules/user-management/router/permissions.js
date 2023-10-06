@@ -103,14 +103,21 @@ router.put('/update/:id', async (req, res) => {
     }
 });
 
-router.get('/all', async (req, res) => {
+router.get('/all', isLoggedIn, async (req, res) => {
     try {
-        const permissions = await permissionService.getAllPermissions();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const sortBy = req.query.sortBy || 'createdAt';
+        const sortOrder = req.query.sortOrder === 'desc' ? -1 : 1;
+
+        const permissions = await permissionService.getAllPermissions(page, limit, sortBy, sortOrder);
+
         return res.status(200).json({success: true, permissions});
     } catch (error) {
         return res.status(500).json({success: false, error: error.message});
     }
 });
+
 
 router.get('/list/:id', async (req, res) => {
     try {

@@ -1,6 +1,16 @@
-import { fieldManagementModel, assetFormManagementModel } from '../models';
+import {fieldManagementModel, assetFormManagementModel} from '../models';
 import mongoose from 'mongoose';
 
+
+const checkExistingGroups = async (groupNames) => {
+    try {
+        const existingGroups = await fieldManagementModel.find({groupName: {$in: groupNames}});
+        return existingGroups;
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+};
 const createMultipleFieldGroups = async (groupNames) => {
     const newFieldGroups = await Promise.all(
         groupNames.map(async (groupName) => {
@@ -66,7 +76,7 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
 
         let updatedGroup;
 
-      const group = await fieldManagementModel.findById(id);
+        const group = await fieldManagementModel.findById(id);
 
         if (!group) {
             updatedGroup = await fieldManagementModel.findOneAndUpdate(
@@ -115,34 +125,34 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
 
         assetFormManagement.map(async (doc) => {
 
-       const group = doc.assetFormManagements.find(g => g._id.toString() === id);
+            const group = doc.assetFormManagements.find(g => g._id.toString() === id);
 
-        let subgroup;
-        if (!group) {
-            subgroup = doc.assetFormManagements.flatMap(g => g.subgroups).find(s => s._id.toString() === id);
-        }
+            let subgroup;
+            if (!group) {
+                subgroup = doc.assetFormManagements.flatMap(g => g.subgroups).find(s => s._id.toString() === id);
+            }
 
-        if (group) {
-            await assetFormManagementModel.updateOne(
-                {_id: doc._id, 'assetFormManagements._id': mongoose.Types.ObjectId(id)},
-                {$push: {'assetFormManagements.$.fields': {$each: [pushedFields]}}}
-            );
+            if (group) {
+                await assetFormManagementModel.updateOne(
+                    {_id: doc._id, 'assetFormManagements._id': mongoose.Types.ObjectId(id)},
+                    {$push: {'assetFormManagements.$.fields': {$each: [pushedFields]}}}
+                );
 
-        } else if (subgroup) {
-            subgroup.fields.push(pushedFields);
+            } else if (subgroup) {
+                subgroup.fields.push(pushedFields);
 
-          await assetFormManagementModel.updateOne(
-              {_id: doc._id},
-                doc,
-                {new: true}
-            );
+                await assetFormManagementModel.updateOne(
+                    {_id: doc._id},
+                    doc,
+                    {new: true}
+                );
 
-        } else {
-            console.error('Group or subgroup not found');
-        }
-    });
+            } else {
+                console.error('Group or subgroup not found');
+            }
+        });
 
-        return {'msg':'field updated successfully'};
+        return {'msg': 'field updated successfully'};
     } catch (error) {
         throw error;
     }
@@ -152,28 +162,25 @@ const getFieldGroupsByOrganizationIdNull = async (organizationId) => {
     try {
 
         let fieldGroups;
-        if(organizationId)
-        {
+        if (organizationId) {
 
-              fieldGroups = await assetFormManagementModel.findOne(
-                { organizationId: organizationId},
-                { assetFormManagements: 1, _id: 0 }
-              );
+            fieldGroups = await assetFormManagementModel.findOne(
+                {organizationId: organizationId},
+                {assetFormManagements: 1, _id: 0}
+            );
 
-        }
-        else
-        {
-         fieldGroups = await fieldManagementModel.find().lean();
+        } else {
+            fieldGroups = await fieldManagementModel.find().lean();
 
-        // Remove fields with isDeleted: true from each subgroup
-        fieldGroups.forEach(group => {
-            group.subgroups.forEach(subgroup => {
-                subgroup.fields = subgroup.fields.filter(field => !field.isDeleted && (field.organizationId == null));
+            // Remove fields with isDeleted: true from each subgroup
+            fieldGroups.forEach(group => {
+                group.subgroups.forEach(subgroup => {
+                    subgroup.fields = subgroup.fields.filter(field => !field.isDeleted && (field.organizationId == null));
+                });
+
+                // Remove fields with isDeleted: true from the top-level fields array
+                group.fields = group.fields.filter(field => !field.isDeleted && (field.organizationId == null));
             });
-
-            // Remove fields with isDeleted: true from the top-level fields array
-            group.fields = group.fields.filter(field => !field.isDeleted && (field.organizationId == null));
-        });
         }
 
         return fieldGroups;
@@ -492,7 +499,8 @@ export const fieldManagementService = {
     updateFieldData,
     markFieldAsDeleted,
     getFieldGroupsByOrganizationId,
-    addFieldAndUpdateAssetForm
+    addFieldAndUpdateAssetForm,
+    checkExistingGroups
 };
 
 
