@@ -9,7 +9,17 @@ router.post('/add-groups', isLoggedIn, async (req, res) => {
     try {
         const {groupNames} = req.body;
 
+
         if (Array.isArray(groupNames)) {
+
+            const existingGroups = await fieldManagementService.checkExistingGroups(groupNames);
+
+            if (existingGroups.length > 0) {
+                return res.status(400).json({
+                    message: 'Group names already exist',
+                });
+            }
+
             const newFieldGroups =
                 await fieldManagementService.createMultipleFieldGroups(
                     groupNames
@@ -63,7 +73,7 @@ router.put('/add-field/:id', isLoggedIn, async (req, res) => {
         // const organizationId = req.user.data.organizationId;
         const {id} = req.params;
         const {fields} = req.body;
-    
+
         const updatedFieldGroup = await fieldManagementService.addFieldAndUpdateAssetForm(id, fields);
         return res.status(200).json(updatedFieldGroup);
     } catch (error) {
@@ -71,7 +81,6 @@ router.put('/add-field/:id', isLoggedIn, async (req, res) => {
         return res.status(500).json({error: 'Unable to update fields'});
     }
 });
-
 
 
 ////// edit field details by field id //////////
@@ -91,7 +100,6 @@ router.put('/edit-field/:id', async (req, res) => {
         res.status(500).json({error: error.message});
     }
 });
-
 
 
 /// update group name, subgroup name and field details by group Id
@@ -122,7 +130,7 @@ router.get('/allGroups', isLoggedIn, async (req, res) => {
 
         return res.status(200).json(fieldGroups);
         // return res.status(200).json({success: true, fieldGroups});
-        
+
     } catch (error) {
         console.log(error);
         return res.status(500).json({error: 'Unable to get field groups'});
@@ -176,7 +184,6 @@ router.get('/subgroup/:subgroupId', isLoggedIn, async (req, res) => {
 });
 
 
-
 // delete filed by field id
 router.delete('/delete-field/:fieldId', isLoggedIn, async (req, res) => {
     try {
@@ -189,7 +196,6 @@ router.delete('/delete-field/:fieldId', isLoggedIn, async (req, res) => {
         return res.status(500).json({error: 'Unable to delete field'});
     }
 });
-
 
 
 router.put('/field/:fieldId/mark-deleted', isLoggedIn, async (req, res) => {
@@ -227,7 +233,6 @@ router.delete('/delete-group/:groupId', isLoggedIn, async (req, res) => {
 });
 
 
-
 router.put('/:groupId/update-fields', isLoggedIn, async (req, res) => {
     try {
         const {groupId} = req.params;
@@ -247,8 +252,6 @@ router.put('/:groupId/update-fields', isLoggedIn, async (req, res) => {
             .json({error: 'Unable to update field group'});
     }
 });
-
-
 
 
 export default router;
