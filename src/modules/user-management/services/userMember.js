@@ -1,7 +1,7 @@
 import jwtService from '../../auth/services/jwt-services';
 import emailtemplate from '../../../helpers/send-email';
-import userModel from '../../auth/models/index.js';
-import locationModel from '../../organization/models/locations';
+import userModel from '../../auth/models';
+import { locationModel } from '../../organization/models';
 
 const getMemberByEmail = async (email) => {
     try {
