@@ -185,7 +185,11 @@ assetGroupService.getAssetGroupsByOrganizationId = async (organizationId, assign
 
      const totalassetGroups = await assetGroupModel.countDocuments();
      const totalPages = Math.ceil(totalassetGroups / limit);
+   
+     let startSerialNumber = (page - 1) * limit + 1;  
+     let endSerialNumber = Math.min(page * limit, totalassetGroups);
      
+   
      if(assignedLocationId && organizationId)
      {
          
@@ -207,18 +211,21 @@ assetGroupService.getAssetGroupsByOrganizationId = async (organizationId, assign
                assert(LocassetGroups, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"));
                const assetgroups = LocassetGroups[0].assetgroups.map(item => item.assetgroupId);
 
-               return{ page,
-                 totalPages,
-                 totalassetGroups,
-                 assetgroups }
-
+               return {
+                    page,
+                    totalPages,
+                    totalassetGroups,
+                    startSerialNumber,
+                    endSerialNumber,
+                    assetGroups,
+                  };
 
      }
 
      else if(organizationId){
 
      
-       const assetGroups = await assetGroupModel.find(
+        const assetGroups = await assetGroupModel.find(
           { organizationId,
             isDeleted: false
           }
@@ -228,17 +235,18 @@ assetGroupService.getAssetGroupsByOrganizationId = async (organizationId, assign
           .select('-isDeleted -deletedAt -organizationId -__v');
 
              assert(assetGroups, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"))
-             return{ page,
+
+             return {
+               page,
                totalPages,
                totalassetGroups,
-               assetGroups}
-
+               startSerialNumber,
+               endSerialNumber,
+               assetGroups,
+             };
      }
-            
-
 
 }
-
 
 
 
