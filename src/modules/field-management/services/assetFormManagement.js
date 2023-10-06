@@ -1,6 +1,5 @@
-import assetFormManagementModel from '../models/assetFormManagement';
-import fieldManagementModel from '../models/fieldManagement';
-import locationModel from '../../organization/models/locations';
+import { assetFormManagementModel, fieldManagementModel } from '../models';
+import { locationModel } from '../../organization/models';
 import mongoose from 'mongoose';
 
 
