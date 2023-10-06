@@ -209,7 +209,7 @@ assetGroupService.getAssetGroupsByOrganizationId = async (organizationId, assign
                })
 
                assert(LocassetGroups, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"));
-               const assetgroups = LocassetGroups[0].assetgroups.map(item => item.assetgroupId);
+               const assetGroups = LocassetGroups[0].assetgroups.map(item => item.assetgroupId);
 
                return {
                     page,
