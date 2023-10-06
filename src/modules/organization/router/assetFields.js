@@ -153,10 +153,7 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
 
         const fieldsMapping = assetFormManagement.assetFormManagements.flatMap(group =>
             group.subgroups.flatMap(subgroup =>
-                subgroup.fields.map(field => ({
-                    excelHeader: field.name,  // Assuming field.name is the field name in your assetFormManagementModel
-                    assetFieldName: field.name
-                }))
+                subgroup.fields.map(field => field.name)
             )
         );
 
@@ -168,22 +165,20 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
                 ownershipDetails: {},
             };
 
-            for (const mapping of fieldsMapping) {
-                const excelHeader = mapping.excelHeader;
-                const assetFieldName = mapping.assetFieldName;
-                const fieldValue = excelData[i][headers.indexOf(excelHeader)];
+            headers.forEach((header, index) => {
+                const field = fieldsMapping[index];
 
-                if (assetFieldName) {
-                    const [groupName, subgroupName, fieldName] = assetFieldName.split('.');
+                if (field) {
+                    const [groupName, subgroupName, fieldName] = field.split('.');
                     if (!asset.assetIdentification[groupName]) {
                         asset.assetIdentification[groupName] = {};
                     }
                     if (!asset.assetIdentification[groupName][subgroupName]) {
                         asset.assetIdentification[groupName][subgroupName] = {};
                     }
-                    asset.assetIdentification[groupName][subgroupName][fieldName] = fieldValue;
+                    asset.assetIdentification[groupName][subgroupName][fieldName] = excelData[i][index];
                 }
-            }
+            });
 
             assets.push(asset);
         }
