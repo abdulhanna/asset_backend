@@ -1,5 +1,4 @@
-import fieldManagementModel from '../models/fieldManagement';
-import assetFormManagementModel from '../models/assetFormManagement';
+import { fieldManagementModel, assetFormManagementModel } from '../models';
 import mongoose from 'mongoose';
 
 const createMultipleFieldGroups = async (groupNames) => {
@@ -149,9 +148,22 @@ const addFieldAndUpdateAssetForm = async (id, fields) => {
     }
 };
 
-const getFieldGroupsByOrganizationIdNull = async () => {
+const getFieldGroupsByOrganizationIdNull = async (organizationId) => {
     try {
-        const fieldGroups = await fieldManagementModel.find();
+
+        let fieldGroups;
+        if(organizationId)
+        {
+
+              fieldGroups = await assetFormManagementModel.findOne(
+                { organizationId: organizationId},
+                { assetFormManagements: 1, _id: 0 }
+              );
+
+        }
+        else
+        {
+         fieldGroups = await fieldManagementModel.find().lean();
 
         // Remove fields with isDeleted: true from each subgroup
         fieldGroups.forEach(group => {
@@ -162,6 +174,7 @@ const getFieldGroupsByOrganizationIdNull = async () => {
             // Remove fields with isDeleted: true from the top-level fields array
             group.fields = group.fields.filter(field => !field.isDeleted && (field.organizationId == null));
         });
+        }
 
         return fieldGroups;
     } catch (error) {
@@ -184,8 +197,6 @@ const getFieldGroupsByOrganizationId = async (organizationId) => {
         return fieldGroups.map(group => {
             const matchingOrganizationFields = group.fields.filter(field => field.organizationId == organizationId);
             const nullOrganizationFields = group.fields.filter(field => field.organizationId == null);
-            console.log('matchingOrganizationFields', matchingOrganizationFields);
-
             return {
                 ...group,
                 fields: matchingOrganizationFields.concat(nullOrganizationFields),

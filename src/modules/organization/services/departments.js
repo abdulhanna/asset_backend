@@ -1,5 +1,4 @@
-import departmentModel from '../models/departments';
-import locationModel from '../models/locations';
+import { departmentModel, locationModel } from '../models';
 
 const addDepartmentToDepartmentsCollection = async (data) => {
      try {
