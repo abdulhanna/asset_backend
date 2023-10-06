@@ -1,4 +1,5 @@
 import {roleDefineModel, permissionModel} from '../models';
+import userModel from '../../auth/models/index';
 
 const createRole = async (roleData) => {
     try {
@@ -145,30 +146,38 @@ const restoreDefaultPermissions = async (roleId) => {
     }
 };
 
-const getAllRoles = async () => {
+const getAllRoles = async (loggedInUserId) => {
     try {
-        // Fetch all roles from the database, excluding isDeleted and isDeactivated fields
+
         const roles = await roleDefineModel
-            .find({isDeleted: false, isDeactivated: false})
-            .select('-isDeactivated -deletedAt')
-            .populate('addedByUserId', 'email') // Only populate 'email' field from addedByUserId
+            .find({
+                addedByUserId: loggedInUserId,
+                isDeleted: false,
+                isDeactivated: false
+
+            })
+            .select('-deletedAt')
+            .populate('addedByUserId', 'email')
             .populate('permissions', 'moduleName read readWrite actions')
             .exec();
 
+        const rolesWithUserCount = await Promise.all(roles.map(async (role) => {
+            const userCount = await userModel.countDocuments({
+                teamRoleId: role._id
+            });
+            role = role.toObject();
+            role.userCount = userCount;
+            return role;
+        }));
+
         // Filter out permissions with removeAccess set to true
-        roles.forEach((role) => {
+        rolesWithUserCount.forEach((role) => {
             role.permissions = role.permissions.filter(
                 (permission) => !permission.removeAccess
             );
         });
 
-        // roles.forEach((role) => {
-        //      role.permissions = role.permissions.filter((permission) => {
-        //           return permission.removeAccess === false;
-        //      });
-        // });
-
-        return roles;
+        return rolesWithUserCount;
     } catch (error) {
         throw new Error('Unable to fetch roles');
     }

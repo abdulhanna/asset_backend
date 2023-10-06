@@ -53,16 +53,37 @@ const updatePermission = async (id, updateData) => {
     }
 };
 
-const getAllPermissions = async () => {
+const getAllPermissions = async (page, limit, sortBy, sortOrder) => {
     try {
-        const permissions = await permissionModel
-            .find({isDeleted: false})
-            .select('moduleName read readWrite actions allAccess removeAccess dashboardType _id createdAt isDeactivated');
-        return permissions;
+        const skip = (page - 1) * limit;
+        let totalDocuments, totalPages, startSerialNumber, endSerialNumber, data;
+
+        const filter = {isDeleted: false, isDeactivated: false};
+
+        data = await permissionModel
+            .find(filter)
+            .select('moduleName read readWrite actions allAccess removeAccess dashboardType _id createdAt isDeactivated')
+            .sort({[sortBy]: sortOrder})
+            .skip(skip)
+            .limit(limit);
+
+        totalDocuments = await permissionModel.countDocuments(filter);
+        totalPages = Math.ceil(totalDocuments / limit);
+        startSerialNumber = (page - 1) * limit + 1;
+        endSerialNumber = Math.min(page * limit, totalDocuments);
+
+        return {
+            data,
+            totalDocuments,
+            totalPages,
+            startSerialNumber,
+            endSerialNumber,
+        };
     } catch (error) {
         throw new Error(error.message);
     }
 };
+
 
 const getPermissionById = async (id) => {
     try {

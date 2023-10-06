@@ -25,7 +25,7 @@ router.post('/', isLoggedIn, async (req, res) => {
         roleName = roleName.toLowerCase();
 
         // Check if the roleName already exists
-        const existingRole = await roleDefineModel.findOne({roleName});
+        const existingRole = await roleDefineModel.findOne({roleName, addedByUserId: userId});
         if (existingRole) {
             return res.status(400).json({
                 success: false,
@@ -148,8 +148,10 @@ router.put('/:roleId/restoreDefaults', isLoggedIn, async (req, res) => {
 // Route to retrieve all roles
 router.get('/', isLoggedIn, async (req, res) => {
     try {
+        const loggedInUserId = req.user.data._id;
+
         // Retrieve all roles from the database
-        const roles = await rolesService.getAllRoles();
+        const roles = await rolesService.getAllRoles(loggedInUserId);
         return res.status(200).json(roles);
     } catch (err) {
         return res.status(500).json({error: 'Unable to fetch roles'});
@@ -241,3 +243,4 @@ router.delete('/:id', async (req, res) => {
 });
 
 export default router;
+

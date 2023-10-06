@@ -4,6 +4,9 @@ import {isLoggedIn} from '../../auth/router/passport';
 import multer from 'multer';
 import {v2 as cloudinary} from 'cloudinary';
 import {secret} from '../../../config/secret.js';
+import Excel from 'exceljs';
+import assetFormManagementModel from '../../field-management/models/assetFormManagement';
+
 
 cloudinary.config(secret.cloudinary);
 
@@ -105,6 +108,90 @@ router.get('/list', isLoggedIn, async (req, res) => {
         res.status(200).json(assets);
     } catch (error) {
         res.status(500).json({error: error.message});
+    }
+});
+
+
+//------------------------------
+const uploadTwo = multer({dest: 'uploads/'});
+const parseExcel = (filePath) => {
+    const workbook = new Excel.Workbook();
+    return workbook.xlsx.readFile(filePath).then(() => {
+        const worksheet = workbook.getWorksheet(1);
+        const data = [];
+
+        worksheet.eachRow((row) => {
+            const rowData = [];
+            row.eachCell({includeEmpty: true}, (cell) => {
+                rowData.push(cell.value);
+            });
+            data.push(rowData);
+        });
+
+        return data;
+    });
+};
+
+
+const getAssetFormManagement = async (organizationId) => {
+    try {
+        const assetFormManagement = await assetFormManagementModel.findOne({organizationId});
+        return assetFormManagement;
+    } catch (error) {
+        throw new Error('Error retrieving assetFormManagement');
+    }
+};
+
+
+router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) => {
+    try {
+        const excelData = await parseExcel(req.file.path);
+        const organizationId = req.user.data.organizationId;
+        const assetFormManagement = await getAssetFormManagement(organizationId);
+
+        const headers = excelData[0]; // Assuming headers are in the first row
+
+        const fieldsMapping = assetFormManagement.assetFormManagements.flatMap(group =>
+            group.subgroups.flatMap(subgroup =>
+                subgroup.fields.map(field => ({
+                    assetFieldName: field.name,
+                    groupName: group.groupName, // Add groupName
+                    subgroupName: subgroup.subgroupName
+                }))
+            )
+        );
+
+        const assets = [];
+
+        for (let i = 1; i < excelData.length; i++) {
+            const asset = {};
+
+            for (const mapping of fieldsMapping) {
+                const assetFieldName = mapping.assetFieldName;
+                const groupName = mapping.groupName;
+                const subgroupName = mapping.subgroupName;
+
+                const fieldValue = excelData[i][headers.indexOf(assetFieldName)];
+
+                if (assetFieldName) {
+                    if (!asset[groupName]) {
+                        asset[groupName] = {};
+                    }
+                    if (!asset[groupName][subgroupName]) {
+                        asset[groupName][subgroupName] = {};
+                    }
+                    asset[groupName][subgroupName][assetFieldName] = fieldValue;
+                }
+            }
+
+            assets.push(asset);
+        }
+
+        await assetService.saveAssetsToDatabase(organizationId, assets);
+
+        return res.json({message: 'Upload successful'});
+    } catch (error) {
+        return res.status(500).json({message: 'Error uploading data', error: error.message});
     }
 });
 
