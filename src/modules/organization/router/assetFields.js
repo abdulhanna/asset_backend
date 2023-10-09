@@ -142,6 +142,26 @@ const getAssetFormManagement = async (organizationId) => {
     }
 };
 
+function protectAndUnlockCells(worksheet) {
+    worksheet.sheetProtection = {
+        sheet: true,
+        insertRows: false,
+        formatCells: false,
+    };
+
+    // Iterate over each row up to 1000 rows
+    for (let rowNumber = 2; rowNumber <= 10; rowNumber++) {
+        const row = worksheet.getRow(rowNumber);
+
+        // Iterate over each header cell
+        row.eachCell((cell, colNumber) => {
+            cell.protection = {
+                locked: false
+            };
+        });
+    }
+}
+
 
 router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) => {
     try {
@@ -188,6 +208,14 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
         }
 
         await assetService.saveAssetsToDatabase(organizationId, assets);
+
+
+        const workbook = new Excel.Workbook();
+        await workbook.xlsx.readFile(req.file.path);
+        const mainSheet = workbook.getWorksheet(1);
+
+        // Assuming mainSheet is available in your context
+        protectAndUnlockCells(mainSheet);
 
         return res.json({message: 'Upload successful'});
     } catch (error) {
