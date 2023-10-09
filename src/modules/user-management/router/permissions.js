@@ -103,11 +103,12 @@ router.put('/update/:id', async (req, res) => {
     }
 });
 
+
 router.get('/all', isLoggedIn, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const sortBy = req.query.sortBy || 'createdAt';
+        const limit = parseInt(req.query.size) || 10;
+        const sortBy = req.query.sort ? JSON.parse(req.query.sort) : 'createdAt';
         const sortOrder = req.query.sortOrder === 'desc' ? -1 : 1;
 
         const permissionsData = await permissionService.getAllPermissions(page, limit, sortBy, sortOrder);
