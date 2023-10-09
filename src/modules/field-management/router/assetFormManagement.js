@@ -121,7 +121,7 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
         assetFormManagement.assetFormManagements.forEach((group) => {
             group.fields.forEach((field) => {
                 if (field.name) {
-                    headers.push({header: field.name, key: field.name, width: 40});
+                    headers.push({header: field.name, key: field.name, width: 10});
                 }
             });
 
@@ -129,7 +129,7 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
                 if (subgroup.fields && subgroup.fields.length > 0) {
                     subgroup.fields.forEach((field) => {
                         if (field.name) {
-                            headers.push({header: field.name, key: field.name, width: 40});
+                            headers.push({header: field.name, key: field.name, width: 30});
                         }
                     });
                 }
@@ -137,6 +137,16 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
         });
         // Set the columns of the worksheet using the headers array
         worksheet.columns = headers;
+
+        const headersRow = worksheet.getRow(1);
+
+        headersRow.eachCell((cell) => {
+            cell.font = {
+                color: {argb: 'FF000000'}, // Black text color
+                bold: true,
+            };
+        });
+
 
         const exportsDir = path.join(__dirname, 'exports');
 
