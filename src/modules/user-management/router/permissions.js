@@ -110,9 +110,16 @@ router.get('/all', isLoggedIn, async (req, res) => {
         const sortBy = req.query.sortBy || 'createdAt';
         const sortOrder = req.query.sortOrder === 'desc' ? -1 : 1;
 
-        const permissions = await permissionService.getAllPermissions(page, limit, sortBy, sortOrder);
+        const permissionsData = await permissionService.getAllPermissions(page, limit, sortBy, sortOrder);
 
-        return res.status(200).json({success: true, permissions});
+        return res.status(200).json({
+            success: true,
+            permissions: permissionsData.data,
+            totalDocuments: permissionsData.totalDocuments,
+            totalPages: permissionsData.totalPages,
+            startSerialNumber: permissionsData.startSerialNumber,
+            endSerialNumber: permissionsData.endSerialNumber
+        });
     } catch (error) {
         return res.status(500).json({success: false, error: error.message});
     }
