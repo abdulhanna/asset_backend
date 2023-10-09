@@ -4,3 +4,4 @@
 node_modules
 mounts
 public
+/src/modules/field-management/router/exports/
