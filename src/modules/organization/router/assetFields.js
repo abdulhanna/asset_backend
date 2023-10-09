@@ -156,9 +156,7 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
                 subgroup.fields.map(field => ({
                     assetFieldName: field.name,
                     groupName: group.groupName, // Add groupName
-                    subgroupName: subgroup.subgroupName,
-                    isMandatory: field.isMandatory,
-                    errorMessage: field.errorMessage
+                    subgroupName: subgroup.subgroupName
                 }))
             )
         );
@@ -166,23 +164,16 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
         const assets = [];
 
         for (let i = 1; i < excelData.length; i++) {
-
             const asset = {};
-            let hasError = false;
 
             for (const mapping of fieldsMapping) {
                 const assetFieldName = mapping.assetFieldName;
                 const groupName = mapping.groupName;
                 const subgroupName = mapping.subgroupName;
-                const isMandatory = mapping.isMandatory;
-                const errorMessage = mapping.errorMessage;
 
                 const fieldValue = excelData[i][headers.indexOf(assetFieldName)];
 
-                if (isMandatory && (!fieldValue || fieldValue.trim() === '')) {
-                    hasError = true;
-                    asset[assetFieldName] = errorMessage;
-                } else {
+                if (assetFieldName) {
                     if (!asset[groupName]) {
                         asset[groupName] = {};
                     }
@@ -191,22 +182,12 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
                     }
                     asset[groupName][subgroupName][assetFieldName] = fieldValue;
                 }
-
             }
 
-            if (!hasError) {
-                assets.push(asset);
-            }
-
+            assets.push(asset);
         }
 
-        if (assets.length > 0) {
-            await assetService.saveAssetsToDatabase(organizationId, assets);
-            return res.json({message: 'Upload successful'});
-        } else {
-            return;
-        }
-
+        await assetService.saveAssetsToDatabase(organizationId, assets);
 
         return res.json({message: 'Upload successful'});
     } catch (error) {
