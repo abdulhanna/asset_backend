@@ -7,12 +7,14 @@ import authModule from './modules/auth';
 import userManagementModule from './modules/user-management';
 import organizationModule from './modules/organization';
 import fieldManagementModule from './modules/field-management';
+import masterTableModule from "./modules/master-table";
 
 const modules = [
     authModule,
     userManagementModule,
     organizationModule,
     fieldManagementModule,
+    masterTableModule
 ];
 
 export const createApp = () => {

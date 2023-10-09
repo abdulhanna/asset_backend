@@ -1,11 +1,5 @@
 import { locationModel } from '../models';
 
-const generateAutomaticCode = () => {
-     const prefix = 'LOC';
-     const randomDigits = Math.floor(10000 + Math.random() * 90000);
-     return prefix + randomDigits;
-};
-
 const checkLocationCodeIdExists = async (locationCodeId) => {
      const existingLocation = await locationModel.findOne({ locationCodeId });
      return !!existingLocation; // Return true if a location with the given codeId exists, otherwise false
@@ -320,7 +314,6 @@ export const locationService = {
      getAllLocations,
      updateLocation,
      deleteLocation,
-     generateAutomaticCode,
      checkLocationCodeIdExists,
      addlocationassetGroup,
      removeAssetGroupFromLocation,

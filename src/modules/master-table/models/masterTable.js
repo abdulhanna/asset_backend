@@ -10,8 +10,11 @@ const dynamicTableFieldSchema = new Schema({
         enum: ['AlphaNumeric', 'TextFields', 'Numeric'],
         required: true
     },
-    label: String,
-    inputValue: String  // This field will be used for Input text value
+    rateType: {
+        type: String,
+        enum: ['SLM', 'WDV', null],
+        default: null
+    }
 });
 
 
@@ -21,12 +24,19 @@ const masterTableSchema = new mongoose.Schema(
             type: String,
             required: true,
             unique: true,
-
+        },
+        tableName: {
+            type: String,
+            required: true,
         },
         applicableTo: {
             type: String,
-            enum: ['All', 'Organization'],
+            enum: ['All', 'Organization', 'Country'],
             required: true
+        },
+        applicableId: {
+            type: String,
+            default: null
         },
         fields: [dynamicTableFieldSchema],
         uploadDocument: {
@@ -42,3 +52,4 @@ const masterTableSchema = new mongoose.Schema(
 const masterTableModel = mongoose.model('mastertables', masterTableSchema);
 
 export default masterTableModel;
+
