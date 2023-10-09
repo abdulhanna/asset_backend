@@ -121,32 +121,46 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
         assetFormManagement.assetFormManagements.forEach((group) => {
             group.fields.forEach((field) => {
                 if (field.name) {
-                    headers.push({header: field.name, key: field.name, width: 10});
+                    headers.push({
+                        header: field.name,
+                        key: field.name,
+                        width: 10,
+                        dataType: field.dataType,
+                        errorMessage: field.errorMessage,
+                        isMandatory: field.isMandatory
+                    });
                 }
             });
 
             group.subgroups.forEach((subgroup) => {
                 if (subgroup.fields && subgroup.fields.length > 0) {
                     subgroup.fields.forEach((field) => {
+                        console.log('field', field);
                         if (field.name) {
-                            headers.push({header: field.name, key: field.name, width: 30});
+                            headers.push({
+                                header: field.name,
+                                key: field.name,
+                                width: 30,
+                                dataType: field.dataType,
+                                errorMessage: field.errorMessage,
+                                isMandatory: field.isMandatory
+                            });
                         }
                     });
                 }
             });
         });
-        // Set the columns of the worksheet using the headers array
+
         worksheet.columns = headers;
 
         const headersRow = worksheet.getRow(1);
 
         headersRow.eachCell((cell) => {
             cell.font = {
-                color: {argb: 'FF000000'}, // Black text color
+                color: {argb: 'FF000000'},
                 bold: true,
             };
         });
-
 
         const exportsDir = path.join(__dirname, 'exports');
 
