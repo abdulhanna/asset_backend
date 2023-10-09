@@ -55,6 +55,7 @@ const updatePermission = async (id, updateData) => {
 
 const getAllPermissions = async (page, limit, sortBy, sortOrder) => {
     try {
+        
         const skip = (page - 1) * limit;
         let totalDocuments, totalPages, startSerialNumber, endSerialNumber, data;
 
@@ -63,7 +64,7 @@ const getAllPermissions = async (page, limit, sortBy, sortOrder) => {
         data = await permissionModel
             .find(filter)
             .select('moduleName read readWrite actions allAccess removeAccess dashboardType _id createdAt isDeactivated')
-            .sort({[sortBy]: sortOrder})
+            .sort(sortBy)
             .skip(skip)
             .limit(limit);
 
