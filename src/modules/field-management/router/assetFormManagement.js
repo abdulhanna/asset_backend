@@ -181,9 +181,29 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
             }
         });
 
+
         worksheet.columns = headers;
 
         const headersRow = worksheet.getRow(1);
+        // Iterate over each row up to 1000 rows
+        for (let rowNumber = 2; rowNumber <= 1000; rowNumber++) {
+            const row = worksheet.getRow(rowNumber);
+
+            // Iterate over each header cell
+            headersRow.eachCell((headerCell, colNumber) => {
+                const cell = row.getCell(colNumber);
+                cell.protection = {
+                    locked: false
+                };
+            });
+        }
+
+        // Protect the worksheet to prevent editing in other cells
+        worksheet.protect('123');
+        worksheet.sheetProtection.sheet = true;
+        worksheet.sheetProtection.insertRows = false;
+        worksheet.sheetProtection.formatCells = false;
+
 
         headersRow.eachCell((cell) => {
             cell.font = {
@@ -191,6 +211,7 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
                 bold: true,
             };
         });
+
 
         const exportsDir = path.join(__dirname, 'exports');
 
