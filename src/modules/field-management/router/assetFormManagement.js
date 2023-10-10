@@ -118,7 +118,7 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
 
         const headers = [];
         let rowNumber = 1; // Initialize row number to 2
-        const startRow = 2; // Starting from row 2
+        const startRow = 1; // Starting from row 2
         const endRow = 1000; // Ending at row 1000
         assetFormManagement.assetFormManagements.forEach((group) => {
             group.fields.forEach((field) => {
@@ -171,7 +171,7 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
                                         };
                                     }
                                 }
-                                
+
                                 rowNumber++; // Increment row number
                                 headers.push(headerInfo);
                             }
@@ -208,7 +208,10 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
 
         fileStream.pipe(res);
 
-        console.log('Excel file sent successfully');
+        return res.status(200).json({
+            success: true,
+            message: 'Excel file generated successfully'
+        });
     } catch (error) {
         console.error('Error exporting Excel:', error);
         res.status(500).send('Internal Server Error');
