@@ -117,39 +117,63 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
         const worksheet = workbook.addWorksheet('Sheet1');
 
         const headers = [];
-
+        let rowNumber = 1; // Initialize row number to 2
         assetFormManagement.assetFormManagements.forEach((group) => {
             group.fields.forEach((field) => {
                 if (field.name) {
-                    headers.push({
+                    const headerInfo = {
                         header: field.name,
                         key: field.name,
                         width: 10,
-                        dataType: field.dataType,
-                        errorMessage: field.errorMessage,
-                        isMandatory: field.isMandatory
-                    });
+                    };
+
+                    if (field.dataType === 'list') {
+                        const joinedDropdownList = field.listOptions.join(',');
+                        const cellAddress = String.fromCharCode(headers.length + 65) + rowNumber;
+
+                        // Apply data validation on the cell
+                        worksheet.getCell(cellAddress).dataValidation = {
+                            type: 'list',
+                            allowBlank: true,
+                            formulae: [`"${joinedDropdownList}"`]
+                        };
+                    }
+
+                    headers.push(headerInfo);
                 }
             });
 
             group.subgroups.forEach((subgroup) => {
                 if (subgroup.fields && subgroup.fields.length > 0) {
                     subgroup.fields.forEach((field) => {
-                        console.log('field', field);
                         if (field.name) {
-                            headers.push({
+                            const headerInfo = {
                                 header: field.name,
                                 key: field.name,
                                 width: 30,
-                                dataType: field.dataType,
-                                errorMessage: field.errorMessage,
-                                isMandatory: field.isMandatory
-                            });
+                            };
+
+                            if (field.dataType === 'list') {
+                                const formula = field.listOptions.map(option => `"${option}"`).join(',');
+                                const cellAddress = String.fromCharCode(headers.length + 65) + rowNumber;
+
+                                console.log('cellAddress', cellAddress);
+                                // Apply data validation on the cell
+                                worksheet.getCell(cellAddress).dataValidation = {
+                                    type: 'list',
+                                    allowBlank: true,
+                                    formulae: [formula]
+                                };
+                            }
+
+                            headers.push(headerInfo);
                         }
                     });
                 }
             });
+            rowNumber++; // Increment row number after processing each group
         });
+
 
         worksheet.columns = headers;
 
