@@ -104,6 +104,13 @@ router.get('/non-mandatory-fields/:groupOrSubgroupId', isLoggedIn, async (req, r
 
 //Set asset form management - .xlsx
 
+const getDate = () => {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1; // Note: months are zero-indexed
+    const day = date.getDate();
+    return [year, month, day];
+};
 router.get('/export-excel', isLoggedIn, async (req, res) => {
     try {
         const organizationId = req.user.data.organizationId;
@@ -170,7 +177,28 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
                                             formulae: [`"${joinedDropdownList}"`]
                                         };
                                     }
+                                } else if (field.dataType === 'date') {
+                                    // Apply date validation on the cell dynamically
+
+
+                                    const currDate = getDate();
+                                    const formulae = [`${currDate[0]}/${currDate[1]}/${currDate[2] + 1}`];
+
+                                    for (let i = startRow; i <= endRow; i++) {
+                                        const cellAddress = String.fromCharCode(headers.length + 65) + i;
+                                        worksheet.getCell(cellAddress).dataValidation = {
+                                            type: 'date',
+                                            allowBlank: true,
+                                            operator: 'lessThanOrEqual',
+                                            formulae,
+                                            showErrorMessage: true,
+                                            errorStyle: 'error',
+                                            errorTitle: 'Invalid Date',
+                                            error: `Please enter a date less than or equal to ${currDate[0]}/${currDate[1]}/${currDate[2] + 1}`,
+                                        };
+                                    }
                                 }
+
 
                                 rowNumber++; // Increment row number
                                 headers.push(headerInfo);
