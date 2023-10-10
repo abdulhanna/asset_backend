@@ -154,7 +154,6 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
                             };
 
                             if (field.dataType === 'list') {
-                                const formula = field.listOptions.map(option => `"${option}"`).join(',');
                                 const cellAddress = String.fromCharCode(headers.length + 65) + rowNumber;
 
                                 console.log('cellAddress', cellAddress);
@@ -162,7 +161,7 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
                                 worksheet.getCell(cellAddress).dataValidation = {
                                     type: 'list',
                                     allowBlank: true,
-                                    formulae: [formula]
+                                    formulae: [`"${field.listOptions.join(',')}"`],
                                 };
                             }
 
