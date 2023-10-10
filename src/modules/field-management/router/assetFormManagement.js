@@ -118,6 +118,8 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
 
         const headers = [];
         let rowNumber = 1; // Initialize row number to 2
+        const startRow = 2; // Starting from row 2
+        const endRow = 1000; // Ending at row 1000
         assetFormManagement.assetFormManagements.forEach((group) => {
             group.fields.forEach((field) => {
                 if (field.name) {
@@ -129,50 +131,55 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
 
                     if (field.dataType === 'list') {
                         const joinedDropdownList = field.listOptions.join(',');
-                        const cellAddress = String.fromCharCode(headers.length + 65) + rowNumber;
 
-                        // Apply data validation on the cell
-                        worksheet.getCell(cellAddress).dataValidation = {
-                            type: 'list',
-                            allowBlank: true,
-                            formulae: [`"${joinedDropdownList}"`]
-                        };
+                        // Apply data validation on the cell dynamically
+                        for (let i = startRow; i <= endRow; i++) {
+                            const cellAddress = String.fromCharCode(headers.length + 65) + i;
+                            worksheet.getCell(cellAddress).dataValidation = {
+                                type: 'list',
+                                allowBlank: true,
+                                formulae: [`"${joinedDropdownList}"`]
+                            };
+                        }
                     }
-
+                    rowNumber++; // Increment row number
                     headers.push(headerInfo);
                 }
             });
 
-            group.subgroups.forEach((subgroup) => {
-                if (subgroup.fields && subgroup.fields.length > 0) {
-                    subgroup.fields.forEach((field) => {
-                        if (field.name) {
-                            const headerInfo = {
-                                header: field.name,
-                                key: field.name,
-                                width: 30,
-                            };
-
-                            if (field.dataType === 'list') {
-                                const cellAddress = String.fromCharCode(headers.length + 65) + rowNumber;
-
-                                console.log('cellAddress', cellAddress);
-                                // Apply data validation on the cell
-                                worksheet.getCell(cellAddress).dataValidation = {
-                                    type: 'list',
-                                    allowBlank: true,
-                                    formulae: [`"${field.listOptions.join(',')}"`],
+            if (group.subgroups && group.subgroups.length > 0) {
+                group.subgroups.forEach((subgroup) => {
+                    if (subgroup.fields && subgroup.fields.length > 0) {
+                        subgroup.fields.forEach((field) => {
+                            if (field.name) {
+                                const headerInfo = {
+                                    header: field.name,
+                                    key: field.name,
+                                    width: 30,
                                 };
+
+                                if (field.dataType === 'list') {
+                                    const joinedDropdownList = field.listOptions.join(',');
+
+                                    // Apply data validation on the cell dynamically
+                                    for (let i = startRow; i <= endRow; i++) {
+                                        const cellAddress = String.fromCharCode(headers.length + 65) + i;
+                                        worksheet.getCell(cellAddress).dataValidation = {
+                                            type: 'list',
+                                            allowBlank: true,
+                                            formulae: [`"${joinedDropdownList}"`]
+                                        };
+                                    }
+                                }
+                                
+                                rowNumber++; // Increment row number
+                                headers.push(headerInfo);
                             }
-
-                            headers.push(headerInfo);
-                        }
-                    });
-                }
-            });
-            rowNumber++; // Increment row number after processing each group
+                        });
+                    }
+                });
+            }
         });
-
 
         worksheet.columns = headers;
 
@@ -210,3 +217,4 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
 
 
 export default router;
+
