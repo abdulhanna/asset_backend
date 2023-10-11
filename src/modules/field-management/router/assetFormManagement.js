@@ -143,6 +143,24 @@ const applyFieldValidation = (worksheet, field, startRow, endRow, headers) => {
                 error: `Please enter a date less than or equal to ${currDate[0]}/${currDate[1]}/${currDate[2] + 1}`,
             };
         }
+    } else if (field.dataType === 'string') {
+        for (let i = startRow; i <= endRow; i++) {
+            const cellAddress = String.fromCharCode(headers.length + 65) + i;
+
+            if (field.fieldLength) {
+                worksheet.getCell(cellAddress).dataValidation = {
+                    type: 'textLength',
+                    allowBlank: true,
+                    operator: 'lessThanOrEqual',
+                    showInputMessage: true,
+                    showErrorMessage: true,
+                    formulae: [field.fieldLength],
+                    errorStyle: 'error',
+                    errorTitle: 'Invalid Length',
+                    error: `The length of this field should be less than or equal to ${field.fieldLength} characters.`
+                };
+            }
+        }
     }
 };
 
