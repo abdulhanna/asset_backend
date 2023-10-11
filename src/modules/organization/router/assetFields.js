@@ -180,6 +180,7 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
                 }))
             )
         );
+        console.log('test');
 
         const assets = [];
 
