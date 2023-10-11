@@ -121,7 +121,9 @@ const applyFieldValidation = (worksheet, field, startRow, endRow, headers) => {
             worksheet.getCell(cellAddress).dataValidation = {
                 type: 'list',
                 allowBlank: true,
-                formulae: [`"${joinedDropdownList}"`]
+                formulae: [`"${joinedDropdownList}"`],
+                showErrorMessage: true,
+                error: field.errorMessage
             };
         }
     } else if (field.dataType === 'date') {
