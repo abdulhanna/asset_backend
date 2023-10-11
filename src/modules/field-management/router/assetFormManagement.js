@@ -161,6 +161,20 @@ const applyFieldValidation = (worksheet, field, startRow, endRow, headers) => {
                 };
             }
         }
+    } else if (field.dataType === 'number') {
+        for (let i = startRow; i <= endRow; i++) {
+            const cellAddress = String.fromCharCode(headers.length + 65) + i;
+
+            // Allow only decimal or whole numbers
+            worksheet.getCell(cellAddress).dataValidation = {
+                type: 'decimal',
+                allowBlank: true,
+                showErrorMessage: true,
+                errorStyle: 'error',
+                errorTitle: 'Invalid Number',
+                error: 'Please enter a valid number (whole or decimal).'
+            };
+        }
     }
 };
 
