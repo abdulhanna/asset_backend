@@ -111,6 +111,39 @@ const getDate = () => {
     const day = date.getDate();
     return [year, month, day];
 };
+
+const applyFieldValidation = (worksheet, field, startRow, endRow, headers) => {
+    if (field.dataType === 'list') {
+        const joinedDropdownList = field.listOptions.join(',');
+
+        for (let i = startRow; i <= endRow; i++) {
+            const cellAddress = String.fromCharCode(headers.length + 65) + i;
+            worksheet.getCell(cellAddress).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: [`"${joinedDropdownList}"`]
+            };
+        }
+    } else if (field.dataType === 'date') {
+        const currDate = getDate();
+        const formulae = [`${currDate[0]}/${currDate[1]}/${currDate[2] + 1}`];
+
+        for (let i = startRow; i <= endRow; i++) {
+            const cellAddress = String.fromCharCode(headers.length + 65) + i;
+            worksheet.getCell(cellAddress).dataValidation = {
+                type: 'date',
+                allowBlank: true,
+                operator: 'lessThanOrEqual',
+                formulae,
+                showErrorMessage: true,
+                errorStyle: 'error',
+                errorTitle: 'Invalid Date',
+                error: `Please enter a date less than or equal to ${currDate[0]}/${currDate[1]}/${currDate[2] + 1}`,
+            };
+        }
+    }
+};
+
 router.get('/export-excel', isLoggedIn, async (req, res) => {
     try {
         const organizationId = req.user.data.organizationId;
@@ -124,36 +157,11 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
         const worksheet = workbook.addWorksheet('Sheet1');
 
         const headers = [];
-        let rowNumber = 1; // Initialize row number to 2
-        const startRow = 1; // Starting from row 2
-        const endRow = 1000; // Ending at row 1000
+        let rowNumber = 1;
+        const startRow = 1;
+        const endRow = 1000;
+
         assetFormManagement.assetFormManagements.forEach((group) => {
-            group.fields.forEach((field) => {
-                if (field.name) {
-                    const headerInfo = {
-                        header: field.name,
-                        key: field.name,
-                        width: 10,
-                    };
-
-                    if (field.dataType === 'list') {
-                        const joinedDropdownList = field.listOptions.join(',');
-
-                        // Apply data validation on the cell dynamically
-                        for (let i = startRow; i <= endRow; i++) {
-                            const cellAddress = String.fromCharCode(headers.length + 65) + i;
-                            worksheet.getCell(cellAddress).dataValidation = {
-                                type: 'list',
-                                allowBlank: true,
-                                formulae: [`"${joinedDropdownList}"`]
-                            };
-                        }
-                    }
-                    rowNumber++; // Increment row number
-                    headers.push(headerInfo);
-                }
-            });
-
             if (group.subgroups && group.subgroups.length > 0) {
                 group.subgroups.forEach((subgroup) => {
                     if (subgroup.fields && subgroup.fields.length > 0) {
@@ -165,42 +173,9 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
                                     width: 30,
                                 };
 
-                                if (field.dataType === 'list') {
-                                    const joinedDropdownList = field.listOptions.join(',');
+                                applyFieldValidation(worksheet, field, startRow, endRow, headers);
 
-                                    // Apply data validation on the cell dynamically
-                                    for (let i = startRow; i <= endRow; i++) {
-                                        const cellAddress = String.fromCharCode(headers.length + 65) + i;
-                                        worksheet.getCell(cellAddress).dataValidation = {
-                                            type: 'list',
-                                            allowBlank: true,
-                                            formulae: [`"${joinedDropdownList}"`]
-                                        };
-                                    }
-                                } else if (field.dataType === 'date') {
-                                    // Apply date validation on the cell dynamically
-
-
-                                    const currDate = getDate();
-                                    const formulae = [`${currDate[0]}/${currDate[1]}/${currDate[2] + 1}`];
-
-                                    for (let i = startRow; i <= endRow; i++) {
-                                        const cellAddress = String.fromCharCode(headers.length + 65) + i;
-                                        worksheet.getCell(cellAddress).dataValidation = {
-                                            type: 'date',
-                                            allowBlank: true,
-                                            operator: 'lessThanOrEqual',
-                                            formulae,
-                                            showErrorMessage: true,
-                                            errorStyle: 'error',
-                                            errorTitle: 'Invalid Date',
-                                            error: `Please enter a date less than or equal to ${currDate[0]}/${currDate[1]}/${currDate[2] + 1}`,
-                                        };
-                                    }
-                                }
-
-
-                                rowNumber++; // Increment row number
+                                rowNumber++;
                                 headers.push(headerInfo);
                             }
                         });
@@ -209,15 +184,13 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
             }
         });
 
-
         worksheet.columns = headers;
 
         const headersRow = worksheet.getRow(1);
-        // Iterate over each row up to 1000 rows
+
         for (let rowNumber = 2; rowNumber <= 1000; rowNumber++) {
             const row = worksheet.getRow(rowNumber);
 
-            // Iterate over each header cell
             headersRow.eachCell((headerCell, colNumber) => {
                 const cell = row.getCell(colNumber);
                 cell.protection = {
@@ -226,12 +199,10 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
             });
         }
 
-        // Protect the worksheet to prevent editing in other cells
         worksheet.protect('123');
         worksheet.sheetProtection.sheet = true;
         worksheet.sheetProtection.insertRows = false;
         worksheet.sheetProtection.formatCells = false;
-
 
         headersRow.eachCell((cell) => {
             cell.font = {
@@ -239,7 +210,6 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
                 bold: true,
             };
         });
-
 
         const exportsDir = path.join(__dirname, 'exports');
 
