@@ -170,7 +170,7 @@ const getMemberById = async (memberId) => {
     }
 };
 
-const deleteUser = async (userId) => {
+const deactivateUser = async (userId) => {
     try {
         // Find the user by ID
         const user = await userModel.findById(userId);
@@ -180,8 +180,10 @@ const deleteUser = async (userId) => {
         }
 
         // Update the isDeleted field to true and set deletedAt to the current date
-        user.isDeleted = true;
-        user.deletedAt = new Date();
+        // user.isDeleted = true;
+        // user.deletedAt = new Date();
+        user.isDeactivated = true;
+
 
         // Save the updated user
         const updatedUser = await user.save();
@@ -199,5 +201,5 @@ export const memberService = {
     getMembersByRole,
     getMemberByEmail,
     getMemberById,
-    deleteUser,
+    deactivateUser,
 };
