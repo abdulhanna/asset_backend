@@ -11,16 +11,12 @@ const checkExistingGroups = async (groupNames) => {
         throw error;
     }
 };
-const createMultipleFieldGroups = async (groupNames) => {
-    const newFieldGroups = await Promise.all(
-        groupNames.map(async (groupName) => {
-            return await fieldManagementModel.create({
-                groupName: groupName,
-                // subgroups: [], // Initialize with an empty array of subgroups
-            });
-        })
-    );
-    return newFieldGroups;
+const createFieldGroup = async (groupName, isMandatory) => {
+    const newFieldGroup = await fieldManagementModel.create({
+        groupName: groupName,
+        isMandatory: isMandatory || false, // Set isMandatory to default value if not provided
+    });
+    return newFieldGroup;
 };
 
 const updateSubgroups = async (groupId, newSubgroups) => {
@@ -490,9 +486,22 @@ const markFieldAsDeleted = async (fieldId) => {
 
     return updatedGroup;
 };
+const updateGroups = async (groupUpdates) => {
+    const updatedGroups = await Promise.all(
+        groupUpdates.map(async ({groupName, stepNo, orderNo}) => {
+            return await fieldManagementModel.findOneAndUpdate(
+                {groupName: groupName},
+                {$set: {stepNo: stepNo, orderNo: orderNo}},
+                {new: true}
+            );
+        })
+    );
+
+    return updatedGroups;
+};
 
 export const fieldManagementService = {
-    createMultipleFieldGroups,
+    createFieldGroup,
     getFieldGroupsById,
     getFieldGroupsByOrganizationIdNull,
     addFieldToGroupV2,
@@ -506,7 +515,8 @@ export const fieldManagementService = {
     markFieldAsDeleted,
     getFieldGroupsByOrganizationId,
     addFieldAndUpdateAssetForm,
-    checkExistingGroups
+    checkExistingGroups,
+    updateGroups
 };
 
 
