@@ -146,7 +146,59 @@ const restoreDefaultPermissions = async (roleId) => {
     }
 };
 
-const getAllRoles = async (loggedInUserId) => {
+const getAllRoles = async (loggedInUserId, page, limit, sortBy) => {
+    try {
+        const skip = (page - 1) * limit;
+
+        const filter = {
+            addedByUserId: loggedInUserId,
+            isDeleted: false,
+            isDeactivated: false
+        };
+
+        const data = await roleDefineModel
+            .find(filter)
+            .select('-deletedAt')
+            .populate('addedByUserId', 'email')
+            .populate('permissions', 'moduleName read readWrite actions')
+            .sort(sortBy)
+            .skip(skip)
+            .limit(limit)
+            .exec();
+
+        const rolesWithUserCount = await Promise.all(data.map(async (role) => {
+            const userCount = await userModel.countDocuments({
+                teamRoleId: role._id
+            });
+            role = role.toObject();
+            role.userCount = userCount;
+            return role;
+        }));
+
+        rolesWithUserCount.forEach((role) => {
+            role.permissions = role.permissions.filter(
+                (permission) => !permission.removeAccess
+            );
+        });
+
+        const totalDocuments = await roleDefineModel.countDocuments(filter);
+        const totalPages = Math.ceil(totalDocuments / limit);
+        const startSerialNumber = (page - 1) * limit + 1;
+        const endSerialNumber = Math.min(page * limit, totalDocuments);
+
+        return {
+            data: rolesWithUserCount,
+            totalDocuments,
+            totalPages,
+            startSerialNumber,
+            endSerialNumber,
+        };
+    } catch (error) {
+        throw new Error('Unable to fetch roles');
+    }
+};
+
+const getAllRolesForMembersAdd = async (loggedInUserId) => {
     try {
 
         const roles = await roleDefineModel
@@ -262,6 +314,7 @@ export const rolesService = {
     createRole,
     updateRole,
     getAllRoles,
+    getAllRolesForMembersAdd,
     restoreDefaultPermissions,
     deleteRoles,
     getAllRolesV2,

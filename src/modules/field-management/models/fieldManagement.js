@@ -79,6 +79,14 @@ const groupSchema = new mongoose.Schema({
         required: true,
         unique: true,
     },
+    step: {
+        type: Number,
+        required: true,
+    },
+    order: {
+        type: Number,
+        required: true,
+    },
     subgroups: {
         type: [subgroupSchema],
     },
