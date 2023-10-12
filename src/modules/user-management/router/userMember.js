@@ -175,8 +175,21 @@ router.get('/', isLoggedIn, async (req, res) => {
         // const { parentId } = req.params;
         const parentId = req.user.data._id;
         const userType = req.query.userType;
-        const members = await memberService.getAllMembers(parentId, userType);
-        return res.status(200).json({success: true, members});
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.size) || 10;
+        const sortBy = req.query.sort ? JSON.parse(req.query.sort) : 'createdAt';
+
+        const membersData = await memberService.getAllMembers(parentId, userType, page, limit, sortBy);
+
+        return res.status(200).json({
+            success: true,
+            roles: membersData.data,
+            totalDocuments: membersData.totalDocuments,
+            totalPages: membersData.totalPages,
+            startSerialNumber: membersData.startSerialNumber,
+            endSerialNumber: membersData.endSerialNumber
+        });
+
     } catch (error) {
         return res.status(500).json({success: false, error: error.message});
     }
