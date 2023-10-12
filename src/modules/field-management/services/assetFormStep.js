@@ -13,13 +13,11 @@ const associateAssetFormStepWithGroups = async (stepNo, stepName, groups) => {
                 const foundGroup = await fieldManagementModel.findById(groupId);
 
                 if (foundGroup) {
-                    if (foundGroup.assetFormStepId === null) {
-                        foundGroup.assetFormStepId = assetFormStep._id;
-                    }
+                    foundGroup.assetFormStepId = assetFormStep._id;
                     foundGroup.orderNo = orderNo;
 
                     await foundGroup.save();
-                    
+
                 } else {
                     throw new Error(`Group with ID ${groupId} not found`);
                 }
