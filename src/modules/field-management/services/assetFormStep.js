@@ -3,8 +3,8 @@ import fieldManagementModel from '../models/fieldManagement';
 
 const associateAssetFormStepWithGroups = async (stepNo, stepName, groups) => {
     try {
-        const assetFormStep = await assetFormStepModel.findOne({stepNo, stepName});
-        console.log(assetFormStep, 'assetFormStep');
+        const newAssetFormStep = new assetFormStepModel({stepNo, stepName});
+        const assetFormStep = await newAssetFormStep.save();
 
         if (assetFormStep) {
             const promises = groups.map(async group => {
@@ -13,11 +13,13 @@ const associateAssetFormStepWithGroups = async (stepNo, stepName, groups) => {
                 const foundGroup = await fieldManagementModel.findById(groupId);
 
                 if (foundGroup) {
-                    foundGroup.assetFormStepId.push({
-                        assetFormStep: assetFormStep._id,
-                        orderNo
-                    });
+                    if (foundGroup.assetFormStepId === null) {
+                        foundGroup.assetFormStepId = assetFormStep._id;
+                    }
+                    foundGroup.orderNo = orderNo;
+
                     await foundGroup.save();
+                    
                 } else {
                     throw new Error(`Group with ID ${groupId} not found`);
                 }
@@ -25,12 +27,13 @@ const associateAssetFormStepWithGroups = async (stepNo, stepName, groups) => {
 
             await Promise.all(promises);
         } else {
-            throw new Error('AssetFormStep not found');
+            throw new Error('Failed to create AssetFormStep');
         }
     } catch (error) {
         throw error;
     }
 };
+
 
 export const assetFormStepService = {
     associateAssetFormStepWithGroups
