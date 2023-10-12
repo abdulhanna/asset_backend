@@ -49,6 +49,7 @@ const createMember = async (userData) => {
             verificationToken: verificationToken,
             userType: userData.userType,
             is_profile_completed: true,
+            createdAt: new Date()
         });
 
         const savedMember = await member.save();

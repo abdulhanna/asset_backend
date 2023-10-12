@@ -79,13 +79,18 @@ const groupSchema = new mongoose.Schema({
         required: true,
         unique: true,
     },
-    step: {
+    orderNo: {
         type: Number,
-        required: true,
+        default: null
     },
-    order: {
-        type: Number,
-        required: true,
+    assetFormStepId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'assetformsteps',
+        default: null
+    },
+    isMandatory: {
+        type: Boolean,
+        default: false
     },
     subgroups: {
         type: [subgroupSchema],
