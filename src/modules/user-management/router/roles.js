@@ -145,14 +145,41 @@ router.put('/:roleId/restoreDefaults', isLoggedIn, async (req, res) => {
     }
 });
 
-// Route to retrieve all roles
-router.get('/', isLoggedIn, async (req, res) => {
+
+router.get('/members-addition', isLoggedIn, async (req, res) => {
     try {
         const loggedInUserId = req.user.data._id;
 
         // Retrieve all roles from the database
-        const roles = await rolesService.getAllRoles(loggedInUserId);
+        const roles = await rolesService.getAllRolesForMembersAdd(loggedInUserId);
         return res.status(200).json(roles);
+    } catch (err) {
+        return res.status(500).json({error: 'Unable to fetch roles'});
+    }
+});
+
+
+// Route to retrieve all roles
+router.get('/', isLoggedIn, async (req, res) => {
+    try {
+
+        const loggedInUserId = req.user.data._id;
+
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.size) || 10;
+        const sortBy = req.query.sort ? JSON.parse(req.query.sort) : 'createdAt';
+
+        // Retrieve all roles from the database
+        const rolesData = await rolesService.getAllRoles(loggedInUserId, page, limit, sortBy);
+
+        return res.status(200).json({
+            success: true,
+            roles: rolesData.data,
+            totalDocuments: rolesData.totalDocuments,
+            totalPages: rolesData.totalPages,
+            startSerialNumber: rolesData.startSerialNumber,
+            endSerialNumber: rolesData.endSerialNumber
+        });
     } catch (err) {
         return res.status(500).json({error: 'Unable to fetch roles'});
     }
