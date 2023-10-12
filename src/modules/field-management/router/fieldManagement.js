@@ -5,49 +5,25 @@ import {isLoggedIn} from '../../auth/router/passport.js';
 const router = express.Router();
 
 // Create multiple groups with only group names
-router.post('/add-group', isLoggedIn, async (req, res) => {
+router.post('/add-groups', isLoggedIn, async (req, res) => {
     try {
-        const {groupName, isMandatory} = req.body;
+        const {groupDetails} = req.body;
 
-        const existingGroup = await fieldManagementService.checkExistingGroups([groupName]);
+        if (Array.isArray(groupDetails)) {
+            const existingGroups = await fieldManagementService.checkExistingGroups(groupDetails.map(group => group.groupName));
 
-        if (existingGroup.length > 0) {
-            return res.status(400).json({
-                message: 'Group name already exists',
-            });
+            if (existingGroups.length > 0) {
+                return res.status(400).json({
+                    message: 'Group names already exist',
+                });
+            }
+
+            const newFieldGroups = await fieldManagementService.createMultipleFieldGroups(groupDetails);
+            return res.status(201).json({success: true, message: 'Field groups added successfully', newFieldGroups});
         }
-
-        const newFieldGroup = await fieldManagementService.createFieldGroup(groupName, isMandatory);
-
-        return res.status(201).json({
-            success: true,
-            message: 'Field group added successfully',
-            newFieldGroup
-        });
     } catch (error) {
         console.error(error);
-        return res.status(500).json({
-            error: 'Unable to create field group'
-        });
-    }
-});
-
-router.put('/update-groups', isLoggedIn, async (req, res) => {
-    try {
-        const groupUpdates = req.body; // Assuming req.body is an array of objects with groupName, stepNo, and orderNo
-
-        const updatedGroups = await fieldManagementService.updateGroups(groupUpdates);
-
-        return res.status(200).json({
-            success: true,
-            message: 'Groups updated successfully',
-            updatedGroups
-        });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({
-            error: 'Unable to update groups'
-        });
+        return res.status(500).json({error: 'Unable to create field groups'});
     }
 });
 

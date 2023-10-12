@@ -4,6 +4,7 @@ import fieldManagementModel from '../models/fieldManagement';
 const associateAssetFormStepWithGroups = async (stepNo, stepName, groups) => {
     try {
         const assetFormStep = await assetFormStepModel.findOne({stepNo, stepName});
+        console.log(assetFormStep, 'assetFormStep');
 
         if (assetFormStep) {
             const promises = groups.map(async group => {
