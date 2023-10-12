@@ -1,7 +1,7 @@
 import jwtService from '../../auth/services/jwt-services';
 import emailtemplate from '../../../helpers/send-email';
 import userModel from '../../auth/models';
-import { locationModel } from '../../organization/models';
+import {locationModel} from '../../organization/models';
 
 const getMemberByEmail = async (email) => {
     try {
@@ -100,9 +100,9 @@ const updateMember = async (id, data) => {
     }
 };
 
-const getAllMembers = async (parentId, userType) => {
+const getAllMembers = async (parentId, userType, page, limit, sortBy) => {
     try {
-
+        const skip = (page - 1) * limit;
 
         let query = {parentId, isDeleted: false};
 
@@ -113,14 +113,29 @@ const getAllMembers = async (parentId, userType) => {
         const members = await userModel
             .find(query)
             .populate('teamRoleId', 'roleName')
-            .select('-deletedAt');
+            .select('-deletedAt')
+            .sort(sortBy)
+            .skip(skip)
+            .limit(limit);
 
-        return members;
+        const totalDocuments = await userModel.countDocuments(query);
+        const totalPages = Math.ceil(totalDocuments / limit);
+        const startSerialNumber = (page - 1) * limit + 1;
+        const endSerialNumber = Math.min(page * limit, totalDocuments);
+
+        return {
+            data: members,
+            totalDocuments,
+            totalPages,
+            startSerialNumber,
+            endSerialNumber,
+        };
     } catch (error) {
         console.log(error);
         throw new Error('Failed to fetch members');
     }
 };
+
 
 // Function to get members by roleName and parentId
 const getMembersByRole = async (teamRoleId) => {
