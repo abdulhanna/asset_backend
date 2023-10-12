@@ -177,7 +177,10 @@ const getFieldGroupsByOrganizationIdNull = async (organizationId) => {
             );
 
         } else {
-            fieldGroups = await fieldManagementModel.find().lean();
+            fieldGroups = await fieldManagementModel.find().lean().populate({
+                path: 'assetFormStepId',
+                select: 'stepNo stepName'
+            });
 
             // Remove fields with isDeleted: true from each subgroup
             fieldGroups.forEach(group => {
