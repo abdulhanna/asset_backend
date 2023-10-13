@@ -249,18 +249,22 @@ router.delete('/delete-subgroup/:subgroupId', isLoggedIn, async (req, res) => {
     try {
         const {subgroupId} = req.params;
         const deleteSubGroupId = await fieldManagementService.deleteSubGroupById(subgroupId);
-        console.log(subgroupId);
 
         return res.status(200).json({
             success: true,
-            message: 'Subgroups deleted successfully'
+            message: 'Subgroup deleted successfully'
         });
 
     } catch (error) {
-
+        // Handle errors here
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal Server Error'
+        });
     }
-
 });
+
 router.put('/:groupId/update-fields', isLoggedIn, async (req, res) => {
     try {
         const {groupId} = req.params;

@@ -537,19 +537,15 @@ const markFieldAsDeleted = async (fieldId) => {
 
 const deleteSubGroupById = async (subgroupId) => {
     try {
-
-        const subgroups = await fieldManagementModel.findById();
-
-        console.log(subgroupId, 'subgroupId');
-        const deleteSubGroup = await fieldManagementModel.deleteOne({
-            'subgroups._id': subgroupId
-        });
+        const deleteSubGroup = await fieldManagementModel.updateOne(
+            {'subgroups._id': subgroupId},
+            {$pull: {subgroups: {_id: subgroupId}}}
+        );
         return deleteSubGroup;
-    } catch {
+    } catch (error) {
         throw error;
     }
 };
-
 export const fieldManagementService = {
     createMultipleFieldGroups,
     getFieldGroupsById,
