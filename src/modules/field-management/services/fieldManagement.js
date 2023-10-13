@@ -198,6 +198,45 @@ const getFieldGroupsByOrganizationIdNull = async (organizationId) => {
         throw new Error('Unable to get field groups');
     }
 };
+
+const getFieldGroupsForFormStep = async (organizationId, stepNo) => {
+    try {
+
+        let fieldGroups;
+        if (organizationId) {
+
+            fieldGroups = await assetFormManagementModel.findOne(
+                {organizationId: organizationId},
+                {assetFormManagements: 1, _id: 0}
+            );
+
+        } else {
+            fieldGroups = await fieldManagementModel.find().lean().populate({
+                path: 'assetFormStepId',
+                match: {stepNo: stepNo}, // Filter based on stepNo
+                select: 'stepNo stepName'
+            });
+
+            // Remove fields with isDeleted: true from each subgroup
+            fieldGroups.forEach(group => {
+                group.subgroups.forEach(subgroup => {
+                    subgroup.fields = subgroup.fields.filter(field => !field.isDeleted && (field.organizationId == null));
+                });
+
+                // Remove fields with isDeleted: true from the top-level fields array
+                group.fields = group.fields.filter(field => !field.isDeleted && (field.organizationId == null));
+            });
+
+            // Filter out groups where assetFormStepId is null
+            fieldGroups = fieldGroups.filter(group => group.assetFormStepId !== null);
+
+        }
+
+        return fieldGroups;
+    } catch (error) {
+        throw new Error('Unable to get field groups');
+    }
+};
 const getFieldGroupsByOrganizationId = async (organizationId) => {
     try {
         const fieldGroups = await fieldManagementModel.find().lean();
@@ -510,7 +549,8 @@ export const fieldManagementService = {
     markFieldAsDeleted,
     getFieldGroupsByOrganizationId,
     addFieldAndUpdateAssetForm,
-    checkExistingGroups
+    checkExistingGroups,
+    getFieldGroupsForFormStep
 };
 
 

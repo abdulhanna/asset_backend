@@ -130,6 +130,23 @@ router.get('/allGroups', isLoggedIn, async (req, res) => {
     }
 });
 
+router.get('/allGroupsWithStepForm', isLoggedIn, async (req, res) => {
+    try {
+
+        const stepNo = parseInt(req.query.stepNo) || 1;
+        const organizationId = req.user.data.organizationId;
+        const fieldGroups = await fieldManagementService.getFieldGroupsForFormStep(organizationId, stepNo);
+
+
+        return res.status(200).json(fieldGroups);
+        // return res.status(200).json({success: true, fieldGroups});
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({error: 'Unable to get field groups for step form'});
+    }
+});
+
 
 router.get('/listWithOrganizationId', isLoggedIn, async (req, res) => {
     try {
