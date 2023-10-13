@@ -1,9 +1,10 @@
 import express from 'express';
 import {assetFormStepService} from '../services/assetFormStep';
+import {isLoggedIn} from '../../auth/router/passport';
 
 const router = express.Router();
 
-router.post('/associateAssetFormStepWithGroups', async (req, res) => {
+router.post('/associateAssetFormStepWithGroups', isLoggedIn, async (req, res) => {
     try {
         const {stepNo, stepName, groups} = req.body;
 
@@ -16,16 +17,30 @@ router.post('/associateAssetFormStepWithGroups', async (req, res) => {
     }
 });
 
-router.get('/list-forms', async (req, res) => {
+router.get('/list-forms', isLoggedIn, async (req, res) => {
     try {
-        const forms = await assetFormStepService.listForms();
-        return res.status(200).json(forms);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.size) || 10;
+        const sortBy = req.query.sort ? JSON.parse(req.query.sort) : 'createdAt';
+
+        const formStepData = await assetFormStepService.listForms(page, limit, sortBy);
+
+        return res.status(200).json({
+            success: true,
+            stepForms: formStepData.data,
+            totalDocuments: formStepData.totalDocuments,
+            totalPages: formStepData.totalPages,
+            startSerialNumber: formStepData.startSerialNumber,
+            endSerialNumber: formStepData.endSerialNumber,
+            currentPage: page
+
+        });
     } catch (error) {
         return res.status(500).json({error: error.message});
     }
 });
 
-router.put('/update-form/:id', async (req, res) => {
+router.put('/update-form/:id', isLoggedIn, async (req, res) => {
     try {
         const {stepNo, stepName, groups} = req.body;
         const formId = req.params.id;
@@ -38,7 +53,7 @@ router.put('/update-form/:id', async (req, res) => {
     }
 });
 
-router.delete('/delete-form/:id', async (req, res) => {
+router.delete('/delete-form/:id', isLoggedIn, async (req, res) => {
     try {
         const formId = req.params.id;
 

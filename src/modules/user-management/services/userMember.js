@@ -163,7 +163,7 @@ const getMembersByRole = async (teamRoleId) => {
 
 const getMemberById = async (memberId) => {
     try {
-        const member = await userModel.findById(memberId);
+        const member = await userModel.findById(memberId).populate('teamRoleId');
         return member;
     } catch (error) {
         console.log(error);

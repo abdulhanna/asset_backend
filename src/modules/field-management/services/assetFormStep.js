@@ -32,7 +32,7 @@ const associateAssetFormStepWithGroups = async (stepNo, stepName, groups) => {
     }
 };
 
-const listForms = async () => {
+const listForms = async (page, limit, sortBy) => {
     try {
         const forms = await assetFormStepModel.find({
             isDeleted: false
