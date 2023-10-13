@@ -2,9 +2,16 @@ import userModel from '../../auth/models/index.js';
 import organizationModel from '../models/organizations.js';
 import jwtService from '../../auth/services/jwt-services.js';
 import bcrypt from "bcryptjs";
+import {assetGroupModel} from "../models";
 
-const getOrganizations = async () => {
+const getOrganizations = async (page, limit, sortBy, sortOrder) => {
      try {
+
+         const totalorganizations = await organizationModel.countDocuments();
+         const totalPages = Math.ceil(totalorganizations / limit);
+
+         let startSerialNumber = (page - 1) * limit + 1;
+         let endSerialNumber = Math.min(page * limit, totalorganizations);
           const organizations = await organizationModel.find()
           .select(
             {
@@ -12,12 +19,22 @@ const getOrganizations = async () => {
                  deletedAt: 0,
                  isDeactivated: 0,
                  __v: 0,}
-          )
+          ).sort({ [sortBy]: sortOrder })
+             .skip((page - 1) * limit)
+             .limit(limit)
           .populate({
            path: 'userId',
            select: 'email password',
          })
-          return organizations;
+
+         return {
+             page,
+             totalPages,
+             totalorganizations,
+             startSerialNumber,
+             endSerialNumber,
+             organizations,
+         };
      } catch (error) {
           console.log(error);
           throw new Error('Unable to get  organizations');
