@@ -34,20 +34,36 @@ const associateAssetFormStepWithGroups = async (stepNo, stepName, groups) => {
 
 const listForms = async (page, limit, sortBy) => {
     try {
-        const forms = await assetFormStepModel.find({
-            isDeleted: false
-        });
+
+        const skip = (page - 1) * limit;
+        const filter = {isDeleted: false};
+
+        let totalDocuments, totalPages, startSerialNumber, endSerialNumber, data;
+
+        const forms = await assetFormStepModel.find(filter).sort(sortBy).limit(limit);
+
+        totalDocuments = await assetFormStepModel.countDocuments(filter);
+        totalPages = Math.ceil(totalDocuments / limit);
+        startSerialNumber = (page - 1) * limit + 1;
+        endSerialNumber = Math.min(page * limit, totalDocuments);
 
         const formsWithGroupCount = await Promise.all(forms.map(async (form) => {
             const formCount = await fieldManagementModel.countDocuments({
                 assetFormStepId: form._id
             });
-            const formObject = form.toObject(); // Use form.toObject() to create a mutable object
-            formObject.groupsCount = formCount;
-            return formObject;
+            return {
+                ...form.toObject(),
+                groupsCount: formCount
+            };
         }));
 
-        return formsWithGroupCount;
+        return {
+            data: formsWithGroupCount, // Changed this line to return formsWithGroupCount
+            totalDocuments,
+            totalPages,
+            startSerialNumber,
+            endSerialNumber
+        };
     } catch (error) {
         throw error;
     }
