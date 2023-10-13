@@ -8,12 +8,11 @@ const router = express.Router();
 
 router.get('/', isLoggedIn, async (req, res) => {
      try {
-          const page = parseInt(req.query.page) || 1; // Current page (default: 1)
-          const limit = parseInt(req.query.limit) || 10; // Number of items per page (default: 10)
-          const sortBy = req.query.sortBy || 'name'; // Field to sort by (default: name)
-          const sortOrder = req.query.sortOrder === 'desc' ? -1 : 1; // Sorting order (default: ascending)
+          const currentPage = parseInt(req.query.page) || 1;
+          const limit = parseInt(req.query.size) || 10;
+          const sortBy = req.query.sort ? JSON.parse(req.query.sort) : 'createdAt';
 
-          const organizations = await organizationService.getOrganizations(page, limit, sortBy, sortOrder);
+          const organizations = await organizationService.getOrganizations(currentPage, limit, sortBy);
 
           return res.status(200).json(organizations);
      } catch (error) {
@@ -140,7 +139,6 @@ router.put('/edit/:id', isLoggedIn, async (req, res) => {
 
 
                if (existingCompanyname ) {
-                    console.log("null ni hai")
                     return res.status(400).json({
                          success: false,
                          error: 'Company Name already exists',

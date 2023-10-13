@@ -181,13 +181,13 @@ assetGroupService.getAssetGroupsHierarchyByOrganizationId = async (organizationI
 
 
 //////// listing without hierarchy //////////////
-assetGroupService.getAssetGroupsByOrganizationId = async (organizationId, assignedLocationId, page, limit, sortBy, sortOrder) => {
+assetGroupService.getAssetGroupsByOrganizationId = async (organizationId, assignedLocationId, currentPage, limit, sortBy) => {
 
-     const totalassetGroups = await assetGroupModel.countDocuments();
-     const totalPages = Math.ceil(totalassetGroups / limit);
+     const totalDocuments = await assetGroupModel.countDocuments();
+     const totalPages = Math.ceil(totalDocuments / limit);
    
-     let startSerialNumber = (page - 1) * limit + 1;  
-     let endSerialNumber = Math.min(page * limit, totalassetGroups);
+     let startSerialNumber = (currentPage - 1) * limit + 1;
+     let endSerialNumber = Math.min(currentPage * limit, totalDocuments);
      
    
      if(assignedLocationId && organizationId)
@@ -202,8 +202,8 @@ assetGroupService.getAssetGroupsByOrganizationId = async (organizationId, assign
                .populate({
                     path: 'assetgroups.assetgroupId',
                     model: 'assetgroups',
-                    sort: { [sortBy]: sortOrder },
-                    skip: (page - 1) * limit,
+                    sort: (sortBy),
+                    skip: (currentPage - 1) * limit,
                     limit: limit,
                     select: '-isDeleted -deletedAt -organizationId -__v'
                })
@@ -212,9 +212,9 @@ assetGroupService.getAssetGroupsByOrganizationId = async (organizationId, assign
                const assetGroups = LocassetGroups[0].assetgroups.map(item => item.assetgroupId);
 
                return {
-                    page,
+                   currentPage,
                     totalPages,
-                    totalassetGroups,
+                    totalDocuments,
                     startSerialNumber,
                     endSerialNumber,
                     assetGroups,
@@ -229,17 +229,17 @@ assetGroupService.getAssetGroupsByOrganizationId = async (organizationId, assign
           { organizationId,
             isDeleted: false
           }
-          ).sort({ [sortBy]: sortOrder })
-          .skip((page - 1) * limit)
+          ).sort(sortBy)
+          .skip((currentPage - 1) * limit)
           .limit(limit)
           .select('-isDeleted -deletedAt -organizationId -__v');
 
              assert(assetGroups, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"))
 
              return {
-               page,
+               currentPage,
                totalPages,
-               totalassetGroups,
+               totalDocuments,
                startSerialNumber,
                endSerialNumber,
                assetGroups,
