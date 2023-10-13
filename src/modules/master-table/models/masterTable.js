@@ -1,42 +1,41 @@
 import mongoose from 'mongoose';
 
-const dynamicTableFieldSchema = new Schema({
-    fieldName: {
-        type: String,
-        required: true
-    },
-    fieldType: {
-        type: String,
-        enum: ['AlphaNumeric', 'TextFields', 'Numeric'],
-        required: true
-    },
-    label: String,
-    inputValue: String  // This field will be used for Input text value
-});
-
-
 const masterTableSchema = new mongoose.Schema(
     {
-        tableID: {
+    tableId: {
             type: String,
+            ref: 'mastertablecolumns',
             required: true,
-            unique: true,
-
-        },
-        applicableTo: {
-            type: String,
-            enum: ['All', 'Organization'],
+    },
+    masterTableData: [],
+        addedByUserId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'users',
             required: true
         },
-        fields: [dynamicTableFieldSchema],
-        uploadDocument: {
-            type: String
-        }
-    },
-    {
-        timestamps: true
-    }
-);
+        isDeleted: {
+            type: Boolean,
+            default: false,
+        },
+        isDeactivated: {
+            type: Boolean,
+            default: false,
+        },
+        deletedAt: {
+            type: Date,
+            default: null,
+        },
+        createdAt: {
+            type: Date,
+            default: null,
+        },
+        updatedAt: {
+            type: Date,
+            default: null,
+        },
+},
+    { new: true }
+)
 
 
 const masterTableModel = mongoose.model('mastertables', masterTableSchema);

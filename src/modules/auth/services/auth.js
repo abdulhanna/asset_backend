@@ -161,7 +161,7 @@ authService.setPassword = async (data) =>
         [data.organizationName, data.organizationRegistrationNumber, data.contactNo],
         createError(
           StatusCodes.BAD_REQUEST,
-          "Invalid Data: [organizationName], [organizationRegistrationNumber] and [confirmPassword] fields must exist"
+          "Invalid Data: [organizationName], [organizationRegistrationNumber] and [contact no.] fields must exist"
         )
       );
     
