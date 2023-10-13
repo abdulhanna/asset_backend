@@ -4,14 +4,14 @@ import jwtService from '../../auth/services/jwt-services.js';
 import bcrypt from "bcryptjs";
 import {assetGroupModel} from "../models";
 
-const getOrganizations = async (currentPage, limit, sortBy, sortOrder) => {
+const getOrganizations = async (currentPage, limit, sortBy) => {
      try {
 
-         const totalorganizations = await organizationModel.countDocuments();
-         const totalPages = Math.ceil(totalorganizations / limit);
+         const totalDocuments = await organizationModel.countDocuments();
+         const totalPages = Math.ceil(totalDocuments / limit);
 
          let startSerialNumber = (currentPage - 1) * limit + 1;
-         let endSerialNumber = Math.min(currentPage * limit, totalorganizations);
+         let endSerialNumber = Math.min(currentPage * limit, totalDocuments);
           const organizations = await organizationModel.find()
           .select(
             {
@@ -19,7 +19,7 @@ const getOrganizations = async (currentPage, limit, sortBy, sortOrder) => {
                  deletedAt: 0,
                  isDeactivated: 0,
                  __v: 0,}
-          ).sort({ [sortBy]: sortOrder })
+          ).sort(sortBy)
              .skip((currentPage - 1) * limit)
              .limit(limit)
           .populate({
@@ -30,7 +30,7 @@ const getOrganizations = async (currentPage, limit, sortBy, sortOrder) => {
          return {
              currentPage,
              totalPages,
-             totalorganizations,
+             totalDocuments,
              startSerialNumber,
              endSerialNumber,
              organizations,

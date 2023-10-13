@@ -181,7 +181,7 @@ assetGroupService.getAssetGroupsHierarchyByOrganizationId = async (organizationI
 
 
 //////// listing without hierarchy //////////////
-assetGroupService.getAssetGroupsByOrganizationId = async (organizationId, assignedLocationId, currentPage, limit, sortBy, sortOrder) => {
+assetGroupService.getAssetGroupsByOrganizationId = async (organizationId, assignedLocationId, currentPage, limit, sortBy) => {
 
      const totalDocuments = await assetGroupModel.countDocuments();
      const totalPages = Math.ceil(totalDocuments / limit);
@@ -202,7 +202,7 @@ assetGroupService.getAssetGroupsByOrganizationId = async (organizationId, assign
                .populate({
                     path: 'assetgroups.assetgroupId',
                     model: 'assetgroups',
-                    sort: { [sortBy]: sortOrder },
+                    sort: (sortBy),
                     skip: (currentPage - 1) * limit,
                     limit: limit,
                     select: '-isDeleted -deletedAt -organizationId -__v'
@@ -229,7 +229,7 @@ assetGroupService.getAssetGroupsByOrganizationId = async (organizationId, assign
           { organizationId,
             isDeleted: false
           }
-          ).sort({ [sortBy]: sortOrder })
+          ).sort(sortBy)
           .skip((currentPage - 1) * limit)
           .limit(limit)
           .select('-isDeleted -deletedAt -organizationId -__v');
