@@ -1,5 +1,6 @@
 import {fieldManagementModel, assetFormManagementModel} from '../models';
 import mongoose from 'mongoose';
+import {errors} from 'puppeteer';
 
 
 const checkExistingGroups = async (groupNames) => {
@@ -534,6 +535,21 @@ const markFieldAsDeleted = async (fieldId) => {
     return updatedGroup;
 };
 
+const deleteSubGroupById = async (subgroupId) => {
+    try {
+
+        const subgroups = await fieldManagementModel.findById();
+
+        console.log(subgroupId, 'subgroupId');
+        const deleteSubGroup = await fieldManagementModel.deleteOne({
+            'subgroups._id': subgroupId
+        });
+        return deleteSubGroup;
+    } catch {
+        throw error;
+    }
+};
+
 export const fieldManagementService = {
     createMultipleFieldGroups,
     getFieldGroupsById,
@@ -550,7 +566,8 @@ export const fieldManagementService = {
     getFieldGroupsByOrganizationId,
     addFieldAndUpdateAssetForm,
     checkExistingGroups,
-    getFieldGroupsForFormStep
+    getFieldGroupsForFormStep,
+    deleteSubGroupById
 };
 
 

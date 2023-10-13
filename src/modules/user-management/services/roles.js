@@ -260,7 +260,11 @@ const getRoleById = async (id) => {
             }
         }
 
-        return role.toObject();
+        // Assuming teamRoleId is the field linking roles and users
+        const assignedUsers = await userModel.find({teamRoleId: role._id});
+        const assignedUserCount = assignedUsers.length;
+
+        return {role: role.toObject(), assignedUsers, assignedUserCount};
     } catch (error) {
         throw new Error('Unable to fetch role by ID');
     }
