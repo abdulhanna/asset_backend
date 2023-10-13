@@ -12,7 +12,7 @@ const dynamicTableFieldSchema = new mongoose.Schema({
     },
     rateType: {
         type: String,
-        enum: ['SLM', 'WDV'],
+        enum: ['SLM', 'WDV', null],
         default: null
     }
 });

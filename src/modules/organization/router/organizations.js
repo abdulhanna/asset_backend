@@ -68,7 +68,14 @@ router.post('/add', isLoggedIn, async (req, res) => {
                });
           }
          
-     
+
+          if(req.body.password !== req.body.confirmPassword)
+          {
+               return res.status(409).json({
+                    success: false,
+                    error: `Password and confirm Password don\'t match`,
+               });
+          }
           const result = await organizationService.addOrganization(id, req.body);
           return res.status(201).json({
                success: true,
@@ -90,7 +97,7 @@ router.put('/edit/:id', isLoggedIn, async (req, res) => {
           const id = req.params.id;
           const getUserId = await organizationModel.findById(id)
 
-          if(req.body.email || req.body.organizationName || req.body.organizationRegistrationNumber || req.body.pan || req.body.gstin)
+          if(req.body.email || req.body.organizationName || req.body.password || req.body.confirmPassword || req.body.organizationRegistrationNumber || req.body.pan || req.body.gstin)
           {
 
              
@@ -105,6 +112,14 @@ router.put('/edit/:id', isLoggedIn, async (req, res) => {
                          success: false,
                          error: 'Email already exists',
                     }); 
+               }
+
+               if(req.body.password !== req.body.confirmPassword)
+               {
+                    return res.status(409).json({
+                         success: false,
+                         error: `Password and confirm Password don\'t match`,
+                    });
                }
 
                const existingCompanyname = await organizationModel.findOne({
