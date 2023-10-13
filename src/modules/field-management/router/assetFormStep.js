@@ -40,6 +40,16 @@ router.get('/list-forms', isLoggedIn, async (req, res) => {
     }
 });
 
+router.get('/list-form/:id', isLoggedIn, async (req, res) => {
+    const {id} = req.params;
+    const formStepDataById = await assetFormStepService.getFormStepById(id);
+
+    return res.status(200).json({
+        success: true,
+        formStepDataById
+    });
+});
+
 router.put('/update-form/:id', isLoggedIn, async (req, res) => {
     try {
         const {stepNo, stepName, groups} = req.body;
