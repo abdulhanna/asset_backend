@@ -178,7 +178,8 @@ router.get('/', isLoggedIn, async (req, res) => {
             totalDocuments: rolesData.totalDocuments,
             totalPages: rolesData.totalPages,
             startSerialNumber: rolesData.startSerialNumber,
-            endSerialNumber: rolesData.endSerialNumber
+            endSerialNumber: rolesData.endSerialNumber,
+            currentPage: page
         });
     } catch (err) {
         return res.status(500).json({error: 'Unable to fetch roles'});

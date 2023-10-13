@@ -119,7 +119,8 @@ router.get('/all', isLoggedIn, async (req, res) => {
             totalDocuments: permissionsData.totalDocuments,
             totalPages: permissionsData.totalPages,
             startSerialNumber: permissionsData.startSerialNumber,
-            endSerialNumber: permissionsData.endSerialNumber
+            endSerialNumber: permissionsData.endSerialNumber,
+            currentPage: page
         });
     } catch (error) {
         return res.status(500).json({success: false, error: error.message});
