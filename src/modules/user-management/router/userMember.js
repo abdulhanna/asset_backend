@@ -117,7 +117,7 @@ router.post(
 );
 
 // Update member
-router.put('/updateMember/:id', upload.single('image'), async (req, res) => {
+router.put('/updateMember/:id', isLoggedIn, upload.single('image'), async (req, res) => {
     try {
         const {id} = req.params;
         const data = req.body;
@@ -175,8 +175,22 @@ router.get('/', isLoggedIn, async (req, res) => {
         // const { parentId } = req.params;
         const parentId = req.user.data._id;
         const userType = req.query.userType;
-        const members = await memberService.getAllMembers(parentId, userType);
-        return res.status(200).json({success: true, members});
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.size) || 10;
+        const sortBy = req.query.sort ? JSON.parse(req.query.sort) : 'createdAt';
+
+        const membersData = await memberService.getAllMembers(parentId, userType, page, limit, sortBy);
+
+        return res.status(200).json({
+            success: true,
+            roles: membersData.data,
+            totalDocuments: membersData.totalDocuments,
+            totalPages: membersData.totalPages,
+            startSerialNumber: membersData.startSerialNumber,
+            endSerialNumber: membersData.endSerialNumber,
+            currentPage: page
+        });
+
     } catch (error) {
         return res.status(500).json({success: false, error: error.message});
     }
@@ -216,12 +230,12 @@ router.get('/member/:id', isLoggedIn, async (req, res) => {
     }
 });
 
-router.delete('/:userId', async (req, res) => {
+router.put('/deactivate/:userId', isLoggedIn, async (req, res) => {
     try {
         const {userId} = req.params;
 
         // Call the service function to update the user's isDeleted field and set deletedAt to the current date
-        const updatedUser = await memberService.deleteUser(userId);
+        const updatedUser = await memberService.deactivateUser(userId);
 
         if (!updatedUser) {
             return res.status(404).json({
@@ -232,7 +246,7 @@ router.delete('/:userId', async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            msg: 'User deleted successfully',
+            msg: 'User deactivated successfully',
             user: updatedUser,
         });
     } catch (error) {

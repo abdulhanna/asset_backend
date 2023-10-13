@@ -13,7 +13,7 @@ const fieldSchema = new mongoose.Schema(
         },
         dataType: {
             type: String,
-            enum: ['whole', 'list', 'date'],
+            enum: ['string', 'number', 'list', 'date'],
         },
         fieldLength: {
             type: Number,
@@ -68,6 +68,10 @@ const subgroupSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    isMandatory: {
+        type: Boolean,
+        default: false
+    },
     fields: {
         type: [fieldSchema],
     },
@@ -78,6 +82,19 @@ const groupSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true,
+    },
+    orderNo: {
+        type: Number,
+        default: null
+    },
+    assetFormStepId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'assetformsteps',
+        default: null
+    },
+    isMandatory: {
+        type: Boolean,
+        default: false
     },
     subgroups: {
         type: [subgroupSchema],

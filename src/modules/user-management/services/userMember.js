@@ -1,7 +1,7 @@
 import jwtService from '../../auth/services/jwt-services';
 import emailtemplate from '../../../helpers/send-email';
 import userModel from '../../auth/models';
-import { locationModel } from '../../organization/models';
+import {locationModel} from '../../organization/models';
 
 const getMemberByEmail = async (email) => {
     try {
@@ -49,6 +49,7 @@ const createMember = async (userData) => {
             verificationToken: verificationToken,
             userType: userData.userType,
             is_profile_completed: true,
+            createdAt: new Date()
         });
 
         const savedMember = await member.save();
@@ -100,9 +101,9 @@ const updateMember = async (id, data) => {
     }
 };
 
-const getAllMembers = async (parentId, userType) => {
+const getAllMembers = async (parentId, userType, page, limit, sortBy) => {
     try {
-
+        const skip = (page - 1) * limit;
 
         let query = {parentId, isDeleted: false};
 
@@ -113,14 +114,29 @@ const getAllMembers = async (parentId, userType) => {
         const members = await userModel
             .find(query)
             .populate('teamRoleId', 'roleName')
-            .select('-deletedAt');
+            .select('-deletedAt')
+            .sort(sortBy)
+            .skip(skip)
+            .limit(limit);
 
-        return members;
+        const totalDocuments = await userModel.countDocuments(query);
+        const totalPages = Math.ceil(totalDocuments / limit);
+        const startSerialNumber = (page - 1) * limit + 1;
+        const endSerialNumber = Math.min(page * limit, totalDocuments);
+
+        return {
+            data: members,
+            totalDocuments,
+            totalPages,
+            startSerialNumber,
+            endSerialNumber,
+        };
     } catch (error) {
         console.log(error);
         throw new Error('Failed to fetch members');
     }
 };
+
 
 // Function to get members by roleName and parentId
 const getMembersByRole = async (teamRoleId) => {
@@ -147,7 +163,7 @@ const getMembersByRole = async (teamRoleId) => {
 
 const getMemberById = async (memberId) => {
     try {
-        const member = await userModel.findById(memberId);
+        const member = await userModel.findById(memberId).populate('teamRoleId');
         return member;
     } catch (error) {
         console.log(error);
@@ -155,7 +171,7 @@ const getMemberById = async (memberId) => {
     }
 };
 
-const deleteUser = async (userId) => {
+const deactivateUser = async (userId) => {
     try {
         // Find the user by ID
         const user = await userModel.findById(userId);
@@ -165,8 +181,10 @@ const deleteUser = async (userId) => {
         }
 
         // Update the isDeleted field to true and set deletedAt to the current date
-        user.isDeleted = true;
-        user.deletedAt = new Date();
+        // user.isDeleted = true;
+        // user.deletedAt = new Date();
+        user.isDeactivated = true;
+
 
         // Save the updated user
         const updatedUser = await user.save();
@@ -184,5 +202,5 @@ export const memberService = {
     getMembersByRole,
     getMemberByEmail,
     getMemberById,
-    deleteUser,
+    deactivateUser,
 };
