@@ -23,12 +23,18 @@ const createMultipleFieldGroups = async (groupNames) => {
     return newFieldGroups;
 };
 
-const updateSubgroups = async (groupId, subgroups) => {
-    return fieldManagementModel.findByIdAndUpdate(
-        groupId,
-        {subgroups: subgroups || []},
-        {new: true}
-    );
+const updateSubgroups = async (groupId, newSubgroups) => {
+    try {
+        const updatedGroup = await fieldManagementModel.findByIdAndUpdate(
+            groupId,
+            {$push: {subgroups: {$each: newSubgroups}}},
+            {new: true}
+        );
+
+        return updatedGroup;
+    } catch (error) {
+        throw new Error(`Unable to update subgroups: ${error.message}`);
+    }
 };
 
 

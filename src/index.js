@@ -6,6 +6,7 @@ import {useRateLimiter} from '@madhouselabs/rate-limiter';
 import {finishApp, createApp, useModules} from './app';
 import {config} from './config/config';
 import {secret} from './config/secret';
+import express from "express";
 import {initPassport} from './modules/auth/router/passport';
 
 (async () => {
@@ -24,6 +25,9 @@ import {initPassport} from './modules/auth/router/passport';
     app.get('/healthy', (req, res) => {
         res.send(StatusCodes.OK);
     });
+
+// Serve static files from the 'public' directory
+    app.use("/static", express.static(secret.static_dir));
 
     useModules(app);
     initPassport();

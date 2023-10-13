@@ -41,4 +41,25 @@ autoCodeGeneration.getassetGrpCode = async(organizationName) => {
  }
 
 
+ autoCodeGeneration.getmstCode = async(organizationName) => {
+     while (true) {
+         const code = Math.floor(Math.random() * 90000) + 10000;
+         if (!existingCodes.has(code)) {
+             existingCodes.add(code);
+             let codeId;
+             if(organizationName)
+             {
+                  codeId = organizationName+'-'+'MST'+code;
+             }
+             else
+             {
+                  codeId = 'Default'+'-'+'MST'+code;
+             }
+
+             return codeId;
+         }
+     }
+
+ }
+
  export default autoCodeGeneration;

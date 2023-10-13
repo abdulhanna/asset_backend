@@ -11,13 +11,21 @@ const getFirstWord = (inputString) => {
 const globalDetails = {};
 
 globalDetails.getOrganizationName = async (organizationId) => {
-  const getOrgName = await organizationModel.findOne({ 
+  if (organizationId) {
+
+  const getOrgName = await organizationModel.findOne({
     organizationId
   });
+
   assert(getOrgName, createError(StatusCodes.REQUEST_TIMEOUT, 'Request Timeout'));
-  
+
   const firstWordGetOrgName = await getFirstWord(getOrgName.organizationName);
   return firstWordGetOrgName;
+}
+  else
+  {
+    return null;
+  }
 };
 
 export default globalDetails;

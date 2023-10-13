@@ -49,8 +49,6 @@ router.post('/', isLoggedIn, async (req, res) => {
                );
                const finalLocationCodeId =
                     await autoCodeGeneration.getlocatinCode(organizationName);
-
-               // locationCodeId = locationService.generateAutomaticCode();
                locationCodeId = finalLocationCodeId;
           }
 
