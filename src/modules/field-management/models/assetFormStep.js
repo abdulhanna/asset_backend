@@ -11,6 +11,10 @@ const assetFormStepSchema = new mongoose.Schema({
             required: true,
             // unique: true,
         },
+        createdAt: {
+            type: Date,
+            default: null
+        }
     },
     {
         timestamps: true
