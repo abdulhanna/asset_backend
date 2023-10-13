@@ -68,6 +68,10 @@ const subgroupSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    isMandatory: {
+        type: Boolean,
+        default: false
+    },
     fields: {
         type: [fieldSchema],
     },
