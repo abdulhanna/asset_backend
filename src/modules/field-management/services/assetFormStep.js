@@ -69,6 +69,15 @@ const listForms = async (page, limit, sortBy) => {
     }
 };
 
+const getFormStepById = async (id) => {
+    try {
+        const formStepById = await assetFormStepModel.findById({_id: id});
+        return formStepById;
+    } catch (error) {
+        throw error;
+    }
+};
+
 const updateForm = async (formId, stepNo, stepName, groups) => {
     try {
         const updatedForm = await assetFormStepModel.findByIdAndUpdate(formId, {stepNo, stepName}, {new: true});
@@ -123,5 +132,6 @@ export const assetFormStepService = {
     associateAssetFormStepWithGroups,
     listForms,
     updateForm,
-    deleteForm
+    deleteForm,
+    getFormStepById
 };
