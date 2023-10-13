@@ -1,5 +1,6 @@
 import {fieldManagementModel, assetFormManagementModel} from '../models';
 import mongoose from 'mongoose';
+import {errors} from 'puppeteer';
 
 
 const checkExistingGroups = async (groupNames) => {
@@ -11,17 +12,18 @@ const checkExistingGroups = async (groupNames) => {
         throw error;
     }
 };
-const createMultipleFieldGroups = async (groupNames) => {
+const createMultipleFieldGroups = async (groupDetails) => {
     const newFieldGroups = await Promise.all(
-        groupNames.map(async (groupName) => {
+        groupDetails.map(async (group) => {
             return await fieldManagementModel.create({
-                groupName: groupName,
-                // subgroups: [], // Initialize with an empty array of subgroups
+                groupName: group.groupName,
+                isMandatory: group.isMandatory, // Add isMandatory
             });
         })
     );
     return newFieldGroups;
 };
+
 
 const updateSubgroups = async (groupId, newSubgroups) => {
     try {
@@ -176,7 +178,10 @@ const getFieldGroupsByOrganizationIdNull = async (organizationId) => {
             );
 
         } else {
-            fieldGroups = await fieldManagementModel.find().lean();
+            fieldGroups = await fieldManagementModel.find().lean().populate({
+                path: 'assetFormStepId',
+                select: 'stepNo stepName'
+            });
 
             // Remove fields with isDeleted: true from each subgroup
             fieldGroups.forEach(group => {
@@ -187,6 +192,45 @@ const getFieldGroupsByOrganizationIdNull = async (organizationId) => {
                 // Remove fields with isDeleted: true from the top-level fields array
                 group.fields = group.fields.filter(field => !field.isDeleted && (field.organizationId == null));
             });
+        }
+
+        return fieldGroups;
+    } catch (error) {
+        throw new Error('Unable to get field groups');
+    }
+};
+
+const getFieldGroupsForFormStep = async (organizationId, stepNo) => {
+    try {
+
+        let fieldGroups;
+        if (organizationId) {
+
+            fieldGroups = await assetFormManagementModel.findOne(
+                {organizationId: organizationId},
+                {assetFormManagements: 1, _id: 0}
+            );
+
+        } else {
+            fieldGroups = await fieldManagementModel.find().lean().populate({
+                path: 'assetFormStepId',
+                match: {stepNo: stepNo}, // Filter based on stepNo
+                select: 'stepNo stepName'
+            });
+
+            // Remove fields with isDeleted: true from each subgroup
+            fieldGroups.forEach(group => {
+                group.subgroups.forEach(subgroup => {
+                    subgroup.fields = subgroup.fields.filter(field => !field.isDeleted && (field.organizationId == null));
+                });
+
+                // Remove fields with isDeleted: true from the top-level fields array
+                group.fields = group.fields.filter(field => !field.isDeleted && (field.organizationId == null));
+            });
+
+            // Filter out groups where assetFormStepId is null
+            fieldGroups = fieldGroups.filter(group => group.assetFormStepId !== null);
+
         }
 
         return fieldGroups;
@@ -491,6 +535,17 @@ const markFieldAsDeleted = async (fieldId) => {
     return updatedGroup;
 };
 
+const deleteSubGroupById = async (subgroupId) => {
+    try {
+        const deleteSubGroup = await fieldManagementModel.updateOne(
+            {'subgroups._id': subgroupId},
+            {$pull: {subgroups: {_id: subgroupId}}}
+        );
+        return deleteSubGroup;
+    } catch (error) {
+        throw error;
+    }
+};
 export const fieldManagementService = {
     createMultipleFieldGroups,
     getFieldGroupsById,
@@ -506,7 +561,9 @@ export const fieldManagementService = {
     markFieldAsDeleted,
     getFieldGroupsByOrganizationId,
     addFieldAndUpdateAssetForm,
-    checkExistingGroups
+    checkExistingGroups,
+    getFieldGroupsForFormStep,
+    deleteSubGroupById
 };
 
 

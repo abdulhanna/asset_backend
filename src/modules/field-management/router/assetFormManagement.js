@@ -104,6 +104,80 @@ router.get('/non-mandatory-fields/:groupOrSubgroupId', isLoggedIn, async (req, r
 
 //Set asset form management - .xlsx
 
+const getDate = () => {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1; // Note: months are zero-indexed
+    const day = date.getDate();
+    return [year, month, day];
+};
+
+const applyFieldValidation = (worksheet, field, startRow, endRow, headers) => {
+    if (field.dataType === 'list') {
+        const joinedDropdownList = field.listOptions.join(',');
+
+        for (let i = startRow; i <= endRow; i++) {
+            const cellAddress = String.fromCharCode(headers.length + 65) + i;
+            worksheet.getCell(cellAddress).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: [`"${joinedDropdownList}"`],
+                showErrorMessage: true,
+                error: field.errorMessage
+            };
+        }
+    } else if (field.dataType === 'date') {
+        const currDate = getDate();
+        const formulae = [`${currDate[0]}/${currDate[1]}/${currDate[2] + 1}`];
+
+        for (let i = startRow; i <= endRow; i++) {
+            const cellAddress = String.fromCharCode(headers.length + 65) + i;
+            worksheet.getCell(cellAddress).dataValidation = {
+                type: 'date',
+                allowBlank: true,
+                operator: 'lessThanOrEqual',
+                formulae,
+                showErrorMessage: true,
+                errorStyle: 'error',
+                errorTitle: 'Invalid Date',
+                error: `Please enter a date less than or equal to ${currDate[0]}/${currDate[1]}/${currDate[2] + 1}`,
+            };
+        }
+    } else if (field.dataType === 'string') {
+        for (let i = startRow; i <= endRow; i++) {
+            const cellAddress = String.fromCharCode(headers.length + 65) + i;
+
+            if (field.fieldLength) {
+                worksheet.getCell(cellAddress).dataValidation = {
+                    type: 'textLength',
+                    allowBlank: true,
+                    operator: 'lessThanOrEqual',
+                    showInputMessage: true,
+                    showErrorMessage: true,
+                    formulae: [field.fieldLength],
+                    errorStyle: 'error',
+                    errorTitle: 'Invalid Length',
+                    error: `The length of this field should be less than or equal to ${field.fieldLength} characters.`
+                };
+            }
+        }
+    } else if (field.dataType === 'number') {
+        for (let i = startRow; i <= endRow; i++) {
+            const cellAddress = String.fromCharCode(headers.length + 65) + i;
+
+            // Allow only decimal or whole numbers
+            worksheet.getCell(cellAddress).dataValidation = {
+                type: 'decimal',
+                allowBlank: true,
+                showErrorMessage: true,
+                errorStyle: 'error',
+                errorTitle: 'Invalid Number',
+                error: 'Please enter a valid number (whole or decimal).'
+            };
+        }
+    }
+};
+
 router.get('/export-excel', isLoggedIn, async (req, res) => {
     try {
         const organizationId = req.user.data.organizationId;
@@ -117,43 +191,52 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
         const worksheet = workbook.addWorksheet('Sheet1');
 
         const headers = [];
+        let rowNumber = 1;
+        const startRow = 1;
+        const endRow = 1000;
 
         assetFormManagement.assetFormManagements.forEach((group) => {
-            group.fields.forEach((field) => {
-                if (field.name) {
-                    headers.push({
-                        header: field.name,
-                        key: field.name,
-                        width: 10,
-                        dataType: field.dataType,
-                        errorMessage: field.errorMessage,
-                        isMandatory: field.isMandatory
-                    });
-                }
-            });
+            if (group.subgroups && group.subgroups.length > 0) {
+                group.subgroups.forEach((subgroup) => {
+                    if (subgroup.fields && subgroup.fields.length > 0) {
+                        subgroup.fields.forEach((field) => {
+                            if (field.name) {
+                                const headerInfo = {
+                                    header: field.name,
+                                    key: field.name,
+                                    width: 30,
+                                };
 
-            group.subgroups.forEach((subgroup) => {
-                if (subgroup.fields && subgroup.fields.length > 0) {
-                    subgroup.fields.forEach((field) => {
-                        console.log('field', field);
-                        if (field.name) {
-                            headers.push({
-                                header: field.name,
-                                key: field.name,
-                                width: 30,
-                                dataType: field.dataType,
-                                errorMessage: field.errorMessage,
-                                isMandatory: field.isMandatory
-                            });
-                        }
-                    });
-                }
-            });
+                                applyFieldValidation(worksheet, field, startRow, endRow, headers);
+
+                                rowNumber++;
+                                headers.push(headerInfo);
+                            }
+                        });
+                    }
+                });
+            }
         });
 
         worksheet.columns = headers;
 
         const headersRow = worksheet.getRow(1);
+
+        for (let rowNumber = 2; rowNumber <= 1000; rowNumber++) {
+            const row = worksheet.getRow(rowNumber);
+
+            headersRow.eachCell((headerCell, colNumber) => {
+                const cell = row.getCell(colNumber);
+                cell.protection = {
+                    locked: false
+                };
+            });
+        }
+
+        worksheet.protect('123');
+        worksheet.sheetProtection.sheet = true;
+        worksheet.sheetProtection.insertRows = false;
+        worksheet.sheetProtection.formatCells = false;
 
         headersRow.eachCell((cell) => {
             cell.font = {
@@ -178,7 +261,10 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
 
         fileStream.pipe(res);
 
-        console.log('Excel file sent successfully');
+        return res.status(200).json({
+            success: true,
+            message: 'Excel file generated successfully'
+        });
     } catch (error) {
         console.error('Error exporting Excel:', error);
         res.status(500).send('Internal Server Error');
@@ -187,3 +273,4 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
 
 
 export default router;
+

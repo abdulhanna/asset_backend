@@ -7,12 +7,10 @@ const router = express.Router();
 // Create multiple groups with only group names
 router.post('/add-groups', isLoggedIn, async (req, res) => {
     try {
-        const {groupNames} = req.body;
+        const {groupDetails} = req.body;
 
-
-        if (Array.isArray(groupNames)) {
-
-            const existingGroups = await fieldManagementService.checkExistingGroups(groupNames);
+        if (Array.isArray(groupDetails)) {
+            const existingGroups = await fieldManagementService.checkExistingGroups(groupDetails.map(group => group.groupName));
 
             if (existingGroups.length > 0) {
                 return res.status(400).json({
@@ -20,17 +18,12 @@ router.post('/add-groups', isLoggedIn, async (req, res) => {
                 });
             }
 
-            const newFieldGroups =
-                await fieldManagementService.createMultipleFieldGroups(
-                    groupNames
-                );
+            const newFieldGroups = await fieldManagementService.createMultipleFieldGroups(groupDetails);
             return res.status(201).json({success: true, message: 'Field groups added successfully', newFieldGroups});
         }
     } catch (error) {
         console.error(error);
-        return res
-            .status(500)
-            .json({error: 'Unable to create field groups'});
+        return res.status(500).json({error: 'Unable to create field groups'});
     }
 });
 
@@ -137,6 +130,23 @@ router.get('/allGroups', isLoggedIn, async (req, res) => {
     }
 });
 
+router.get('/allGroupsWithStepForm', isLoggedIn, async (req, res) => {
+    try {
+
+        const stepNo = parseInt(req.query.stepNo) || 1;
+        const organizationId = req.user.data.organizationId;
+        const fieldGroups = await fieldManagementService.getFieldGroupsForFormStep(organizationId, stepNo);
+
+
+        return res.status(200).json(fieldGroups);
+        // return res.status(200).json({success: true, fieldGroups});
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({error: 'Unable to get field groups for step form'});
+    }
+});
+
 
 router.get('/listWithOrganizationId', isLoggedIn, async (req, res) => {
     try {
@@ -232,6 +242,28 @@ router.delete('/delete-group/:groupId', isLoggedIn, async (req, res) => {
     }
 });
 
+
+//
+
+router.delete('/delete-subgroup/:subgroupId', isLoggedIn, async (req, res) => {
+    try {
+        const {subgroupId} = req.params;
+        const deleteSubGroupId = await fieldManagementService.deleteSubGroupById(subgroupId);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Subgroup deleted successfully'
+        });
+
+    } catch (error) {
+        // Handle errors here
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal Server Error'
+        });
+    }
+});
 
 router.put('/:groupId/update-fields', isLoggedIn, async (req, res) => {
     try {
