@@ -8,7 +8,12 @@ const router = express.Router();
 
 router.get('/', isLoggedIn, async (req, res) => {
      try {
-          const organizations = await organizationService.getOrganizations();
+          const page = parseInt(req.query.page) || 1; // Current page (default: 1)
+          const limit = parseInt(req.query.limit) || 10; // Number of items per page (default: 10)
+          const sortBy = req.query.sortBy || 'name'; // Field to sort by (default: name)
+          const sortOrder = req.query.sortOrder === 'desc' ? -1 : 1; // Sorting order (default: ascending)
+
+          const organizations = await organizationService.getOrganizations(page, limit, sortBy, sortOrder);
 
           return res.status(200).json(organizations);
      } catch (error) {
@@ -107,20 +112,19 @@ router.put('/edit/:id', isLoggedIn, async (req, res) => {
           const getUserId = await organizationModel.findById(id)
 
           // Check if any of the required fields are missing
-          if (!req.body.email || !req.body.organizationName || !req.body.password || !req.body.confirmPassword || !req.body.mainAddress.country || !req.body.organizationRegistrationNumber || !req.body.pan || !req.body.gstin) {
+          if (!req.body.email || !req.body.organizationName || !req.body.mainAddress.country || !req.body.organizationRegistrationNumber || !req.body.pan || !req.body.gstin) {
                return res.status(400).json({
                     success: false,
-                    error: 'Required fields are missing!!! Email, Password, Organization name, Country, Registration No., PAN No.,GSTIN are mandatory fields',
+                    error: 'Required fields are missing!!! Email, Organization name, Country, Registration No., PAN No.,GSTIN are mandatory fields',
                });
           }
-
 
                const existingEmail = await userModel.findOne({
                     email: req.body.email,
                     _id: { $ne: getUserId.userId },
                })
 
-               if(existingEmail)
+             if(existingEmail)
                {
                     return res.status(400).json({
                          success: false,
@@ -131,23 +135,27 @@ router.put('/edit/:id', isLoggedIn, async (req, res) => {
                const existingCompanyname = await organizationModel.findOne(
                    {
                         organizationName: req.body.organizationName,
-                        _id: { $ne: getUserId.userId },
-                   }
-               )
+                        _id: { $ne: getUserId._id },
+                   })
 
-               if (existingCompanyname) {
+
+               if (existingCompanyname ) {
+                    console.log("null ni hai")
                     return res.status(400).json({
                          success: false,
                          error: 'Company Name already exists',
                     });
                }
-               if(req.body.password !== req.body.confirmPassword)
-               {
-                    return res.status(409).json({
-                         success: false,
-                         error: `Password and confirm Password don\'t match`,
-                    });
-               }
+
+
+          /// matching password and confirm password
+               // if(req.body.password !== req.body.confirmPassword)
+               // {
+               //      return res.status(409).json({
+               //           success: false,
+               //           error: `Password and confirm Password don\'t match`,
+               //      });
+               // }
 
 
                const existingRegNumber = await organizationModel.findOne({
