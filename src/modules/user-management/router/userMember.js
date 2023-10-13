@@ -187,7 +187,8 @@ router.get('/', isLoggedIn, async (req, res) => {
             totalDocuments: membersData.totalDocuments,
             totalPages: membersData.totalPages,
             startSerialNumber: membersData.startSerialNumber,
-            endSerialNumber: membersData.endSerialNumber
+            endSerialNumber: membersData.endSerialNumber,
+            currentPage: page
         });
 
     } catch (error) {
