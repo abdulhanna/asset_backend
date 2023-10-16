@@ -1,6 +1,16 @@
 import assetFormStepModel from '../models/assetFormStep';
 import fieldManagementModel from '../models/fieldManagement';
 
+
+const checkStepNoExists = async (stepNo) => {
+    try {
+        const existingStep = await assetFormStepModel.findOne({stepNo});
+        return !!existingStep; // Returns true if stepNo exists, false if not
+    } catch (error) {
+        throw error;
+    }
+};
+
 const associateAssetFormStepWithGroups = async (stepNo, stepName, groups) => {
     try {
         const newAssetFormStep = new assetFormStepModel({stepNo, stepName, createdAt: new Date()});
@@ -133,5 +143,6 @@ export const assetFormStepService = {
     listForms,
     updateForm,
     deleteForm,
-    getFormStepById
+    getFormStepById,
+    checkStepNoExists
 };
