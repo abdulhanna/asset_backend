@@ -261,7 +261,7 @@ const getRoleById = async (id) => {
         }
 
         // Assuming teamRoleId is the field linking roles and users
-        const assignedUsers = await userModel.find({teamRoleId: role._id}).populate('teamRoleId')
+        const assignedUsers = await userModel.find({teamRoleId: role._id}).populate('teamRoleId', 'roleName')
         ;
         const assignedUserCount = assignedUsers.length;
 
