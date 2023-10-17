@@ -72,9 +72,9 @@ router.put('/update-form/:id', isLoggedIn, async (req, res) => {
 
         await assetFormStepService.updateForm(formId, stepNo, stepName, groups);
 
-        res.json({message: 'Form updated successfully'});
+        return res.json({message: 'Form updated successfully'});
     } catch (error) {
-        res.status(500).json({error: error.message});
+        return res.status(500).json({error: error.message});
     }
 });
 
@@ -84,9 +84,9 @@ router.delete('/delete-form/:id', isLoggedIn, async (req, res) => {
 
         await assetFormStepService.deleteForm(formId);
 
-        res.json({message: 'Form deleted successfully'});
+        return res.json({message: 'Form deleted successfully'});
     } catch (error) {
-        res.status(500).json({error: error.message});
+        return res.status(500).json({error: error.message});
     }
 });
 export default router;
