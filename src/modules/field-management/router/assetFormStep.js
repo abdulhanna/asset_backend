@@ -8,16 +8,27 @@ router.post('/associateAssetFormStepWithGroups', isLoggedIn, async (req, res) =>
     try {
         const {stepNo, stepName, groups} = req.body;
 
-        console.log(req.body);
+        if (stepNo) {
+            const stepExists = await assetFormStepService.checkStepNoExists(stepNo);
+
+            if (stepExists) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Step number already exists'
+                });
+            }
+        }
+
         await assetFormStepService.associateAssetFormStepWithGroups(stepNo, stepName, groups);
 
-        res.json({message: 'AssetFormStep associated with groups successfully'});
+        return res.json({message: 'AssetFormStep associated with groups successfully'});
     } catch (error) {
-        res.status(500).json({error: error.message});
+        return res.status(500).json({error: error.message});
     }
 });
 
-router.get('/list-forms', isLoggedIn, async (req, res) => {
+
+router.get('/listAllSteps', isLoggedIn, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.size) || 10;
@@ -40,14 +51,18 @@ router.get('/list-forms', isLoggedIn, async (req, res) => {
     }
 });
 
-router.get('/list-form/:id', isLoggedIn, async (req, res) => {
-    const {id} = req.params;
+router.get('/stepDetails/:id', isLoggedIn, async (req, res) => {
+    try {
+        const {id} = req.params;
     const formStepDataById = await assetFormStepService.getFormStepById(id);
 
     return res.status(200).json({
         success: true,
         formStepDataById
     });
+    } catch (error) {
+        return res.status(500).json({error: error.message});
+    }
 });
 
 router.put('/update-form/:id', isLoggedIn, async (req, res) => {

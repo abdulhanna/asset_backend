@@ -1,6 +1,16 @@
 import assetFormStepModel from '../models/assetFormStep';
 import fieldManagementModel from '../models/fieldManagement';
 
+
+const checkStepNoExists = async (stepNo) => {
+    try {
+        const existingStep = await assetFormStepModel.findOne({stepNo});
+        return !!existingStep; // Returns true if stepNo exists, false if not
+    } catch (error) {
+        throw error;
+    }
+};
+
 const associateAssetFormStepWithGroups = async (stepNo, stepName, groups) => {
     try {
         const newAssetFormStep = new assetFormStepModel({stepNo, stepName, createdAt: new Date()});
@@ -71,8 +81,28 @@ const listForms = async (page, limit, sortBy) => {
 
 const getFormStepById = async (id) => {
     try {
-        const formStepById = await assetFormStepModel.findById({_id: id});
-        return formStepById;
+        // Find the asset form step by its Id
+        const step = await assetFormStepModel.findOne({ _id: id });
+
+        if (!step) {
+            throw new Error(`Step with ID ${id} not found`);
+        }
+
+        const groups = await fieldManagementModel.find({assetFormStepId: id})
+            .select('_id orderNo groupName isMandatory');
+
+        const response = {
+            stepNo: step.stepNo,
+            stepName: step.stepName,
+            groups: groups.map(group => ({
+                groupId: group._id,
+                groupName: group.groupName,
+                isMandatory: group.isMandatory,
+                orderNo: group.orderNo,
+            })),
+        };
+
+        return response;
     } catch (error) {
         throw error;
     }
@@ -133,5 +163,6 @@ export const assetFormStepService = {
     listForms,
     updateForm,
     deleteForm,
-    getFormStepById
+    getFormStepById,
+    checkStepNoExists
 };
