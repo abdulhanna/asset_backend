@@ -4,7 +4,7 @@ const assetFormStepSchema = new mongoose.Schema({
         stepNo: {
             type: Number,
             required: true,
-            //unique: true
+            unique: true
         },
         stepName: {
             type: String,

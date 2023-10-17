@@ -230,12 +230,12 @@ router.get('/member/:id', isLoggedIn, async (req, res) => {
     }
 });
 
-router.put('/deactivate/:userId', isLoggedIn, async (req, res) => {
+router.delete('/delete/:userId', isLoggedIn, async (req, res) => {
     try {
         const {userId} = req.params;
 
         // Call the service function to update the user's isDeleted field and set deletedAt to the current date
-        const updatedUser = await memberService.deactivateUser(userId);
+        const updatedUser = await memberService.deleteUser(userId);
 
         if (!updatedUser) {
             return res.status(404).json({
@@ -246,7 +246,7 @@ router.put('/deactivate/:userId', isLoggedIn, async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            msg: 'User deactivated successfully',
+            msg: 'User deleted successfully',
             user: updatedUser,
         });
     } catch (error) {
