@@ -12,9 +12,8 @@ const globalDetails = {};
 
 globalDetails.getOrganizationName = async (organizationId) => {
   if (organizationId) {
-
   const getOrgName = await organizationModel.findOne({
-    organizationId
+    _id:organizationId
   });
 
   assert(getOrgName, createError(StatusCodes.REQUEST_TIMEOUT, 'Request Timeout'));

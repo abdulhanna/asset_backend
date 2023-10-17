@@ -3,15 +3,20 @@ import mongoose from 'mongoose';
 const masterTableSchema = new mongoose.Schema(
     {
     tableId: {
-            type: String,
-            ref: 'mastertablecolumns',
-            required: true,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'mastertablecolumns',
+        required: true
     },
     masterTableData: [],
         addedByUserId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'users',
             required: true
+        },
+        publishStatus:{
+            type: String,
+            enum: ['published', 'unpublished'],
+            default: 'published'
         },
         isDeleted: {
             type: Boolean,
