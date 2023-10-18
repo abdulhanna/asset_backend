@@ -24,7 +24,7 @@ const getOrganizations = async (currentPage, limit, sortBy) => {
              .limit(limit)
           .populate({
            path: 'userId',
-           select: 'email password',
+           select: 'email password is_email_verified',
          })
 
          return {
@@ -52,7 +52,7 @@ const getOrganiztionById = async (id) => {
              )
              .populate({
               path: 'userId',
-              select: 'email password',
+              select: 'email password is_email_verified',
             });
 
           return organization;
