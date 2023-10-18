@@ -81,8 +81,28 @@ const listForms = async (page, limit, sortBy) => {
 
 const getFormStepById = async (id) => {
     try {
-        const formStepById = await assetFormStepModel.findById({_id: id});
-        return formStepById;
+        // Find the asset form step by its Id
+        const step = await assetFormStepModel.findOne({ _id: id });
+
+        if (!step) {
+            throw new Error(`Step with ID ${id} not found`);
+        }
+
+        const groups = await fieldManagementModel.find({assetFormStepId: id})
+            .select('_id orderNo groupName isMandatory');
+
+        const response = {
+            stepNo: step.stepNo,
+            stepName: step.stepName,
+            groups: groups.map(group => ({
+                groupId: group._id,
+                groupName: group.groupName,
+                isMandatory: group.isMandatory,
+                orderNo: group.orderNo,
+            })),
+        };
+
+        return response;
     } catch (error) {
         throw error;
     }

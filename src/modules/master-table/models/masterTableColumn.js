@@ -7,12 +7,12 @@ const dynamicTableFieldSchema = new mongoose.Schema({
     },
     dataType: {
         type: String,
-        enum: ['Alphanumeric', 'Number'],
+        enum: ['alphanumeric', 'number'],
         default: null
     },
-    rateType: {
+    depreciationType: {
         type: String,
-        enum: ['SLM', 'WDV', null],
+        enum: ['SLM', 'WDV', 'Usage', null],
         default: null
     }
 });
@@ -30,7 +30,7 @@ const masterTableColumnSchema = new mongoose.Schema(
             enum: ['auto', 'manual'],
             default: 'auto',
         },
-        tableId: {
+        tableCodeId: {
             type: String,
             required: true,
             unique: true,
