@@ -3,6 +3,7 @@ import { httpHandler } from '@madhouselabs/http-helpers';
 import  {isLoggedIn} from "../../auth/router/passport";
 import uploader from "../../../helpers/fileUploader";
 import path from "path";
+import fs from "fs";
 import masterTableService from "../services/masterTable";
 
 
@@ -15,12 +16,12 @@ router.post("/add",
 
             const dashboardPermission = req.user.data.dashboardPermission;
             const organizationId = req.user.data.organizationId;
-            const result = await masterTableService.createMasterTable(req.body, dashboardPermission, organizationId);
+            const addedBy = req.user.data._id;
+            const result = await masterTableService.createMasterTable(req.body, dashboardPermission, organizationId, addedBy);
             res.send(result);
 
     })
     )
-
 
 
 
@@ -31,26 +32,34 @@ router.post("/uploadTableData",
     httpHandler(async (req, res) => {
         const filePath = req.file.path;
         const tableCodeId = req.body.tableCodeId;
-        const addedBy = req.user.data._id;
+        
         // Check file format (XLSX or CSV)
         const fileExtension = path.extname(req.file.originalname).toLowerCase();
         if (fileExtension !== '.xlsx' && fileExtension !== '.csv') {
+             // Remove the uploaded file
+             fs.unlinkSync(filePath); // Synchronously delete the file
             return res.status(400).json({ error: 'File format not supported. Please upload an XLSX or CSV file.' });
         }
 
         // Check file size (not larger than 10MB)
         if (req.file.size > 10 * 1024 * 1024) {
+             // Remove the uploaded file
+             fs.unlinkSync(filePath); // Synchronously delete the file
             return res.status(400).json({ error: 'File size exceeds the 10MB limit.' });
         }
 
-        const result = await masterTableService.uploadMasterTableData(filePath, tableCodeId, addedBy);
+        const result = await masterTableService.uploadMasterTableData(filePath, tableCodeId);
+
+        // Remove the uploaded file after processing
+        fs.unlinkSync(filePath); // Synchronously delete the file
+        
         res.send(result)
     })
     )
 
 
 //////////// get all table by user role /////////
-router.get("/all",
+router.get("/listAllTables",
     isLoggedIn,
     httpHandler(async (req, res)=> {
         const dashboardPermission = req.user.data.dashboardPermission;
@@ -61,5 +70,30 @@ router.get("/all",
     })
     )
 
+
+
+  //////////////// get single Table Data /////////
+  router.get("/tableDetails/:id",
+  isLoggedIn,
+  httpHandler(async (req, res)=> {
+    const mstId = req.params.id;
+    const tableData = await masterTableService.getSinlgleTable(mstId);
+    res.send(tableData)
+
+  })
+  )  
+
+
+
+
+  ////////// delete master table by id ////////
+  router.delete("/deleteTable/:id",
+  isLoggedIn,
+  httpHandler(async (req, res)=> {
+    const mstId = req.params.id;
+    const deletetable = await masterTableService.deleteTable(mstId)
+    res.send(deletetable)
+  })
+  )
 
 export default router;
