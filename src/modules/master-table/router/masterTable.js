@@ -9,7 +9,7 @@ import masterTableService from "../services/masterTable";
 
 const router = Router();
 
-
+/////// add table columns and other details////////
 router.post("/add",
     isLoggedIn,
     httpHandler(async (req, res) => {
@@ -23,7 +23,17 @@ router.post("/add",
     })
     )
 
+/////////generate SmapelFile by Table id //////////
 
+router.get("/generateSampleFile/:id",
+isLoggedIn,
+httpHandler(async (req, res)=> {
+  const mstId = req.params.id;
+  const tableFile = await masterTableService.generateSampelefile(mstId);
+  res.send(tableFile)
+
+})
+)
 
 //// upload tabel data
 router.put("/uploadTableData",
