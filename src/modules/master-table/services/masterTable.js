@@ -39,7 +39,8 @@ masterTableService.createMasterTable = async (data, dashboardPermission, organiz
              applicableTo: data.applicableTo,
              applicableId: data.applicableId,
              fields: data.fields,
-             addedByUserId:addedByUserId
+             addedByUserId:addedByUserId,
+             createdAt: Date.now()
         })
         const savedMstTableColumn = await newMstTable.save();
         assert(
@@ -310,61 +311,44 @@ masterTableService.getSinlgleTable = async (mstId) => {
 
 
 
+  /////// modify obeject/row of  masterTableData array and create a new document ////////////////
 
-//////////// get single row/masterTable object data of table by objectId ////////
-masterTableService.getTableRowData = async (rowId)=> {
+masterTableService.modifyableData = async (updatedMasterTable, tableId, organizationId, addedByUserId)=> {
+        // Retrieve the existing document
+        const existingDocument = await masterTableModel.findById(tableId);
+        assert(existingDocument, createError(StatusCodes.CONFLICT, `Table not found with id ${tableId}`))
 
-    const rowData = await masterTableModel.findOne({
-        'masterTableData._id': mongoose.Types.ObjectId(rowId)
-    }, {
-        'masterTableData.$': 1,
-    });
+        // Make a deep copy of the existing document
+        const copiedDocument = JSON.parse(JSON.stringify(existingDocument));
 
-    assert(rowData, createError(StatusCodes.BAD_REQUEST, `No row data found with id ${rowId}`))
+        // Check if 'Code No' values are unique within the updated masterTable object
+        const updatedCodes = new Set();
+        for (const data of updatedMasterTable.masterTableData) {
+            assert(!updatedCodes.has(data['Code No']), createError(StatusCodes.BAD_REQUEST, `Code No ${data['Code No']} is duplicated within the updated masterTable.`));
+            updatedCodes.add(data['Code No']);
+        }
 
-     // Deconstruct the masterTableData array and remove the _id field
-     const { _id, masterTableData } = rowData;
-     const formattedData = masterTableData[0];
-     delete formattedData._id;
-    return formattedData;
-}
-
-
-
-////// edit single row/masterTable object data of table by objectId /////
-
-masterTableService.editTableData = async (updatedData, tableId)=> {
-
-    const existingData = await masterTableModel.findOne({ _id: tableId });
-    assert(existingData, createError(StatusCodes.CONFLICT, `Table not found having id ${tableId}`))
-
-    const existingCodes = new Set();
-    for (const data of existingData.masterTableData) {
-        existingCodes.add(data['Code No']);
-    }
-
-    for (const data of updatedData) {
-        // Check if 'Code No' exists in other objects, excluding the current object
-        const currentObjectId = data._id;
-        assert(!(existingCodes.has(data['Code No']) && !existingData.masterTableData.some(obj => obj._id === currentObjectId)), createError(StatusCodes.CONFLICT, `Code No is duplicated within the table.`));
-
-        // Update each object by its _id
-        const updatedObject = await masterTableModel.findOneAndUpdate(
-            {
-                _id: tableId,
-                'masterTableData._id': data._id
-            },
-            {
-                $set: { 'masterTableData.$': data }
-            },
-            { new: true }
+        /// get organization name
+        const organizationName = await globalDetails.getOrganizationName(
+            organizationId
         );
-        assert(updatedObject, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"));   
+   
+       
+        // add unique data and added by userId
+        copiedDocument._id = mongoose.Types.ObjectId();
+        copiedDocument.tableCodeId = await autoCodeGeneration.getmstCode(organizationName);
+        copiedDocument.createdAt = Date.now();
+        copiedDocument.addedByUserId = addedByUserId;
+        copiedDocument.publishStatus = 'unpublished';
 
-    }
+        // Update the masterTable in the copied document
+        copiedDocument.masterTable = updatedMasterTable;
 
-
-    return updatedData;
+        // Save the copied document as a new document
+        const newDocument = new masterTableModel(copiedDocument);
+        const savedDocument = await newDocument.save();
+        assert(savedDocument, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout")); 
+        return savedDocument;
 }
 
 
