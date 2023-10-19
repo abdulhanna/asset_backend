@@ -63,9 +63,10 @@ router.get("/listAllTables",
     isLoggedIn,
     httpHandler(async (req, res)=> {
         const dashboardPermission = req.user.data.dashboardPermission;
+        const publishStatus = req.query.publishStatus;
         const organizationId = req.user.data.organizationId;
 
-        const result = await masterTableService.getallTable(dashboardPermission, organizationId);
+        const result = await masterTableService.getallTable(dashboardPermission, organizationId, publishStatus);
         res.send(result)
     })
     )
@@ -97,8 +98,8 @@ router.get("/listAllTables",
 
 
 
-  /////// edit single object/row of table/masterTableData array by id ////////////////
-  router.put("/editTable/:tableId",
+  /////// modify object/row of table/masterTableData array by id ////////////////
+  router.put("/modifyTable/:tableId",
   isLoggedIn,
   httpHandler(async (req, res)=> {
     const tableId = req.params.tableId;

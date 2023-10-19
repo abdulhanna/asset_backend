@@ -240,7 +240,7 @@ masterTableService.uploadMasterTableData = async (filePath, tableCodeId) => {
 
 
 ////// get all table //////////
-masterTableService.getallTable = async (dashboardPermission, organizationId) => {
+masterTableService.getallTable = async (dashboardPermission, organizationId, publishStatus) => {
     let finalOrganizationId;
 
     if (dashboardPermission === 'root_dashboard') {
@@ -250,8 +250,16 @@ masterTableService.getallTable = async (dashboardPermission, organizationId) => 
         finalOrganizationId = mongoose.Types.ObjectId(organizationId);
     }
 
+    const query = {
+        organizationId: finalOrganizationId,
+        isDeleted: false
+      };
+      
+      if (publishStatus) {
+        query.publishStatus = publishStatus;
+      }
 
-    const allTables = await masterTableModel.find({organizationId: finalOrganizationId, isDeleted: false})
+    const allTables = await masterTableModel.find(query)
     .populate('addedByUserId', 'email userProfile.name')
     .select('_id tableCodeId tableName applicableTo applicableId publishStatus createdAt')
 
