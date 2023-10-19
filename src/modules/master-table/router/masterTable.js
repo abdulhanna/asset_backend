@@ -26,7 +26,7 @@ router.post("/add",
 
 
 //// upload tabel data
-router.post("/uploadTableData",
+router.put("/uploadTableData",
     isLoggedIn,
     uploader.single("file"),
     httpHandler(async (req, res) => {
@@ -52,7 +52,7 @@ router.post("/uploadTableData",
 
         // Remove the uploaded file after processing
         fs.unlinkSync(filePath); // Synchronously delete the file
-        
+
         res.send(result)
     })
     )
@@ -85,6 +85,52 @@ router.get("/listAllTables",
 
 
 
+  //////// get single object/row of table/masterTableData array by id ////////////////
+  router.get("/tableRowDetails/:id",
+  isLoggedIn,
+  httpHandler(async (req, res)=> {
+    const rowId = req.params.id;
+    const rowData = await masterTableService.getTableRowData(rowId)
+    res.send(rowData)
+  })
+  )
+
+
+
+  /////// edit single object/row of table/masterTableData array by id ////////////////
+  router.put("/editTable/:tableId",
+  isLoggedIn,
+  httpHandler(async (req, res)=> {
+    const tableId = req.params.tableId;
+    const updatedData = req.body.masterTableData; // Updated data from the request body
+    const rowData = await masterTableService.editTableData(updatedData, tableId)
+    res.send(rowData)
+  })
+  )
+
+
+
+  /////////publish draft table by id /////////
+  router.put("/publish/:id",
+  isLoggedIn,
+  httpHandler(async (req, res)=> {
+    const mstId = req.params.id;
+    const result = await masterTableService.publishTable(mstId)
+    res.send(result)
+  })
+  )
+
+
+//////// delete draft table by id //////////
+
+router.delete("/deleteDraftTable/:id",
+isLoggedIn,
+httpHandler(async (req, res)=> {
+  const mstId = req.params.id;
+  const deletetable = await masterTableService.deleteDraft(mstId)
+  res.send(deletetable)
+})
+)
 
   ////////// delete master table by id ////////
   router.delete("/deleteTable/:id",
@@ -95,5 +141,8 @@ router.get("/listAllTables",
     res.send(deletetable)
   })
   )
+
+
+
 
 export default router;
