@@ -191,20 +191,6 @@ masterTableService.uploadMasterTableData = async (filePath, tableCodeId) => {
     // Assuming the headers match your schema's field names and data types
     const data = [];
 
-    // worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-    //     if (rowNumber > 1) { // Skip the header row
-    //         const rowData = {};
-    //         row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
-    //             // Use headers[1] to get the correct header for the column
-    //             rowData[headers[colNumber]] = cell.value;
-    //         });
-    //         data.push(rowData);
-    //     }
-    // });
-
-
-
-
     worksheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
         if (rowNumber > 1) { // Skip the header row
             const rowData = {};
@@ -300,7 +286,7 @@ masterTableService.getSinlgleTable = async (mstId) => {
      .select('_id tableName tableCodeId publishStatus fields masterTableData')
 
      assert(getTableData, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"));
-
+     
      const formattedMasterTableHeader = getTableData.fields.map(field => field.fieldName);
 
      const formatData = {
@@ -311,13 +297,103 @@ masterTableService.getSinlgleTable = async (mstId) => {
         masterTableHeader: formattedMasterTableHeader,
         masterTableData:getTableData.masterTableData
      }
-
      return formatData;
 }
 
 
 
-//////// delete Master table by id ////////
+
+//////////// get single row/masterTable object data of table by objectId ////////
+masterTableService.getTableRowData = async (rowId)=> {
+
+    const rowData = await masterTableModel.findOne({
+        'masterTableData._id': mongoose.Types.ObjectId(rowId)
+    }, {
+        'masterTableData.$': 1,
+    });
+
+    assert(rowData, createError(StatusCodes.BAD_REQUEST, `No row data found with id ${rowId}`))
+
+     // Deconstruct the masterTableData array and remove the _id field
+     const { _id, masterTableData } = rowData;
+     const formattedData = masterTableData[0];
+     delete formattedData._id;
+    return formattedData;
+}
+
+
+
+////// edit single row/masterTable object data of table by objectId /////
+
+masterTableService.editTableData = async (updatedData, tableId)=> {
+
+    const existingData = await masterTableModel.findOne({ _id: tableId });
+    assert(existingData, createError(StatusCodes.CONFLICT, `Table not found having id ${tableId}`))
+
+    const existingCodes = new Set();
+    for (const data of existingData.masterTableData) {
+        existingCodes.add(data['Code No']);
+    }
+
+    for (const data of updatedData) {
+        // Check if 'Code No' exists in other objects, excluding the current object
+        const currentObjectId = data._id;
+        assert(!(existingCodes.has(data['Code No']) && !existingData.masterTableData.some(obj => obj._id === currentObjectId)), createError(StatusCodes.CONFLICT, `Code No is duplicated within the table.`));
+
+        // Update each object by its _id
+        const updatedObject = await masterTableModel.findOneAndUpdate(
+            {
+                _id: tableId,
+                'masterTableData._id': data._id
+            },
+            {
+                $set: { 'masterTableData.$': data }
+            },
+            { new: true }
+        );
+        assert(updatedObject, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"));   
+
+    }
+
+
+    return updatedData;
+}
+
+
+
+////// publish draft table by Id ////////////////
+masterTableService.publishTable = async (mstId)=> {
+     // Update status 
+     const updateStatus = await masterTableModel.findOneAndUpdate(
+        {
+            _id: mstId,
+        },
+        {
+            publishStatus: "published"
+        },
+        { new: true }
+    );
+    assert(updateStatus, createError(StatusCodes.BAD_REQUEST, `No Master Table is exist with id ${mstId}`))
+
+   return updateStatus;
+}
+
+
+//////// delete draft master table by id //////////
+masterTableService.deleteDraft = async (tableId)=>{
+    const isExistTable = await masterTableModel.findOne({_id: tableId});
+    assert(isExistTable, createError(StatusCodes.BAD_REQUEST, `No Master Table is exist with id ${tableId}`))
+    assert(isExistTable.publishStatus !== 'published', createError(StatusCodes.BAD_REQUEST, `Master Table with id ${tableId} is a published table`))
+    //// delete
+    const deleteTable = await masterTableModel.deleteOne({_id: tableId});
+    assert(deleteTable, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"))
+    return{"msg":"Draft Master Table Deleted Successfully"}
+}
+
+
+
+
+//////// delete published Master table by id ////////
 masterTableService.deleteTable = async (mstId)=> {
     const isExistTable = await masterTableModel.findOneAndDelete({_id: mstId});
     assert(isExistTable, createError(StatusCodes.BAD_REQUEST, `No Master Table is exist with id ${mstId}`))
