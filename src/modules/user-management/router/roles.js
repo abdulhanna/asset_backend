@@ -25,7 +25,23 @@ router.post('/', isLoggedIn, async (req, res) => {
         roleName = roleName.toLowerCase();
 
         // Check if the roleName already exists
-        const existingRole = await roleDefineModel.findOne({roleName, addedByUserId: userId});
+        let finalOrganizationId;
+
+        if (organizationId) 
+        {
+            finalOrganizationId = mongoose.Types.ObjectId(organizationId);
+        } else
+        {
+            finalOrganizationId = null;
+        }
+
+        const query = {
+            roleName: roleName,
+            organizationId: finalOrganizationId,
+            isDeleted: false
+          };
+
+        const existingRole = await roleDefineModel.findOne(query);
         if (existingRole) {
             return res.status(400).json({
                 success: false,
