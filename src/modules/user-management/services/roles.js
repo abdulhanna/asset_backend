@@ -152,8 +152,7 @@ const getAllRoles = async (loggedInUserId, page, limit, sortBy) => {
 
         const filter = {
             addedByUserId: loggedInUserId,
-            isDeleted: false,
-            isDeactivated: false
+            isDeleted: false
         };
 
         const data = await roleDefineModel
