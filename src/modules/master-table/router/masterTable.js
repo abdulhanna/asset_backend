@@ -94,6 +94,16 @@ router.get("/listAllTables",
   })
   )  
 
+  //////////////// get single row data by row and table id
+  router.get("/table/:tableId/rowDetails/:rowId",
+  isLoggedIn,
+  httpHandler(async (req, res)=> {
+    const tableId = req.params.tableId;
+    const rowId = req.params.rowId;
+    const rowData = await masterTableService.getSingleRow(tableId, rowId)
+    res.send(rowData)
+  })
+  )
 
   /////// modify obeject/row of  masterTableData array and create a new document ////////////////
   router.put("/modifyTable/:tableId",

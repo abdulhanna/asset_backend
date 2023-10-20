@@ -32,6 +32,16 @@ masterTableService.createMasterTable = async (data, dashboardPermission, organiz
 
         assert(!getExistingtable, createError(StatusCodes.CONFLICT, "Table Name already exists"))
 
+
+     // Generate fieldKey for each field based on fieldName (with spaces removed and converted to lowercase)
+     const fieldsWithFieldKey = data.fields.map((field) => ({
+        ...field,
+        fieldKey: field.fieldName.replace(/ /g, '').toLowerCase(), // Remove spaces and convert to lowercase
+    }));
+
+
+
+
         const newMstTable = new masterTableModel({
              organizationId: organizationId,
              codeGenerationType: data.codeGenerationType,
@@ -39,7 +49,7 @@ masterTableService.createMasterTable = async (data, dashboardPermission, organiz
              tableName: data.tableName,
              applicableTo: data.applicableTo,
              applicableId: data.applicableId,
-             fields: data.fields,
+             fields: fieldsWithFieldKey,
              addedByUserId:addedByUserId,
              createdAt: Date.now()
         })
@@ -214,40 +224,41 @@ masterTableService.uploadMasterTableData = async (filePath, tableCodeId) => {
     const headers = headerRow.values;
 
     // Assuming the headers match your schema's field names and data types
+
     const data = [];
 
-    worksheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
-        if (rowNumber > 1) { // Skip the header row
-            const rowData = {};
-            row.eachCell({ includeEmpty: false }, async (cell, colNumber) => {
-                const header = headers[colNumber];
-                const value = cell.value;
-    
-                if (header === 'ParentCode') {
-                    // Find and associate the ParentCode with its corresponding ID
-                    const parentObject = data.find((item) => item['Code No'] === value);
-                    if (parentObject) {
-                        rowData[header] = parentObject._id;
-                    } else {
-                        // Handle the case where no matching parentObject is found
-                        rowData[header] = null;
-                    }
-                } else {
-                    rowData[header] = value;
-                }
-            });
-    
-            // Generate a new MongoDB ObjectId for each row
-            const newRow = {
-                _id: new mongoose.Types.ObjectId(), // Assuming you're using Mongoose
-                ...rowData
-            };
-    
-            data.push(newRow);
-        }
-    });
-    
+worksheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
+    if (rowNumber > 1) { // Skip the header row
+        const rowData = {};
+        row.eachCell({ includeEmpty: false }, async (cell, colNumber) => {
+            const header = headers[colNumber];
+            const value = cell.value;
 
+            if (header === 'ParentCode') {
+                // Find and associate the ParentCode with its corresponding ID
+                const parentObject = data.find((item) => item['Code No'] === value);
+                if (parentObject) {
+                    rowData[header] = parentObject._id;
+                } else {
+                    // Handle the case where no matching parentObject is found
+                    rowData[header] = null;
+                }
+            } else {
+                // Remove spaces and convert header to lowercase
+                const formattedHeader = header.replace(/ /g, '').toLowerCase();
+                rowData[formattedHeader] = value;
+            }
+        });
+
+        // Generate a new MongoDB ObjectId for each row
+        const newRow = {
+            _id: new mongoose.Types.ObjectId(), // Assuming you're using Mongoose
+            ...rowData
+        };
+
+        data.push(newRow);
+    }
+});
     // Perform data validation on 'data' if needed
 
     // update masterTabl3Data 
@@ -308,7 +319,7 @@ masterTableService.getallTable = async (dashboardPermission, organizationId, pub
 
 
 
-///////// get single data by Id ///////////
+///////// get single table data by Id ///////////
 masterTableService.getSinlgleTable = async (mstId) => {
     
     const isExistTable = await masterTableModel.findOne({_id: mstId, isDeleted : false});
@@ -320,8 +331,17 @@ masterTableService.getSinlgleTable = async (mstId) => {
 
      assert(getTableData, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"));
      
-     const formattedMasterTableHeader = getTableData.fields.map(field => field.fieldName);
-
+      // Format the masterTableHeader as an object with key-value pairs
+      const formattedMasterTableHeader = getTableData.fields.reduce((obj, field) => {
+        if (field.depreciationType) {
+            const depricatonMethod = field.depreciationType.replace(/ /g, '').toLowerCase()
+            obj[`${field.fieldKey}(${depricatonMethod})`] = `${field.fieldKey} (${field.depreciationType})`;
+        } else {
+            obj[field.fieldKey] = field.fieldName;
+        }
+        return obj;
+    }, {});
+    
      const formatData = {
         _id:getTableData._id,
         tableCodeId: getTableData.tableCodeId,
@@ -333,6 +353,24 @@ masterTableService.getSinlgleTable = async (mstId) => {
      return formatData;
 }
 
+
+
+
+
+///////////// get single row data by row id ////////////////
+masterTableService.getSingleRow = async (tableId, rowId)=> {
+   // Retrieve the existing document
+   const existingDocument = await masterTableModel.findOne({_id : tableId, isDeleted: false});
+   assert(existingDocument, createError(StatusCodes.BAD_REQUEST, `No Master Table is exist with id ${tableId}`))
+    // Find the object within the masterTableData array using $elemMatch
+    const objectData = existingDocument.masterTableData.find(
+        (data) => data._id.toString() === rowId
+    );
+
+    assert(objectData, createError(StatusCodes.BAD_REQUEST, `No Row Data is exist with id ${rowId}`))
+    return objectData;
+
+}
 
 
   /////// modify obeject/row of  masterTableData array and create a new document ////////////////
@@ -348,8 +386,8 @@ masterTableService.modifyableData = async (updatedMasterTable, tableId, organiza
         // Check if 'Code No' values are unique within the updated masterTable object
         const updatedCodes = new Set();
         for (const data of updatedMasterTable.masterTableData) {
-            assert(!updatedCodes.has(data['Code No']), createError(StatusCodes.BAD_REQUEST, `Code No ${data['Code No']} is duplicated within the updated masterTable.`));
-            updatedCodes.add(data['Code No']);
+            assert(!updatedCodes.has(data['codeno']), createError(StatusCodes.BAD_REQUEST, `Code No ${data['codeno']} is duplicated within the updated masterTable.`));
+            updatedCodes.add(data['codeno']);
         }
 
         /// get organization name
