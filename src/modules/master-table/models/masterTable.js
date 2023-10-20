@@ -5,6 +5,10 @@ const dynamicTableFieldSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    fieldKey:{
+      type: String,
+      required: true,
+    },
     dataType: {
         type: String,
         enum: ['alphanumeric', 'number'],
