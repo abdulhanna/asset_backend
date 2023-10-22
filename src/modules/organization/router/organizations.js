@@ -89,6 +89,47 @@ router.post('/add', isLoggedIn, async (req, res) => {
           }
 
 
+
+          const existingRegNumber = await organizationModel.findOne({
+               organizationRegistrationNumber: req.body.organizationRegistrationNumber,
+               isDeleted: false
+          })
+
+          if (existingRegNumber) {
+               return res.status(400).json({
+                    success: false,
+                    error: 'Registration Number already exists',
+               });
+          }
+
+
+
+          const existingPan = await organizationModel.findOne({
+               pan: req.body.pan,
+               isDeleted: false
+          })
+
+          if (existingPan) {
+               return res.status(400).json({
+                    success: false,
+                    error: 'PAN No. already exists',
+               });
+          }
+
+
+          const existingGSTIN = await organizationModel.findOne({
+               gstin: req.body.gstin,
+               isDeleted: false
+          })
+          
+          if (existingGSTIN) {gstin
+               return res.status(400).json({
+                    success: false,
+                    error: 'GSTIN already exists',
+               });
+          }
+
+
           const result = await organizationService.addOrganization(id, req.body);
           return res.status(201).json({
                success: true,
