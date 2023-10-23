@@ -154,6 +154,13 @@ router.put('/updateMember/:id', isLoggedIn, upload.single('image'), async (req, 
                 profileImg: result.secure_url,
                 profileImgPublicId: result.public_id,
             };
+        } else if (existingMember && existingMember.userProfile) {
+            // If no new image is provided, keep the existing image data
+            data.userProfile = {
+                ...data.userProfile,
+                profileImg: existingMember.userProfile.profileImg,
+                profileImgPublicId: existingMember.userProfile.profileImgPublicId,
+            };
         }
 
         const updateMember = await memberService.updateMember(id, data);
@@ -183,7 +190,7 @@ router.get('/', isLoggedIn, async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            roles: membersData.data,
+            members: membersData.data,
             totalDocuments: membersData.totalDocuments,
             totalPages: membersData.totalPages,
             startSerialNumber: membersData.startSerialNumber,
