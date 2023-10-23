@@ -11,7 +11,7 @@ import puppeteer from 'puppeteer';
 cloudinary.config(secret.cloudinary);
 
 const profileImg = multer.diskStorage({
-    destination: 'public/images/profileImage',
+    destination: 'public/exports/profileImage',
     filename: (req, file, cb) => {
         cb(null, file.fieldname + '_' + Date.now() + file.originalname);
     },
