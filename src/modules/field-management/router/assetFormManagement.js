@@ -245,7 +245,7 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
             };
         });
 
-        const exportsDir = path.join(__dirname, 'exports');
+        const exportsDir = path.join(__dirname, '../../../../public/exports/assetFormFields');
 
         if (!fs.existsSync(exportsDir)) {
             fs.mkdirSync(exportsDir, {recursive: true});
@@ -265,6 +265,17 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
             success: true,
             message: 'Excel file generated successfully'
         });
+
+
+        // res.download(filePath, `export_${organizationId}.xlsx`, (err) => {
+        //     if (err) {
+        //         console.error('Error exporting Excel:', err);
+        //         res.status(500).send('Internal Server Error');
+        //     } else {
+        //         console.log('Excel file downloaded successfully');
+        //         fs.unlinkSync(filePath); // Remove the file after download
+        //     }
+        // });
     } catch (error) {
         console.error('Error exporting Excel:', error);
         res.status(500).send('Internal Server Error');
