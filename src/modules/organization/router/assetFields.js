@@ -6,6 +6,7 @@ import {v2 as cloudinary} from 'cloudinary';
 import {secret} from '../../../config/secret.js';
 import Excel from 'exceljs';
 import assetFormManagementModel from '../../field-management/models/assetFormManagement';
+import {validate} from '@babel/core/lib/config/validation/options';
 
 
 cloudinary.config(secret.cloudinary);
@@ -113,7 +114,7 @@ router.get('/list', isLoggedIn, async (req, res) => {
 
 
 //------------------------------
-const uploadTwo = multer({dest: 'uploads/'});
+const uploadTwo = multer({dest: 'public/exports/assets'});
 const parseExcel = (filePath) => {
     const workbook = new Excel.Workbook();
     return workbook.xlsx.readFile(filePath).then(() => {
@@ -162,10 +163,65 @@ function protectAndUnlockCells(worksheet) {
     }
 }
 
+const validateDateFormat = (dateString) => {
+    // Parse the input date string
+    const dateObject = new Date(dateString);
+
+    // Check if the dateObject is valid
+    if (isNaN(dateObject.getTime())) {
+        return false;
+    }
+
+    // Convert the date to YYYY/MM/DD format
+    const year = dateObject.getFullYear();
+    const month = String(dateObject.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObject.getDate()).padStart(2, '0');
+
+    const formattedDate = `${year}/${month}/${day}`;
+
+    // Regular expression to validate date format (YYYY/MM/DD)
+    const dateRegex = /^\d{4}\/\d{2}\/\d{2}$/;
+
+    // Check if the formatted date matches the date format
+    return dateRegex.test(formattedDate);
+};
+
+
+const validateAsset = (asset, mapping) => {
+    const assetFieldName = mapping.assetFieldName;
+    const groupName = mapping.groupName;
+    const subgroupName = mapping.subgroupName;
+    const fieldValue = asset[groupName][subgroupName][assetFieldName];
+
+    if (mapping.fieldType === 'date') {
+        const isValidDate = validateDateFormat(fieldValue);
+        if (!isValidDate) {
+            return mapping.errorMessage;
+        }
+    } else if (mapping.fieldType === 'string') {
+        if (mapping.fieldLength && fieldValue && fieldValue.length > mapping.fieldLength) {
+            return mapping.errorMessage;
+        }
+    } else if (mapping.fieldType === 'number') {
+        if (isNaN(fieldValue)) {
+            return mapping.errorMessage;
+        }
+    } else if (mapping.fieldType === 'list') {
+        const validOptions = mapping.listOptions;
+        console.log('validOptions', validOptions);
+        if (fieldValue && !validOptions.includes(fieldValue)) {
+            return mapping.errorMessage;
+        }
+    }
+
+    return null; // Return null if there are no validation errors
+};
+
 
 router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) => {
     try {
         const excelData = await parseExcel(req.file.path);
+
         const organizationId = req.user.data.organizationId;
         const assetFormManagement = await getAssetFormManagement(organizationId);
 
@@ -176,16 +232,20 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
                 subgroup.fields.map(field => ({
                     assetFieldName: field.name,
                     groupName: group.groupName, // Add groupName
-                    subgroupName: subgroup.subgroupName
+                    subgroupName: subgroup.subgroupName,
+                    fieldType: field.dataType,
+                    fieldLength: field.fieldLength,
+                    errorMessage: field.errorMessage,
+                    listOptions: field.listOptions
                 }))
             )
         );
-        console.log('test');
 
         const assets = [];
+        const validationErrors = [];
 
         for (let i = 1; i < excelData.length; i++) {
-            const asset = {};
+            const newAsset = {}; // Rename the loop variable
 
             for (const mapping of fieldsMapping) {
                 const assetFieldName = mapping.assetFieldName;
@@ -195,18 +255,30 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
                 const fieldValue = excelData[i][headers.indexOf(assetFieldName)];
 
                 if (assetFieldName) {
-                    if (!asset[groupName]) {
-                        asset[groupName] = {};
+                    if (!newAsset[groupName]) {
+                        newAsset[groupName] = {};
                     }
-                    if (!asset[groupName][subgroupName]) {
-                        asset[groupName][subgroupName] = {};
+                    if (!newAsset[groupName][subgroupName]) {
+                        newAsset[groupName][subgroupName] = {};
                     }
-                    asset[groupName][subgroupName][assetFieldName] = fieldValue;
+                    newAsset[groupName][subgroupName][assetFieldName] = fieldValue;
+                }
+
+                const validationError = validateAsset(newAsset, mapping);
+
+                if (validationError) {
+                    validationErrors.push(validationError);
                 }
             }
 
-            assets.push(asset);
+            assets.push(newAsset); // Push the newAsset into the assets array
         }
+
+        if (validationErrors.length > 0) {
+            return res.status(400).json({message: 'Validation errors', errors: validationErrors});
+        }
+
+        console.log('assets', assets);
 
         await assetService.saveAssetsToDatabase(organizationId, assets);
 
@@ -220,6 +292,7 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
 
         return res.json({message: 'Upload successful'});
     } catch (error) {
+        console.log(error);
         return res.status(500).json({message: 'Error uploading data', error: error.message});
     }
 });
