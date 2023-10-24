@@ -276,7 +276,7 @@ worksheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
 
 
 ////// get all table //////////
-masterTableService.getallTable = async (dashboardPermission, organizationId, publishStatus) => {
+masterTableService.getallTable = async (dashboardPermission, organizationId, publishStatus, currentPage, limit,sortBy) => {
     let finalOrganizationId;
 
     if (dashboardPermission === 'root_dashboard') {
@@ -285,7 +285,7 @@ masterTableService.getallTable = async (dashboardPermission, organizationId, pub
     {
         finalOrganizationId = mongoose.Types.ObjectId(organizationId);
     }
-
+ 
     const query = {
         organizationId: finalOrganizationId,
         isDeleted: false
@@ -295,7 +295,18 @@ masterTableService.getallTable = async (dashboardPermission, organizationId, pub
         query.publishStatus = publishStatus;
       }
 
+
+    const totalDocuments = await masterTableModel.countDocuments(query);
+    const totalPages = Math.ceil(totalDocuments / limit);
+
+    let startSerialNumber = (currentPage - 1) * limit + 1;
+    let endSerialNumber = Math.min(currentPage * limit, totalDocuments);
+
+   
     const allTables = await masterTableModel.find(query)
+    .sort(sortBy)
+             .skip((currentPage - 1) * limit)
+             .limit(limit)
     .populate('addedByUserId', 'email userProfile.name')
     .select('_id tableCodeId tableName applicableTo applicableId publishStatus createdAt')
 
@@ -313,8 +324,16 @@ masterTableService.getallTable = async (dashboardPermission, organizationId, pub
         createdAt: table.createdAt,
       }));
 
-      
-     return formattedResponse;
+    //   return formattedResponse;
+
+      return {
+        currentPage,
+        totalPages,
+        totalDocuments,
+        startSerialNumber,
+        endSerialNumber,
+        data:formattedResponse,
+    };
 }
 
 
@@ -380,6 +399,13 @@ masterTableService.modifyableData = async (updatedMasterTable, tableId, organiza
         const existingDocument = await masterTableModel.findById(tableId);
         assert(existingDocument, createError(StatusCodes.CONFLICT, `Table not found with id ${tableId}`))
 
+        
+          // Check if 'masterTableData' is the same in existingDocument and updatedMasterTable
+    assert(
+        JSON.stringify(existingDocument.masterTableData) !== JSON.stringify(updatedMasterTable.masterTableData),
+        createError(StatusCodes.BAD_REQUEST, 'No changes made to masterTableData.')
+    );
+
         // Make a deep copy of the existing document
         const copiedDocument = JSON.parse(JSON.stringify(existingDocument));
 
@@ -399,6 +425,7 @@ masterTableService.modifyableData = async (updatedMasterTable, tableId, organiza
         // add unique data and added by userId
         copiedDocument._id = mongoose.Types.ObjectId();
         copiedDocument.tableCodeId = await autoCodeGeneration.getmstCode(organizationName);
+        copiedDocument.masterTableData = updatedMasterTable.masterTableData;
         copiedDocument.createdAt = Date.now();
         copiedDocument.addedByUserId = addedByUserId;
         copiedDocument.publishStatus = 'unpublished';

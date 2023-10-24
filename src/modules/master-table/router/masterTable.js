@@ -72,11 +72,16 @@ router.put("/uploadTableData",
 router.get("/listAllTables",
     isLoggedIn,
     httpHandler(async (req, res)=> {
+
+      const currentPage = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.size) || 10;
+      const sortBy = req.query.sort ? JSON.parse(req.query.sort) : 'createdAt';
+
         const dashboardPermission = req.user.data.dashboardPermission;
         const publishStatus = req.query.publishStatus;
         const organizationId = req.user.data.organizationId;
 
-        const result = await masterTableService.getallTable(dashboardPermission, organizationId, publishStatus);
+        const result = await masterTableService.getallTable(dashboardPermission, organizationId, publishStatus, currentPage, limit, sortBy);
         res.send(result)
     })
     )
