@@ -244,8 +244,12 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
         const assets = [];
         const validationErrors = [];
 
+        const workbook = new Excel.Workbook();
+        await workbook.xlsx.readFile(req.file.path);
+        const mainSheet = workbook.getWorksheet(1);
+
         for (let i = 1; i < excelData.length; i++) {
-            const newAsset = {}; // Rename the loop variable
+            const newAsset = {};
 
             for (const mapping of fieldsMapping) {
                 const assetFieldName = mapping.assetFieldName;
@@ -267,28 +271,54 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
                 const validationError = validateAsset(newAsset, mapping);
 
                 if (validationError) {
+
                     validationErrors.push(validationError);
+
+                    // Set cell color to red if validation fails
+                    const cellAddress = `${String.fromCharCode(headers.indexOf(assetFieldName) + 65)}${i + 1}`;
+
+                    const cellError = mainSheet.getCell(cellAddress);
+
+                    cellError.note = {
+                        texts: [{
+                            'font': {
+                                'bold': true,
+                                'size': 12,
+                                'color': {'theme': 1},
+                                'name': 'Calibri',
+                                'family': 2,
+                                'scheme': 'minor'
+                            }, 'text': `${validationError ? validationError : validationError}`
+                        }],
+                        style: {
+                            fill: {
+                                fgColor: {argb: 'FFFF0000'},
+                            },
+                        },
+                        margins: {
+
+                            inset: [0.25, 0.25, 0.35, 0.35]
+                        }
+
+                    };
                 }
+
             }
 
-            assets.push(newAsset); // Push the newAsset into the assets array
+            assets.push(newAsset);
         }
+
 
         if (validationErrors.length > 0) {
+            await workbook.xlsx.writeFile('output.xlsx'); // Save as a new file
             return res.status(400).json({message: 'Validation errors', errors: validationErrors});
         }
-
-        console.log('assets', assets);
-
         await assetService.saveAssetsToDatabase(organizationId, assets);
 
-
-        const workbook = new Excel.Workbook();
-        await workbook.xlsx.readFile(req.file.path);
-        const mainSheet = workbook.getWorksheet(1);
-
-        // Assuming mainSheet is available in your context
+        // Protect and unlock cells after all processing
         protectAndUnlockCells(mainSheet);
+
+        await workbook.xlsx.writeFile(req.file.path);
 
         return res.json({message: 'Upload successful'});
     } catch (error) {
