@@ -461,6 +461,20 @@ const deleteFieldById = async (fieldId) => {
 
     return updatedGroup;
 };
+
+const handleMandatoryGroupDeletion = async (groupId) => {
+    const group = await fieldManagementModel.findById(groupId);
+    if (!group) {
+        return [];
+    }
+
+    if (group.isMandatory) {
+        return [group]; // Return the mandatory group
+    }
+
+    return [];
+};
+
 const deleteGroupAndFieldsById = async (groupId) => {
     try {
         const group = await fieldManagementModel.findById(groupId);
@@ -468,20 +482,15 @@ const deleteGroupAndFieldsById = async (groupId) => {
             return false;
         }
 
-        // Collect all field IDs in the group
-        const fieldIds = group.fields.map((field) => field._id);
-
         // Delete the group and all associated fields
-        await Promise.all([
-            fieldManagementModel.deleteMany({_id: {$in: fieldIds}}),
-            fieldManagementModel.deleteOne({_id: groupId}),
-        ]);
+        await fieldManagementModel.deleteOne({_id: groupId});
 
         return true;
     } catch (error) {
         throw error;
     }
 };
+
 
 const editFieldById = async (fieldId, updatedData) => {
     try {
@@ -603,7 +612,8 @@ export const fieldManagementService = {
     addFieldAndUpdateAssetForm,
     checkExistingGroups,
     getFieldGroupsForFormStep,
-    deleteSubGroupById
+    deleteSubGroupById,
+    handleMandatoryGroupDeletion
 };
 
 

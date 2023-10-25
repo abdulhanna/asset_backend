@@ -226,9 +226,17 @@ router.put('/field/:fieldId/mark-deleted', isLoggedIn, async (req, res) => {
 router.delete('/delete-group/:groupId', isLoggedIn, async (req, res) => {
     const {groupId} = req.params;
     try {
-        const result = await fieldManagementService.deleteGroupAndFieldsById(
-            groupId
-        );
+        const existingMandatoryGroup = await fieldManagementService.handleMandatoryGroupDeletion(groupId);
+
+        if (existingMandatoryGroup.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot delete a mandatory group',
+            });
+        }
+
+        const result = await fieldManagementService.deleteGroupAndFieldsById(groupId);
+
         if (result) {
             return res.status(200).json({
                 success: true,
