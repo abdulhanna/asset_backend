@@ -59,7 +59,7 @@ const getAllPermissions = async (page, limit, sortBy, sortOrder) => {
         const skip = (page - 1) * limit;
         let totalDocuments, totalPages, startSerialNumber, endSerialNumber, data;
 
-        const filter = {isDeleted: false, isDeactivated: false};
+        const filter = {isDeleted: false};
 
         data = await permissionModel
             .find(filter)
