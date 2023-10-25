@@ -137,7 +137,7 @@ router.get('/list/:id', async (req, res) => {
         return res.status(500).json({success: false, error: error.message});
     }
 });
-router.delete('/delete/:id', async (req, res) => {
+router.delete('/hard-delete/:id', async (req, res) => {
     try {
         const {id} = req.params;
 
@@ -172,7 +172,7 @@ router.delete('/delete/:id', async (req, res) => {
     }
 });
 
-router.put('/deactivate/:id', async (req, res) => {
+router.delete('/delete/:id', async (req, res) => {
     try {
         const {id} = req.params;
 

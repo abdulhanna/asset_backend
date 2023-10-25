@@ -14,7 +14,7 @@ const createRole = async (roleData) => {
 
 const updateRole = async (roleId, updatedRoleData) => {
     try {
-        const {roleName, description, permissions} = updatedRoleData;
+        const {roleName, description, permissions, isDeactivated} = updatedRoleData;
 
         // Find the role by ID and update it with the new data
         const updatedRole = await roleDefineModel.findByIdAndUpdate(
@@ -22,7 +22,8 @@ const updateRole = async (roleId, updatedRoleData) => {
             {
                 roleName,
                 description,
-                permissions
+                permissions,
+                isDeactivated
             },
             {new: true} // This ensures that the function returns the updated document
         );
