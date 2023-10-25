@@ -55,7 +55,7 @@ const updatePermission = async (id, updateData) => {
 
 const getAllPermissions = async (page, limit, sortBy, sortOrder) => {
     try {
-        
+
         const skip = (page - 1) * limit;
         let totalDocuments, totalPages, startSerialNumber, endSerialNumber, data;
 
@@ -100,7 +100,10 @@ const softDeletePermissions = async (id) => {
     try {
         const softDeleteResult = await permissionModel.updateOne(
             {_id: id},
-            {isDeactivated: true}
+            {
+                isDeleted: true,
+                deletedAt: new Date()
+            }
         );
         return softDeleteResult;
     } catch (error) {
@@ -127,7 +130,7 @@ const getPermissionsByDashboardPermission = async (dashboardPermission) => {
             dashboardType = 'user';
         }
 
-        const permissions = await permissionModel.find({dashboardType, isDeactivated: false});
+        const permissions = await permissionModel.find({dashboardType, isDeleted: false});
 
         return permissions;
     } catch (error) {
