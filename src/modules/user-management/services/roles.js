@@ -102,7 +102,8 @@ const getAllRoles = async (loggedInUserId, page, limit, sortBy) => {
 
         const rolesWithUserCount = await Promise.all(data.map(async (role) => {
             const userCount = await userModel.countDocuments({
-                teamRoleId: role._id
+                teamRoleId: role._id,
+                isDeleted: false
             });
             role = role.toObject();
             role.userCount = userCount;
