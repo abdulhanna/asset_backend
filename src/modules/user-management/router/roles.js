@@ -27,11 +27,9 @@ router.post('/', isLoggedIn, async (req, res) => {
         // Check if the roleName already exists
         let finalOrganizationId;
 
-        if (organizationId) 
-        {
+        if (organizationId) {
             finalOrganizationId = mongoose.Types.ObjectId(organizationId);
-        } else
-        {
+        } else {
             finalOrganizationId = null;
         }
 
@@ -39,7 +37,7 @@ router.post('/', isLoggedIn, async (req, res) => {
             roleName: roleName,
             organizationId: finalOrganizationId,
             isDeleted: false
-          };
+        };
 
         const existingRole = await roleDefineModel.findOne(query);
         if (existingRole) {
@@ -91,7 +89,7 @@ const isValidObjectId = (id) => {
 // PUT route for updating a role with permissions
 router.put('/:roleId', isLoggedIn, async (req, res) => {
     try {
-        const {roleName, description, permissions} = req.body;
+        const {roleName, description, permissions, isDeactivated} = req.body;
         const roleId = req.params.roleId;
 
         // Validate the moduleId before proceeding
@@ -128,6 +126,7 @@ router.put('/:roleId', isLoggedIn, async (req, res) => {
                     : roleName,
             description,
             permissions,
+            isDeactivated,
             updatedAt: new Date(),
         };
 
@@ -137,6 +136,7 @@ router.put('/:roleId', isLoggedIn, async (req, res) => {
         );
         return res.json(updatedRole);
     } catch (err) {
+        console.log(err);
         return res.status(500).json({error: 'Unable to update role'});
     }
 });
