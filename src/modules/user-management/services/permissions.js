@@ -100,7 +100,10 @@ const softDeletePermissions = async (id) => {
     try {
         const softDeleteResult = await permissionModel.updateOne(
             {_id: id},
-            {isDeleted: true}
+            {
+                isDeleted: true,
+                deletedAt: new Date()
+            }
         );
         return softDeleteResult;
     } catch (error) {
