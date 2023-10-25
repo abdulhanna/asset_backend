@@ -8,6 +8,7 @@ const router = express.Router();
 router.post('/add-groups', isLoggedIn, async (req, res) => {
     try {
         const {groupDetails} = req.body;
+        const organizationId = req.user.data.organizationId;
 
         if (Array.isArray(groupDetails)) {
             const existingGroups = await fieldManagementService.checkExistingGroups(groupDetails.map(group => group.groupName));
@@ -18,7 +19,7 @@ router.post('/add-groups', isLoggedIn, async (req, res) => {
                 });
             }
 
-            const newFieldGroups = await fieldManagementService.createMultipleFieldGroups(groupDetails);
+            const newFieldGroups = await fieldManagementService.createMultipleFieldGroups(groupDetails, organizationId);
             return res.status(201).json({success: true, message: 'Field groups added successfully', newFieldGroups});
         }
     } catch (error) {

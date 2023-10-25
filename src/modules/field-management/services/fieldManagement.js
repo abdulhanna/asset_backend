@@ -12,15 +12,55 @@ const checkExistingGroups = async (groupNames) => {
         throw error;
     }
 };
-const createMultipleFieldGroups = async (groupDetails) => {
+const createMultipleFieldGroups = async (groupDetails, organizationId) => {
     const newFieldGroups = await Promise.all(
         groupDetails.map(async (group) => {
-            return await fieldManagementModel.create({
-                groupName: group.groupName,
-                isMandatory: group.isMandatory, // Add isMandatory
-            });
+            let createdGroup;
+
+            // If organizationId is provided, create group only in assetFormManagementModel
+            if (organizationId) {
+                const assetFormManagement = await assetFormManagementModel.findOne({organizationId});
+                console.log(assetFormManagement);
+
+                if (assetFormManagement) {
+                    const newGroup = {
+                        organizationId,
+                        _id: mongoose.Types.ObjectId(),
+                        groupName: group.groupName,
+                        isMandatory: group.isMandatory,
+                    };
+
+                    assetFormManagement.assetFormManagements.push(newGroup);
+                    await assetFormManagement.save();
+
+                } else {
+                    console.error('AssetFormManagement document not found');
+                }
+            } else {
+                // If organizationId is null, create group in both models
+                createdGroup = await fieldManagementModel.create({
+                    groupName: group.groupName,
+                    isMandatory: group.isMandatory,
+                });
+
+                const newGroupForAsset = {
+                    _id: createdGroup._id,
+                    groupName: createdGroup.groupName,
+                    fields: [], // You may need to adjust this based on your schema
+                };
+
+                // Find all organizations and push the new group
+                const organizations = await assetFormManagementModel.find();
+                organizations.forEach(async (org) => {
+                    org.assetFormManagements.push(newGroupForAsset);
+                    await org.save();
+                });
+            }
+
+            return createdGroup;
         })
     );
+
     return newFieldGroups;
 };
 
