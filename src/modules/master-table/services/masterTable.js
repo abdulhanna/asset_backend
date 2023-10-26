@@ -350,17 +350,22 @@ masterTableService.getSinlgleTable = async (mstId) => {
 
      assert(getTableData, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"));
      
-      // Format the masterTableHeader as an object with key-value pairs
-      const formattedMasterTableHeader = getTableData.fields.reduce((obj, field) => {
+     
+     // Format the masterTableHeader as an array of objects with key-value pairs
+     const formattedMasterTableHeader = getTableData.fields.map((field) => {
         if (field.depreciationType) {
-            const depricatonMethod = field.depreciationType.replace(/ /g, '').toLowerCase()
-            obj[`${field.fieldKey}(${depricatonMethod})`] = `${field.fieldKey} (${field.depreciationType})`;
+            const depricationMethod = field.depreciationType.replace(/ /g, '').toLowerCase();
+            return {
+                name: `${field.fieldKey}(${depricationMethod})`,
+                label: `${field.fieldName} (${field.depreciationType})`
+            };
         } else {
-            obj[field.fieldKey] = field.fieldName;
+            return {
+                name: field.fieldKey,
+                label: field.fieldName
+            };
         }
-        return obj;
-    }, {});
-    
+    });
      const formatData = {
         _id:getTableData._id,
         tableCodeId: getTableData.tableCodeId,
