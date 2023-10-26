@@ -58,12 +58,21 @@ const fieldSchema = new mongoose.Schema(
         fieldInfo: {
             type: String,
             default: 'Default field info'
-        }
+        },
+        orderNo: {
+            type: Number,
+            default: null
+        },
     },
     {_id: true}
 );
 
 const subgroupSchema = new mongoose.Schema({
+    organizationId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'organizations',
+        default: null
+    },
     subgroupName: {
         type: String,
         required: true,
@@ -78,6 +87,11 @@ const subgroupSchema = new mongoose.Schema({
 });
 
 const groupSchema = new mongoose.Schema({
+    organizationId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'organizations',
+        default: null
+    },
     groupName: {
         type: String,
         required: true,

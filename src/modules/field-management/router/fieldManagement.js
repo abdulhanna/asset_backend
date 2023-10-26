@@ -8,6 +8,7 @@ const router = express.Router();
 router.post('/add-groups', isLoggedIn, async (req, res) => {
     try {
         const {groupDetails} = req.body;
+        const organizationId = req.user.data.organizationId;
 
         if (Array.isArray(groupDetails)) {
             const existingGroups = await fieldManagementService.checkExistingGroups(groupDetails.map(group => group.groupName));
@@ -18,7 +19,7 @@ router.post('/add-groups', isLoggedIn, async (req, res) => {
                 });
             }
 
-            const newFieldGroups = await fieldManagementService.createMultipleFieldGroups(groupDetails);
+            const newFieldGroups = await fieldManagementService.createMultipleFieldGroups(groupDetails, organizationId);
             return res.status(201).json({success: true, message: 'Field groups added successfully', newFieldGroups});
         }
     } catch (error) {
@@ -225,9 +226,17 @@ router.put('/field/:fieldId/mark-deleted', isLoggedIn, async (req, res) => {
 router.delete('/delete-group/:groupId', isLoggedIn, async (req, res) => {
     const {groupId} = req.params;
     try {
-        const result = await fieldManagementService.deleteGroupAndFieldsById(
-            groupId
-        );
+        const existingMandatoryGroup = await fieldManagementService.handleMandatoryGroupDeletion(groupId);
+
+        if (existingMandatoryGroup.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot delete a mandatory group',
+            });
+        }
+
+        const result = await fieldManagementService.deleteGroupAndFieldsById(groupId);
+
         if (result) {
             return res.status(200).json({
                 success: true,

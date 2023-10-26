@@ -12,15 +12,55 @@ const checkExistingGroups = async (groupNames) => {
         throw error;
     }
 };
-const createMultipleFieldGroups = async (groupDetails) => {
+const createMultipleFieldGroups = async (groupDetails, organizationId) => {
     const newFieldGroups = await Promise.all(
         groupDetails.map(async (group) => {
-            return await fieldManagementModel.create({
-                groupName: group.groupName,
-                isMandatory: group.isMandatory, // Add isMandatory
-            });
+            let createdGroup;
+
+            // If organizationId is provided, create group only in assetFormManagementModel
+            if (organizationId) {
+                const assetFormManagement = await assetFormManagementModel.findOne({organizationId});
+                console.log(assetFormManagement);
+
+                if (assetFormManagement) {
+                    const newGroup = {
+                        organizationId,
+                        _id: mongoose.Types.ObjectId(),
+                        groupName: group.groupName,
+                        isMandatory: group.isMandatory,
+                    };
+
+                    assetFormManagement.assetFormManagements.push(newGroup);
+                    await assetFormManagement.save();
+
+                } else {
+                    console.error('AssetFormManagement document not found');
+                }
+            } else {
+                // If organizationId is null, create group in both models
+                createdGroup = await fieldManagementModel.create({
+                    groupName: group.groupName,
+                    isMandatory: group.isMandatory,
+                });
+
+                const newGroupForAsset = {
+                    _id: createdGroup._id,
+                    groupName: createdGroup.groupName,
+                    fields: [], // You may need to adjust this based on your schema
+                };
+
+                // Find all organizations and push the new group
+                const organizations = await assetFormManagementModel.find();
+                organizations.forEach(async (org) => {
+                    org.assetFormManagements.push(newGroupForAsset);
+                    await org.save();
+                });
+            }
+
+            return createdGroup;
         })
     );
+
     return newFieldGroups;
 };
 
@@ -421,6 +461,20 @@ const deleteFieldById = async (fieldId) => {
 
     return updatedGroup;
 };
+
+const handleMandatoryGroupDeletion = async (groupId) => {
+    const group = await fieldManagementModel.findById(groupId);
+    if (!group) {
+        return [];
+    }
+
+    if (group.isMandatory) {
+        return [group]; // Return the mandatory group
+    }
+
+    return [];
+};
+
 const deleteGroupAndFieldsById = async (groupId) => {
     try {
         const group = await fieldManagementModel.findById(groupId);
@@ -428,20 +482,15 @@ const deleteGroupAndFieldsById = async (groupId) => {
             return false;
         }
 
-        // Collect all field IDs in the group
-        const fieldIds = group.fields.map((field) => field._id);
-
         // Delete the group and all associated fields
-        await Promise.all([
-            fieldManagementModel.deleteMany({_id: {$in: fieldIds}}),
-            fieldManagementModel.deleteOne({_id: groupId}),
-        ]);
+        await fieldManagementModel.deleteOne({_id: groupId});
 
         return true;
     } catch (error) {
         throw error;
     }
 };
+
 
 const editFieldById = async (fieldId, updatedData) => {
     try {
@@ -563,7 +612,8 @@ export const fieldManagementService = {
     addFieldAndUpdateAssetForm,
     checkExistingGroups,
     getFieldGroupsForFormStep,
-    deleteSubGroupById
+    deleteSubGroupById,
+    handleMandatoryGroupDeletion
 };
 
 
