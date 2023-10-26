@@ -13,7 +13,7 @@ const organizationSchema = new mongoose.Schema(
           },
           organizationRegistrationNumber: {
                type: String,
-               required: true,
+               default: null,
           },
           organizationType: {
                type: String,
