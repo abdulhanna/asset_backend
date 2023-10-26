@@ -286,7 +286,13 @@ const getFieldGroupsForFormStep = async (organizationId, stepNo) => {
                         ...management,
                         assetFormStepId: assetFormStepDetail || null
                     };
+                }).filter(group => {
+                    if (group.assetFormStepId) {
+                        return group.assetFormStepId.stepNo === stepNo;
+                    }
+                    return false;
                 });
+                
             } else {
                 fieldGroups = [];
             }
