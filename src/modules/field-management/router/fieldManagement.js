@@ -223,28 +223,43 @@ router.put('/field/:fieldId/mark-deleted', isLoggedIn, async (req, res) => {
 
 
 /// delete group whole data fields/subgroup/ subgroup fileds
+
 router.delete('/delete-group/:groupId', isLoggedIn, async (req, res) => {
-    const {groupId} = req.params;
     try {
-        const existingMandatoryGroup = await fieldManagementService.handleMandatoryGroupDeletion(groupId);
+        const {groupId} = req.params;
+        const organizationId = req.user.data.organizationId;
 
-        if (existingMandatoryGroup.length > 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'Cannot delete a mandatory group',
-            });
-        }
-
-        const result = await fieldManagementService.deleteGroupAndFieldsById(groupId);
-
-        if (result) {
+        if (!organizationId) {
+            const result = await fieldManagementService.deleteGroupAndFieldsById(groupId);
             return res.status(200).json({
                 success: true,
-                message: 'Group and related fields deleted successfully',
+                message: result ? 'Group and related fields deleted successfully' : 'Group not found',
+            });
+        }
+
+        const isMandatory = await fieldManagementService.checkIfGroupIsMandatory(groupId, organizationId);
+
+        if (isMandatory) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot delete a mandatory group associated with an organization',
+            });
+        }
+
+        const isRemovedFromAssetForm = await fieldManagementService.removeGroupFromAssetFormManagement(groupId, organizationId);
+
+        if (isRemovedFromAssetForm) {
+            return res.status(200).json({
+                success: true,
+                message: 'Group removed from asset form management',
             });
         } else {
-            return res.status(404).json({message: 'Group not found'});
+            return res.status(500).json({
+                success: false,
+                message: 'Error removing group from asset form management',
+            });
         }
+
     } catch (error) {
         console.log(error);
         return res.status(500).json({message: 'Internal server error'});

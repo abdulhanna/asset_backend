@@ -462,18 +462,60 @@ const deleteFieldById = async (fieldId) => {
     return updatedGroup;
 };
 
-const handleMandatoryGroupDeletion = async (groupId) => {
-    const group = await fieldManagementModel.findById(groupId);
-    if (!group) {
-        return [];
+const checkIfGroupIsMandatory = async (groupId, organizationId) => {
+    if (organizationId !== null) {
+        const groupInAssetForm = await assetFormManagementModel.findOne({
+            organizationId
+        });
+
+        if (groupInAssetForm) {
+            const matchingGroup = groupInAssetForm.assetFormManagements.find(group => group._id.toString() === groupId);
+
+            if (matchingGroup && matchingGroup.isMandatory) {
+                return true; // The group is mandatory
+            }
+        }
     }
 
-    if (group.isMandatory) {
-        return [group]; // Return the mandatory group
-    }
-
-    return [];
+    return false; // The group is not mandatory or organizationId is null
 };
+
+
+const removeGroupFromAssetFormManagement = async (groupId, organizationId) => {
+    try {
+        if (organizationId !== null) {
+            const groupInAssetFormManagement = await assetFormManagementModel.findOne({
+                organizationId
+            });
+
+            if (groupInAssetFormManagement) {
+                const matchingGroup = groupInAssetFormManagement.assetFormManagements.find(group => {
+                    // console.log('groupId:', groupId);
+                    // console.log('group._id.toString():', group._id.toString());
+                    return group._id.toString() === groupId;
+                });
+
+                if (matchingGroup) {
+                    await assetFormManagementModel.findOneAndUpdate(
+                        {organizationId},
+                        {$pull: {assetFormManagements: matchingGroup}}
+                    );
+
+                    console.log('Group removed successfully');
+
+                    return {success: true, message: 'Group removed successfully'};
+                } else {
+                    return {success: false, message: 'Matching group not found'};
+                }
+            }
+        }
+
+        return {success: false, message: 'Organization ID is null'};
+    } catch (error) {
+        throw error;
+    }
+};
+
 
 const deleteGroupAndFieldsById = async (groupId) => {
     try {
@@ -613,7 +655,8 @@ export const fieldManagementService = {
     checkExistingGroups,
     getFieldGroupsForFormStep,
     deleteSubGroupById,
-    handleMandatoryGroupDeletion
+    checkIfGroupIsMandatory,
+    removeGroupFromAssetFormManagement
 };
 
 
