@@ -1,4 +1,4 @@
-import {fieldManagementModel, assetFormManagementModel} from '../models';
+import {fieldManagementModel, assetFormManagementModel, assetFormStepModel} from '../models';
 import mongoose from 'mongoose';
 import {errors} from 'puppeteer';
 
@@ -46,6 +46,7 @@ const createMultipleFieldGroups = async (groupDetails, organizationId) => {
                 const newGroupForAsset = {
                     _id: createdGroup._id,
                     groupName: createdGroup.groupName,
+                    isMandatory: createdGroup.isMandatory,
                     fields: [], // You may need to adjust this based on your schema
                 };
 
@@ -65,15 +66,37 @@ const createMultipleFieldGroups = async (groupDetails, organizationId) => {
 };
 
 
-const updateSubgroups = async (groupId, newSubgroups) => {
+const updateSubgroups = async (groupId, newSubgroups, organizationId) => {
     try {
-        const updatedGroup = await fieldManagementModel.findByIdAndUpdate(
-            groupId,
-            {$push: {subgroups: {$each: newSubgroups}}},
-            {new: true}
-        );
+        // Step 2: Check if organizationId is provided
+        if (organizationId) {
+            // Step 3: Update subgroups in assetFormManagementModel for the specific organization
+            const organization = await assetFormManagementModel.findOne({organizationId});
+            if (organization) {
+                organization.assetFormManagements.forEach(group => {
+                    if (group._id.toString() === groupId) {
+                        group.subgroups.push(...newSubgroups);
+                    }
+                });
+                await organization.save();
+            }
+        } else {
+            // Step 1: Update subgroups in fieldManagementModel
+            const updatedGroup = await fieldManagementModel.findByIdAndUpdate(
+                groupId,
+                {$push: {subgroups: {$each: newSubgroups}}},
+                {new: true}
+            );
 
-        return updatedGroup;
+            // Step 4: Update subgroups in assetFormManagementModel for all organizations
+            await assetFormManagementModel.updateMany(
+                {},
+                {$push: {'assetFormManagements.$[elem].subgroups': {$each: newSubgroups}}},
+                {arrayFilters: [{'elem._id': groupId}]}
+            );
+
+            return updatedGroup;
+        }
     } catch (error) {
         throw new Error(`Unable to update subgroups: ${error.message}`);
     }
@@ -242,15 +265,31 @@ const getFieldGroupsByOrganizationIdNull = async (organizationId) => {
 
 const getFieldGroupsForFormStep = async (organizationId, stepNo) => {
     try {
-
         let fieldGroups;
-        if (organizationId) {
 
-            fieldGroups = await assetFormManagementModel.findOne(
+        if (organizationId) {
+            const assetFormManagements = await assetFormManagementModel.findOne(
                 {organizationId: organizationId},
                 {assetFormManagements: 1, _id: 0}
             );
 
+            if (assetFormManagements && assetFormManagements.assetFormManagements) {
+                const assetFormStepIds = assetFormManagements.assetFormManagements.map(management => management.assetFormStepId).filter(Boolean);
+
+                const assetFormStepDetails = await assetFormStepModel.find({
+                    _id: {$in: assetFormStepIds}
+                });
+
+                fieldGroups = assetFormManagements.assetFormManagements.map(management => {
+                    const assetFormStepDetail = assetFormStepDetails.find(detail => detail._id && management.assetFormStepId && detail._id.toString() === management.assetFormStepId.toString());
+                    return {
+                        ...management,
+                        assetFormStepId: assetFormStepDetail || null
+                    };
+                });
+            } else {
+                fieldGroups = [];
+            }
         } else {
             fieldGroups = await fieldManagementModel.find().lean().populate({
                 path: 'assetFormStepId',
@@ -270,7 +309,6 @@ const getFieldGroupsForFormStep = async (organizationId, stepNo) => {
 
             // Filter out groups where assetFormStepId is null
             fieldGroups = fieldGroups.filter(group => group.assetFormStepId !== null);
-
         }
 
         return fieldGroups;
@@ -278,6 +316,8 @@ const getFieldGroupsForFormStep = async (organizationId, stepNo) => {
         throw new Error('Unable to get field groups');
     }
 };
+
+
 const getFieldGroupsByOrganizationId = async (organizationId) => {
     try {
         const fieldGroups = await fieldManagementModel.find().lean();

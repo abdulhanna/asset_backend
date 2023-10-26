@@ -32,11 +32,13 @@ router.post('/add-groups', isLoggedIn, async (req, res) => {
 // Update subgroups within a group
 router.put('/:groupId/add-subgroups', isLoggedIn, async (req, res) => {
     try {
+        const organizationId = req.user.data.organizationId;
         const {groupId} = req.params;
         const {subgroups} = req.body;
 
         const updatedFieldGroup =
-            await fieldManagementService.updateSubgroups(groupId, subgroups);
+            await fieldManagementService.updateSubgroups(groupId, subgroups, organizationId);
+        
         return res.status(200).json(updatedFieldGroup);
     } catch (error) {
         console.log(error);
