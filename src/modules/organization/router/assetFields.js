@@ -224,8 +224,32 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
 
         const organizationId = req.user.data.organizationId;
         const assetFormManagement = await getAssetFormManagement(organizationId);
-
+        const headersInModel = new Set();
         const headers = excelData[0]; // Assuming headers are in the first row
+        const invalidHeaders = [];
+
+        // Extract headers from assetFormManagement
+        assetFormManagement.assetFormManagements.forEach(group => {
+            group.subgroups.forEach(subgroup => {
+                subgroup.fields.forEach(field => {
+                    headersInModel.add(field.name);
+                });
+            });
+        });
+
+        // Check if all headers in uploaded file exist in the model
+        for (const header of headers) {
+            if (!headersInModel.has(header)) {
+                invalidHeaders.push(header);
+            }
+        }
+
+        if (invalidHeaders.length > 0) {
+            return res.status(400).json({
+                message: 'Invalid headers detected',
+                error: `Headers '${invalidHeaders.join(', ')}' not allowed.`
+            });
+        }
 
         const fieldsMapping = assetFormManagement.assetFormManagements.flatMap(group =>
             group.subgroups.flatMap(subgroup =>
