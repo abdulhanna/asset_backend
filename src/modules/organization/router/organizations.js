@@ -50,7 +50,7 @@ router.post('/add', isLoggedIn, async (req, res) => {
           if (!req.body.email || !req.body.organizationName || !req.body.mainAddress.country || !req.body.pan || !req.body.gstin) {
                return res.status(400).json({
                     success: false,
-                    error: 'Required fields are missing!!! Email, Password, Organization name, Country, PAN No., GSTIN are mandatory fields',
+                    error: 'Required fields are missing!!! Email, Organization name, Country, PAN No., GSTIN are mandatory fields',
                });
           }
                const existingUser = await userModel.findOne(
