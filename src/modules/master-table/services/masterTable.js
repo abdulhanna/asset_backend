@@ -32,15 +32,13 @@ masterTableService.createMasterTable = async (data, dashboardPermission, organiz
 
         assert(!getExistingtable, createError(StatusCodes.CONFLICT, "Table Name already exists"))
 
+    const mergedFields = [...data.fixedFields, ...data.rateFields];
 
-     // Generate fieldKey for each field based on fieldName (with spaces removed and converted to lowercase)
-     const fieldsWithFieldKey = data.fields.map((field) => ({
+    // Generate fieldKey for each field based on fieldName (with spaces removed and converted to lowercase)
+    const fieldsWithFieldKey = mergedFields.map((field) => ({
         ...field,
         fieldKey: field.fieldName.replace(/ /g, '').toLowerCase(), // Remove spaces and convert to lowercase
     }));
-
-
-
 
         const newMstTable = new masterTableModel({
              organizationId: organizationId,
