@@ -430,25 +430,38 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
                         newAsset[groupName][subgroupName][assetFieldName] = fieldValue;
                     }
 
-                    if (mapping.listOptions && Array.isArray(mapping.listOptions)) {
-                        if (!mapping.listOptions.includes(fieldValue)) {
-                            const cellAddress = `${String.fromCharCode(colIndex + 64)}${rowNum}`;
-                            sheet.getCell(cellAddress).fill = {
-                                type: 'pattern',
-                                pattern: 'solid',
-                                fgColor: {argb: 'FFFF0000'} // Set cell color to red if validation fails
-                            };
-                            validationErrors.push({
-                                message: `Invalid option for ${assetFieldName}`,
-                                cell: cellAddress
-                            });
-                        }
-                    }
 
                     const validationError = validateAsset(newAsset, mapping);
 
                     if (validationError) {
+
                         validationErrors.push(validationError);
+
+                        // Set cell color to red if validation fails
+                        const cellAddress = `${String.fromCharCode(headers.indexOf(assetFieldName) + 65)}${rowNum}`;
+
+                        const cellError = sheet.getCell(cellAddress);
+
+                        cellError.note = {
+                            texts: [{
+                                'font': {
+                                    'bold': true,
+                                    'size': 12,
+                                    'color': {'theme': 1},
+                                    'name': 'Calibri',
+                                    'family': 2,
+                                    'scheme': 'minor'
+                                }, 'text': `${validationError ? validationError : validationError}`
+                            }],
+                            style: {
+                                fill: {
+                                    fgColor: {argb: 'FFFF0000'},
+                                },
+                            },
+                            margins: {
+                                inset: [0.25, 0.25, 0.35, 0.35]
+                            }
+                        };
                     }
                 }
 
