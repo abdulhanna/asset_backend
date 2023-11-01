@@ -208,7 +208,6 @@ const validateAsset = (asset, mapping) => {
         }
     } else if (mapping.fieldType === 'list') {
         const validOptions = mapping.listOptions;
-        console.log('validOptions', validOptions);
         if (fieldValue && !validOptions.includes(fieldValue)) {
             return mapping.errorMessage;
         }
@@ -282,6 +281,7 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
 
                 const fieldValue = excelData[i][headers.indexOf(assetFieldName)];
 
+
                 if (assetFieldName) {
                     if (!newAsset[groupName]) {
                         newAsset[groupName] = {};
@@ -354,45 +354,51 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
 router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, res) => {
     try {
         const organizationId = req.user.data.organizationId;
-        const assetFormManagement = await getAssetFormManagement(organizationId);
-        const headersInModel = new Set();
-        const invalidHeaders = [];
-
-        // Extract headers from assetFormManagement
-        assetFormManagement.assetFormManagements.forEach(group => {
-            group.subgroups.forEach(subgroup => {
-                subgroup.fields.forEach(field => {
-                    headersInModel.add(field.name);
-                });
-            });
-        });
-
         const workbook = new Excel.Workbook();
         await workbook.xlsx.readFile(req.file.path);
 
-        workbook.eachSheet(async (sheet, sheetId) => {
-            const headers = sheet.getRow(1).values; // Assuming headers are in the first row
+        const stepSheets = ['Step_1', 'Step_2', 'Step_3'];
 
-            if (!headers) {
+        for (const sheetName of stepSheets) {
+            const sheet = workbook.getWorksheet(sheetName);
+
+            if (!sheet) {
+                return res.status(400).json({
+                    message: 'Invalid sheet name',
+                    error: `Sheet with name '${sheetName}' not found.`
+                });
+            }
+
+
+            const headers = sheet.getRow(1).values.filter(header => header !== undefined); // Filter out empty or undefined headers
+
+            console.log(headers, 'headers');
+
+            if (!headers || headers.length === 0) {
                 return res.status(400).json({
                     message: 'Invalid sheet format',
                     error: 'Headers not found in the sheet.'
                 });
             }
 
-            const fieldsMapping = assetFormManagement.assetFormManagements.flatMap(group =>
-                group.subgroups.flatMap(subgroup =>
-                    subgroup.fields.map(field => ({
-                        assetFieldName: field.name,
-                        groupName: group.groupName,
-                        subgroupName: subgroup.subgroupName,
-                        fieldType: field.dataType,
-                        fieldLength: field.fieldLength,
-                        errorMessage: field.errorMessage,
-                        listOptions: field.listOptions
-                    }))
-                )
-            );
+            const assetFormManagement = await getAssetFormManagement(organizationId);
+            const fieldsMapping = assetFormManagement.assetFormManagements.flatMap(group => {
+                if (group.subgroups && group.subgroups.length > 0) {
+                    return group.subgroups.flatMap(subgroup =>
+                        subgroup.fields.map(field => ({
+                            assetFieldName: field.name,
+                            groupName: group.groupName,
+                            subgroupName: subgroup.subgroupName,
+                            fieldType: field.dataType,
+                            fieldLength: field.fieldLength,
+                            errorMessage: field.errorMessage,
+                            listOptions: field.listOptions
+                        }))
+                    );
+                } else {
+                    return [];
+                }
+            });
 
             const assets = [];
             const validationErrors = [];
@@ -420,6 +426,8 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
 
                     const fieldValue = cell.value;
 
+                    console.log('fieldValue', cell.value);
+
                     if (assetFieldName) {
                         if (!newAsset[groupName]) {
                             newAsset[groupName] = {};
@@ -430,16 +438,12 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
                         newAsset[groupName][subgroupName][assetFieldName] = fieldValue;
                     }
 
-
                     const validationError = validateAsset(newAsset, mapping);
 
                     if (validationError) {
-
                         validationErrors.push(validationError);
 
-                        // Set cell color to red if validation fails
                         const cellAddress = `${String.fromCharCode(headers.indexOf(assetFieldName) + 65)}${rowNum}`;
-
                         const cellError = sheet.getCell(cellAddress);
 
                         cellError.note = {
@@ -469,14 +473,13 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
             });
 
             if (validationErrors.length > 0) {
-                await workbook.xlsx.writeFile(`output_${sheetId}.xlsx`); // Save as a new file
+                await workbook.xlsx.writeFile(`output.xlsx`); // Save as a new file
             } else {
                 await assetService.saveAssetsToDatabase(organizationId, assets);
             }
 
-            // Protect and unlock cells after all processing
             protectAndUnlockCells(sheet);
-        });
+        }
 
         await workbook.xlsx.writeFile(req.file.path);
 
@@ -486,6 +489,5 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
         return res.status(500).json({message: 'Error uploading data', error: error.message});
     }
 });
-
 
 export default router;
