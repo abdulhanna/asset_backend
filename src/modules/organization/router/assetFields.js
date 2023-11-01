@@ -358,6 +358,8 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
         await workbook.xlsx.readFile(req.file.path);
 
         const stepSheets = ['Step_1', 'Step_2', 'Step_3'];
+        const assets = [];
+        const validationErrors = [];
 
         for (const sheetName of stepSheets) {
             const sheet = workbook.getWorksheet(sheetName);
@@ -369,10 +371,7 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
                 });
             }
 
-
             const headers = sheet.getRow(1).values.filter(header => header !== undefined); // Filter out empty or undefined headers
-
-            console.log(headers, 'headers');
 
             if (!headers || headers.length === 0) {
                 return res.status(400).json({
@@ -400,9 +399,6 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
                 }
             });
 
-            const assets = [];
-            const validationErrors = [];
-
             sheet.eachRow({includeEmpty: false}, (row, rowNum) => {
                 if (rowNum === 1) return; // Skip header row
 
@@ -425,8 +421,6 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
                     }
 
                     const fieldValue = cell.value;
-
-                    console.log('fieldValue', cell.value);
 
                     if (assetFieldName) {
                         if (!newAsset[groupName]) {
@@ -469,16 +463,16 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
                     }
                 }
 
-                assets.push(newAsset);
+                if (Object.keys(newAsset).length > 0) {
+                    assets.push(newAsset);
+                }
             });
 
-            if (validationErrors.length > 0) {
-                await workbook.xlsx.writeFile(`output.xlsx`); // Save as a new file
-            } else {
-                await assetService.saveAssetsToDatabase(organizationId, assets);
-            }
-
             protectAndUnlockCells(sheet);
+        }
+
+        if (validationErrors.length === 0 && assets.length > 0) {
+            await assetService.saveAssetsToDatabase(organizationId, assets);
         }
 
         await workbook.xlsx.writeFile(req.file.path);
@@ -489,5 +483,6 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
         return res.status(500).json({message: 'Error uploading data', error: error.message});
     }
 });
+
 
 export default router;
