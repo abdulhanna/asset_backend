@@ -11,6 +11,28 @@ const checkStepNoExists = async (stepNo) => {
     }
 };
 
+
+const getListOfGroups = async () => {
+    try {
+        const groups = await fieldManagementModel.find({
+            assetFormStepId: {$eq: null}
+        });
+        console.log('groups', groups);
+
+        const filteredGroups = groups.map(group => {
+            return {
+                _id: group._id,
+                groupName: group.groupName
+            };
+        });
+
+        return filteredGroups;
+    } catch (error) {
+        throw error;
+    }
+};
+
+
 const associateAssetFormStepWithGroups = async (stepNo, stepName, groups) => {
     try {
         const newAssetFormStep = new assetFormStepModel({stepNo, stepName, createdAt: new Date()});
@@ -82,7 +104,7 @@ const listForms = async (page, limit, sortBy) => {
 const getFormStepById = async (id) => {
     try {
         // Find the asset form step by its Id
-        const step = await assetFormStepModel.findOne({ _id: id });
+        const step = await assetFormStepModel.findOne({_id: id});
 
         if (!step) {
             throw new Error(`Step with ID ${id} not found`);
@@ -164,5 +186,6 @@ export const assetFormStepService = {
     updateForm,
     deleteForm,
     getFormStepById,
-    checkStepNoExists
+    checkStepNoExists,
+    getListOfGroups
 };
