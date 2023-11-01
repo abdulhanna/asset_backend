@@ -224,8 +224,32 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
 
         const organizationId = req.user.data.organizationId;
         const assetFormManagement = await getAssetFormManagement(organizationId);
-
+        const headersInModel = new Set();
         const headers = excelData[0]; // Assuming headers are in the first row
+        const invalidHeaders = [];
+
+        // Extract headers from assetFormManagement
+        assetFormManagement.assetFormManagements.forEach(group => {
+            group.subgroups.forEach(subgroup => {
+                subgroup.fields.forEach(field => {
+                    headersInModel.add(field.name);
+                });
+            });
+        });
+
+        // Check if all headers in uploaded file exist in the model
+        for (const header of headers) {
+            if (!headersInModel.has(header)) {
+                invalidHeaders.push(header);
+            }
+        }
+
+        if (invalidHeaders.length > 0) {
+            return res.status(400).json({
+                message: 'Invalid headers detected',
+                error: `Headers '${invalidHeaders.join(', ')}' not allowed.`
+            });
+        }
 
         const fieldsMapping = assetFormManagement.assetFormManagements.flatMap(group =>
             group.subgroups.flatMap(subgroup =>
@@ -317,6 +341,142 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
 
         // Protect and unlock cells after all processing
         protectAndUnlockCells(mainSheet);
+
+        await workbook.xlsx.writeFile(req.file.path);
+
+        return res.json({message: 'Upload successful'});
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({message: 'Error uploading data', error: error.message});
+    }
+});
+
+router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, res) => {
+    try {
+        const organizationId = req.user.data.organizationId;
+        const assetFormManagement = await getAssetFormManagement(organizationId);
+        const headersInModel = new Set();
+        const invalidHeaders = [];
+
+        // Extract headers from assetFormManagement
+        assetFormManagement.assetFormManagements.forEach(group => {
+            group.subgroups.forEach(subgroup => {
+                subgroup.fields.forEach(field => {
+                    headersInModel.add(field.name);
+                });
+            });
+        });
+
+        const workbook = new Excel.Workbook();
+        await workbook.xlsx.readFile(req.file.path);
+
+        workbook.eachSheet(async (sheet, sheetId) => {
+            const headers = sheet.getRow(1).values; // Assuming headers are in the first row
+
+            if (!headers) {
+                return res.status(400).json({
+                    message: 'Invalid sheet format',
+                    error: 'Headers not found in the sheet.'
+                });
+            }
+
+            const fieldsMapping = assetFormManagement.assetFormManagements.flatMap(group =>
+                group.subgroups.flatMap(subgroup =>
+                    subgroup.fields.map(field => ({
+                        assetFieldName: field.name,
+                        groupName: group.groupName,
+                        subgroupName: subgroup.subgroupName,
+                        fieldType: field.dataType,
+                        fieldLength: field.fieldLength,
+                        errorMessage: field.errorMessage,
+                        listOptions: field.listOptions
+                    }))
+                )
+            );
+
+            const assets = [];
+            const validationErrors = [];
+
+            sheet.eachRow({includeEmpty: false}, (row, rowNum) => {
+                if (rowNum === 1) return; // Skip header row
+
+                const newAsset = {};
+
+                for (const mapping of fieldsMapping) {
+                    const assetFieldName = mapping.assetFieldName;
+                    const groupName = mapping.groupName;
+                    const subgroupName = mapping.subgroupName;
+
+                    const colIndex = headers.indexOf(assetFieldName) + 1; // Corrected index
+
+                    if (colIndex <= 0) {
+                        continue; // Skip if column index is invalid
+                    }
+
+                    const cell = row.getCell(colIndex);
+                    if (!cell) {
+                        continue; // Skip if cell doesn't exist
+                    }
+
+                    const fieldValue = cell.value;
+
+                    if (assetFieldName) {
+                        if (!newAsset[groupName]) {
+                            newAsset[groupName] = {};
+                        }
+                        if (!newAsset[groupName][subgroupName]) {
+                            newAsset[groupName][subgroupName] = {};
+                        }
+                        newAsset[groupName][subgroupName][assetFieldName] = fieldValue;
+                    }
+
+
+                    const validationError = validateAsset(newAsset, mapping);
+
+                    if (validationError) {
+
+                        validationErrors.push(validationError);
+
+                        // Set cell color to red if validation fails
+                        const cellAddress = `${String.fromCharCode(headers.indexOf(assetFieldName) + 65)}${rowNum}`;
+
+                        const cellError = sheet.getCell(cellAddress);
+
+                        cellError.note = {
+                            texts: [{
+                                'font': {
+                                    'bold': true,
+                                    'size': 12,
+                                    'color': {'theme': 1},
+                                    'name': 'Calibri',
+                                    'family': 2,
+                                    'scheme': 'minor'
+                                }, 'text': `${validationError ? validationError : validationError}`
+                            }],
+                            style: {
+                                fill: {
+                                    fgColor: {argb: 'FFFF0000'},
+                                },
+                            },
+                            margins: {
+                                inset: [0.25, 0.25, 0.35, 0.35]
+                            }
+                        };
+                    }
+                }
+
+                assets.push(newAsset);
+            });
+
+            if (validationErrors.length > 0) {
+                await workbook.xlsx.writeFile(`output_${sheetId}.xlsx`); // Save as a new file
+            } else {
+                await assetService.saveAssetsToDatabase(organizationId, assets);
+            }
+
+            // Protect and unlock cells after all processing
+            protectAndUnlockCells(sheet);
+        });
 
         await workbook.xlsx.writeFile(req.file.path);
 

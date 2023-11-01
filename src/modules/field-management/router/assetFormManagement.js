@@ -1,7 +1,7 @@
 import express from 'express';
 import {assetFormManagementService} from '../services/assetFormManagement.js';
 import {isLoggedIn} from '../../auth/router/passport.js';
-import {assetFormManagementModel} from '../models';
+import {assetFormManagementModel, assetFormStepModel} from '../models';
 import path from 'path';
 import fs from 'fs';
 import Excel from 'exceljs';
@@ -276,6 +276,133 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
         //         fs.unlinkSync(filePath); // Remove the file after download
         //     }
         // });
+    } catch (error) {
+        console.error('Error exporting Excel:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+
+router.get('/export-excel-test', isLoggedIn, async (req, res) => {
+    try {
+        const organizationId = req.user.data.organizationId;
+        const assetFormManagement = await assetFormManagementModel.findOne({organizationId});
+
+        if (!assetFormManagement) {
+            return res.status(404).send('No assetFormManagement found for the provided organizationId.');
+        }
+
+        const workbook = new Excel.Workbook();
+        const exportsDir = path.join(__dirname, '../../../../public/exports/assetFormFields');
+
+        if (!fs.existsSync(exportsDir)) {
+            fs.mkdirSync(exportsDir, {recursive: true});
+        }
+
+        const startRow = 1;
+        const endRow = 1000;
+
+        const assetFormStepIds = assetFormManagement.assetFormManagements.map(group => group.assetFormStepId).filter(id => id);
+
+        const stepInfoMap = new Map(); // Create a map to store step info
+
+        for (const group of assetFormManagement.assetFormManagements) {
+            const assetFormStepId = group.assetFormStepId;
+
+            if (assetFormStepId) {
+                const stepInfo = await assetFormStepModel.findOne({_id: assetFormStepId});
+
+                if (stepInfo) {
+                    const stepNo = stepInfo.stepNo;
+
+                    if (!stepInfoMap.has(stepNo)) {
+                        stepInfoMap.set(stepNo, {stepFields: [], stepGroups: new Set()});
+                    }
+
+                    const stepInfoData = stepInfoMap.get(stepNo);
+
+                    stepInfoData.stepGroups.add(group._id.toString()); // Add group ID to set
+
+                    if (group.subgroups && group.subgroups.length > 0) {
+                        group.subgroups.forEach((subgroup) => {
+                            if (subgroup.fields && subgroup.fields.length > 0) {
+                                subgroup.fields.forEach((field) => {
+                                    if (field.name && !stepInfoData.stepFields.some(existingField => existingField.header === field.name)) {
+                                        const headerInfo = {
+                                            header: field.name,
+                                            key: field.name,
+                                            width: 30,
+                                            ...field
+                                        };
+
+                                        stepInfoData.stepFields.push(headerInfo);
+                                    }
+                                });
+                            }
+                        });
+                    }
+
+                    stepInfoMap.set(stepNo, stepInfoData);
+                }
+            }
+        }
+
+        // Now, create worksheets for each step
+        for (const [stepNo, stepInfoData] of stepInfoMap) {
+            const sheetName = `Step_${stepNo}`;
+            const worksheet = workbook.addWorksheet(sheetName);
+
+            worksheet.columns = stepInfoData.stepFields;
+
+            // Apply field validations
+            stepInfoData.stepFields.forEach((field) => {
+                applyFieldValidation(worksheet, field, startRow, endRow, stepInfoData.stepFields);
+            });
+
+            const headersRow = worksheet.getRow(1);
+
+            for (let rowNumber = 2; rowNumber <= 1000; rowNumber++) {
+                const row = worksheet.getRow(rowNumber);
+
+                headersRow.eachCell((headerCell, colNumber) => {
+                    const cell = row.getCell(colNumber);
+                    cell.protection = {
+                        locked: false
+                    };
+                });
+            }
+
+            worksheet.protect('123');
+            worksheet.sheetProtection.sheet = true;
+            worksheet.sheetProtection.insertRows = false;
+            worksheet.sheetProtection.formatCells = false;
+
+            headersRow.eachCell((cell) => {
+                cell.font = {
+                    color: {argb: 'FF000000'},
+                    bold: true,
+                };
+            });
+
+            // Additional logic based on stepInfoData.stepGroups set
+            // You can use stepInfoData.stepGroups.size to get the number of groups for this step
+        }
+
+        const filePath = path.join(exportsDir, `export_${organizationId}.xlsx`);
+        await workbook.xlsx.writeFile(filePath);
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename=export_${organizationId}.xlsx`);
+
+        const fileStream = fs.createReadStream(filePath);
+
+        fileStream.pipe(res);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Excel file generated successfully'
+        });
+
     } catch (error) {
         console.error('Error exporting Excel:', error);
         res.status(500).send('Internal Server Error');

@@ -27,6 +27,16 @@ router.post('/associateAssetFormStepWithGroups', isLoggedIn, async (req, res) =>
     }
 });
 
+router.get('/groups', isLoggedIn, async (req, res) => {
+    try {
+        const groups = await assetFormStepService.getListOfGroups();
+
+        return res.json({groups});
+    } catch (error) {
+        return res.status(500).json({error: error.message});
+    }
+});
+
 
 router.get('/listAllSteps', isLoggedIn, async (req, res) => {
     try {
@@ -54,12 +64,12 @@ router.get('/listAllSteps', isLoggedIn, async (req, res) => {
 router.get('/stepDetails/:id', isLoggedIn, async (req, res) => {
     try {
         const {id} = req.params;
-    const formStepDataById = await assetFormStepService.getFormStepById(id);
+        const formStepDataById = await assetFormStepService.getFormStepById(id);
 
-    return res.status(200).json({
-        success: true,
-        formStepDataById
-    });
+        return res.status(200).json({
+            success: true,
+            formStepDataById
+        });
     } catch (error) {
         return res.status(500).json({error: error.message});
     }
