@@ -358,8 +358,27 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
         await workbook.xlsx.readFile(req.file.path);
 
         const stepSheets = ['Step_1', 'Step_2', 'Step_3'];
-        const assets = [];
+        let mergedAssets = []; // Initialize an array to store merged assets
         const validationErrors = [];
+
+        const assetFormManagement = await getAssetFormManagement(organizationId);
+        const fieldsMapping = assetFormManagement.assetFormManagements.flatMap(group => {
+            if (group.subgroups && group.subgroups.length > 0) {
+                return group.subgroups.flatMap(subgroup =>
+                    subgroup.fields.map(field => ({
+                        assetFieldName: field.name,
+                        groupName: group.groupName,
+                        subgroupName: subgroup.subgroupName,
+                        fieldType: field.dataType,
+                        fieldLength: field.fieldLength,
+                        errorMessage: field.errorMessage,
+                        listOptions: field.listOptions
+                    }))
+                );
+            } else {
+                return [];
+            }
+        });
 
         for (const sheetName of stepSheets) {
             const sheet = workbook.getWorksheet(sheetName);
@@ -380,29 +399,11 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
                 });
             }
 
-            const assetFormManagement = await getAssetFormManagement(organizationId);
-            const fieldsMapping = assetFormManagement.assetFormManagements.flatMap(group => {
-                if (group.subgroups && group.subgroups.length > 0) {
-                    return group.subgroups.flatMap(subgroup =>
-                        subgroup.fields.map(field => ({
-                            assetFieldName: field.name,
-                            groupName: group.groupName,
-                            subgroupName: subgroup.subgroupName,
-                            fieldType: field.dataType,
-                            fieldLength: field.fieldLength,
-                            errorMessage: field.errorMessage,
-                            listOptions: field.listOptions
-                        }))
-                    );
-                } else {
-                    return [];
-                }
-            });
+            let rowIndex = 2; // Start from the second row
 
-            sheet.eachRow({includeEmpty: false}, (row, rowNum) => {
-                if (rowNum === 1) return; // Skip header row
-
-                const newAsset = {};
+            while (sheet.getRow(rowIndex).values.length > 0) {
+                const row = sheet.getRow(rowIndex);
+                let rowAsset = {};
 
                 for (const mapping of fieldsMapping) {
                     const assetFieldName = mapping.assetFieldName;
@@ -422,22 +423,21 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
 
                     const fieldValue = cell.value;
 
-                    if (assetFieldName) {
-                        if (!newAsset[groupName]) {
-                            newAsset[groupName] = {};
-                        }
-                        if (!newAsset[groupName][subgroupName]) {
-                            newAsset[groupName][subgroupName] = {};
-                        }
-                        newAsset[groupName][subgroupName][assetFieldName] = fieldValue;
+                    if (!rowAsset[groupName]) {
+                        rowAsset[groupName] = {};
+                    }
+                    if (!rowAsset[groupName][subgroupName]) {
+                        rowAsset[groupName][subgroupName] = {};
                     }
 
-                    const validationError = validateAsset(newAsset, mapping);
+                    rowAsset[groupName][subgroupName][assetFieldName] = fieldValue;
+
+                    const validationError = validateAsset(rowAsset, mapping);
 
                     if (validationError) {
                         validationErrors.push(validationError);
 
-                        const cellAddress = `${String.fromCharCode(headers.indexOf(assetFieldName) + 65)}${rowNum}`;
+                        const cellAddress = `${String.fromCharCode(colIndex + 64)}${rowIndex}`;
                         const cellError = sheet.getCell(cellAddress);
 
                         cellError.note = {
@@ -463,16 +463,16 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
                     }
                 }
 
-                if (Object.keys(newAsset).length > 0) {
-                    assets.push(newAsset);
-                }
-            });
+                mergedAssets[rowIndex - 2] = {...mergedAssets[rowIndex - 2], ...rowAsset}; // Merge the row data into the merged assets
+                rowIndex++;
+            }
 
             protectAndUnlockCells(sheet);
         }
 
-        if (validationErrors.length === 0 && assets.length > 0) {
-            await assetService.saveAssetsToDatabase(organizationId, assets);
+        if (validationErrors.length === 0) {
+            // No validation errors, save merged assets to the database
+            await assetService.saveAssetsToDatabase(organizationId, mergedAssets);
         }
 
         await workbook.xlsx.writeFile(req.file.path);
