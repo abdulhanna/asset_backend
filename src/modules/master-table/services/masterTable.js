@@ -8,6 +8,7 @@ import ExcelJS from "exceljs";
 import fs from "fs";
 import mongoose from "mongoose";
 import {secret} from "../../../config/secret";
+import sheetValidation from "../../../helpers/excelSheetValidate";
 
 
 const masterTableService = {}
@@ -19,8 +20,10 @@ masterTableService.createMasterTable = async (data, dashboardPermission, organiz
          organizationId
      );
 
+     ///  code id value if manual then tableCodeId and if auto then generate
      const finalMSTCodeId = data.codeGenerationType === 'manual' ? data.tableCodeId : await autoCodeGeneration.getmstCode(organizationName);
 
+     /// organization Id if root user null else organization id of user
      const finalOrganizationId = dashboardPermission === 'root_dashboard' ? null : organizationId;
 
 
@@ -86,6 +89,28 @@ masterTableService.createMasterTable = async (data, dashboardPermission, organiz
     });
    const headerRow = worksheet.addRow(headers);
 
+    
+    // Iterate over each row and add data from masterTableData if it is not blank
+
+    isExistTable["masterTableData"].forEach(rowData => {
+        const row = fields.map((field) => {
+
+            let depricationField;
+            // checking depreciationType for rate field and converting it into lower case to match the masterTableData object 
+            if(field.depreciationType)
+            {
+                 depricationField = `(${field.depreciationType.toLowerCase()})`;
+            }
+               // add cell values                
+            const  cellValue = rowData[`${field.fieldKey}${depricationField}`] || rowData[field.fieldKey] || "";
+            return cellValue;
+        });
+        
+        worksheet.addRow(row);
+    });
+
+
+
     // Set background color for the header row
     headerRow.fill = {
         type: 'pattern',
@@ -119,6 +144,35 @@ masterTableService.createMasterTable = async (data, dashboardPermission, organiz
         const colNum = index + 1;
         let dataValidation;
         if (field.dataType === 'number') {
+
+            if(field.fieldKey === 'codeno')
+            {
+                  // For code no column, this column is always mandatory
+              dataValidation = {
+                type: 'decimal',
+                operator: 'greaterThan',
+                formulae: [0],
+                allowBlank: false,
+                showErrorMessage: true,
+                errorTitle: 'Invalid Data',
+                error: `Please enter a valid Code No, value should be numeric only.`,
+            };
+            }
+            else if(field.fieldKey === 'parentcode')
+            {
+                 
+                dataValidation = {
+                    type: 'decimal',
+                    operator: 'greaterThan',
+                    formulae: [0],
+                    allowBlank: true,
+                    showErrorMessage: true,
+                    errorTitle: 'Invalid Data',
+                    error: `Please enter a valid Parent Code, value should be numeric only.`,
+                };
+            }
+            else
+            {
             dataValidation = {
                 type: 'decimal',
                 operator: 'greaterThan',
@@ -126,18 +180,34 @@ masterTableService.createMasterTable = async (data, dashboardPermission, organiz
                 allowBlank: true,
                 showErrorMessage: true,
                 errorTitle: 'Invalid Data',
-                error: 'Please enter a valid Rate.',
+                error: `Please enter a valid Rate, value should be numeric only.`,
             };
-        } else {
-            // For alphanumeric data, specify a custom formula (text validation)
+          }
+
+        } 
+
+        else if(field.dataType === 'string' && field.fieldKey === 'description'){
+
             dataValidation = {
                 type: 'textLength',
                 operator: 'lessThanOrEqual',
-                formulae: [50], // Maximum text length allowed (adjust as needed)
+                formulae: [100], // Maximum text length allowed (adjust as needed)
+                allowBlank: false,
+                showErrorMessage: true,
+                errorTitle: 'Invalid Data',
+                error: `Please enter valid Descripton, Maximun length is 100 characters`,
+            };
+        }
+        else {
+            // default case
+            dataValidation = {
+                type: 'textLength',
+                operator: 'lessThanOrEqual',
+                formulae: [15], // Maximum text length allowed (adjust as needed)
                 allowBlank: true,
                 showErrorMessage: true,
                 errorTitle: 'Invalid Data',
-                error: 'Text is too long. Maximum length is 50 characters.',
+                error: 'Text is too long. Maximum length is 15 characters.',
             };
         }
 
@@ -155,9 +225,6 @@ masterTableService.createMasterTable = async (data, dashboardPermission, organiz
     worksheet.sheetProtection.sheet = true;
     worksheet.sheetProtection.insertRows = false;
     worksheet.sheetProtection.formatCells = false;
-
-
-
 
     // Iterate over each row up to 1000 rows
     for (let rowNumber = 2; rowNumber <= 1000; rowNumber++) {
@@ -196,7 +263,7 @@ masterTableService.createMasterTable = async (data, dashboardPermission, organiz
 
 
 ////////// upload table data ////////////
-masterTableService.uploadMasterTableData = async (filePath, tableCodeId) => {
+masterTableService.uploadMasterTableData = async (filePath, originalname, tableCodeId, ubdatedByUserId, publishStatus) => {
 
     assertEvery(
         [tableCodeId, filePath],
@@ -205,9 +272,17 @@ masterTableService.uploadMasterTableData = async (filePath, tableCodeId) => {
             "Invalid Data: tableCodeId and file must exist"
         )
     );
+ 
 
+        // Perform data validation on 'data' if needed
     const getTableId = await masterTableModel.findOne({tableCodeId: tableCodeId})
     assert(getTableId, createError(StatusCodes.BAD_REQUEST, `No table exist with tableCodeId ${tableCodeId}`))
+
+    const sheetValid = await sheetValidation.validateExcelSheet(filePath, originalname);
+    if(sheetValid)
+    {
+        return sheetValid;
+    }
 
     const tableId = getTableId._id;
     const workbook = new ExcelJS.Workbook();
@@ -232,20 +307,10 @@ worksheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
             const header = headers[colNumber];
             const value = cell.value;
 
-            if (header === 'ParentCode') {
-                // Find and associate the ParentCode with its corresponding ID
-                const parentObject = data.find((item) => item['Code No'] === value);
-                if (parentObject) {
-                    rowData[header] = parentObject._id;
-                } else {
-                    // Handle the case where no matching parentObject is found
-                    rowData[header] = null;
-                }
-            } else {
                 // Remove spaces and convert header to lowercase
                 const formattedHeader = header.replace(/ /g, '').toLowerCase();
                 rowData[formattedHeader] = value;
-            }
+            
         });
 
         // Generate a new MongoDB ObjectId for each row
@@ -257,12 +322,22 @@ worksheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
         data.push(newRow);
     }
 });
-    // Perform data validation on 'data' if needed
+
+
+
+         // Check if 'Code No' values are unique within the updated masterTable object
+    const updatedCodes = new Set();
+    for (const ccdata of data) {
+        assert(!updatedCodes.has(ccdata['codeno']), createError(StatusCodes.BAD_REQUEST, `Code No ${ccdata['codeno']} is duplicated within the updated masterTable.`));
+        updatedCodes.add(ccdata['codeno']);
+    }   
 
     // update masterTabl3Data 
     const savedMasterTable = await masterTableModel.findOneAndUpdate({tableCodeId: tableCodeId},
         {
-      masterTableData: data
+      masterTableData: data,
+      updatedByUserId: ubdatedByUserId,
+      publishStatus: publishStatus,
     },
     { new: true }
     )
@@ -397,7 +472,7 @@ masterTableService.getSingleRow = async (tableId, rowId)=> {
 
   /////// modify obeject/row of  masterTableData array and create a new document ////////////////
 
-masterTableService.modifyableData = async (updatedMasterTable, tableId, organizationId, addedByUserId)=> {
+masterTableService.modifyTableData = async (updatedMasterTable, tableId, organizationId, ubdatedByUserId)=> {
         // Retrieve the existing document
         const existingDocument = await masterTableModel.findById(tableId);
         assert(existingDocument, createError(StatusCodes.CONFLICT, `Table not found with id ${tableId}`))
@@ -430,7 +505,7 @@ masterTableService.modifyableData = async (updatedMasterTable, tableId, organiza
         copiedDocument.tableCodeId = await autoCodeGeneration.getmstCode(organizationName);
         copiedDocument.masterTableData = updatedMasterTable.masterTableData;
         copiedDocument.createdAt = Date.now();
-        copiedDocument.addedByUserId = addedByUserId;
+        copiedDocument.updatedByUserId = ubdatedByUserId;
         copiedDocument.publishStatus = 'unpublished';
 
         // Update the masterTable in the copied document
@@ -442,6 +517,44 @@ masterTableService.modifyableData = async (updatedMasterTable, tableId, organiza
         assert(savedDocument, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout")); 
         return savedDocument;
 }
+
+
+
+//////////////// edit draft tables ///////////////
+
+
+masterTableService.editTableData = async (updatedMasterTable, tableId, ubdatedByUserId)=> {
+    // Retrieve the existing document
+    const existingDocument = await masterTableModel.findById(tableId);
+    assert(existingDocument, createError(StatusCodes.CONFLICT, `Table not found with id ${tableId}`))
+
+    
+      // Check if 'masterTableData' is the same in existingDocument and updatedMasterTable
+assert(
+    JSON.stringify(existingDocument.masterTableData) !== JSON.stringify(updatedMasterTable.masterTableData),
+    createError(StatusCodes.BAD_REQUEST, 'No changes made to masterTableData.')
+);
+
+   
+    // Check if 'Code No' values are unique within the updated masterTable object
+    const updatedCodes = new Set();
+    for (const data of updatedMasterTable.masterTableData) {
+        assert(!updatedCodes.has(data['codeno']), createError(StatusCodes.BAD_REQUEST, `Code No ${data['codeno']} is duplicated within the updated masterTable.`));
+        updatedCodes.add(data['codeno']);
+    }   
+    
+      // update masterTableData 
+      const savedMasterTable = await masterTableModel.findOneAndUpdate({_id: tableId},
+        {
+      masterTableData: updatedMasterTable.masterTableData,
+      updatedByUserId: ubdatedByUserId
+    },
+    { new: true }
+    )
+    assert(savedMasterTable, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout")); 
+    return savedMasterTable;
+}
+
 
 
 
