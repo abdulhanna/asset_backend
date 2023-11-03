@@ -432,6 +432,7 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
 
                     rowAsset[groupName][subgroupName][assetFieldName] = fieldValue;
 
+
                     const validationError = validateAsset(rowAsset, mapping);
 
                     if (validationError) {
@@ -470,10 +471,16 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
             protectAndUnlockCells(sheet);
         }
 
-        if (validationErrors.length === 0) {
-            // No validation errors, save merged assets to the database
-            await assetService.saveAssetsToDatabase(organizationId, mergedAssets);
+
+        console.log('validationErrors', validationErrors);
+
+        if (validationErrors.length > 0) {
+            await workbook.xlsx.writeFile('output.xlsx'); // Save as a new file
+            return res.status(400).json({message: 'Validation errors', errors: validationErrors});
         }
+
+
+        await assetService.saveAssetsToDatabase(organizationId, mergedAssets);
 
         await workbook.xlsx.writeFile(req.file.path);
 
