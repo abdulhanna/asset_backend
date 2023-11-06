@@ -1,13 +1,37 @@
 import { ExtractJwt, Strategy as JwtStrategy } from 'passport-jwt';
 import passport from 'passport';
 import { secret } from '../../../config/secret';
+import userModel from '../models';
 
 // Function to extract JWT from cookies
-const extractJwtFromCookies = (req) => {
-     const cookieName = 'access_token'; // Replace this with the actual name of your JWT cookie
-     const cookieValue = req.cookies[cookieName];
-     return cookieValue || null;
-   };
+
+/***** Old code */
+// const extractJwtFromCookies = (req) => {
+//      const cookieName = 'access_token'; // Replace this with the actual name of your JWT cookie
+//      const cookieValue = req.cookies[cookieName];
+//      return cookieValue || null;
+//    };
+
+/***** new code */
+   const extractJwtFromCookies = (req) => {
+    const cookieName = 'access_token'; // Replace this with the actual name of your JWT cookie
+    const cookieValue = req.cookies[cookieName];
+  
+    if (cookieValue) {
+      // Check if the token is still valid in the schema
+      userModel.findOne({ token: cookieValue }, (err, user) => {
+        if (err || !user) {
+          // Token is invalid or user not found, remove the cookie
+          res.clearCookie(cookieName);
+          return null;
+        }
+      });
+  
+      return cookieValue;
+    }
+  
+    return null;
+  };
    
    const opts = {};
    
