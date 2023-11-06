@@ -164,26 +164,8 @@ function protectAndUnlockCells(worksheet) {
 }
 
 const validateDateFormat = (dateString) => {
-    // Parse the input date string
-    const dateObject = new Date(dateString);
-
-    // Check if the dateObject is valid
-    if (isNaN(dateObject.getTime())) {
-        return false;
-    }
-
-    // Convert the date to YYYY/MM/DD format
-    const year = dateObject.getFullYear();
-    const month = String(dateObject.getMonth() + 1).padStart(2, '0');
-    const day = String(dateObject.getDate()).padStart(2, '0');
-
-    const formattedDate = `${year}/${month}/${day}`;
-
-    // Regular expression to validate date format (YYYY/MM/DD)
-    const dateRegex = /^\d{4}\/\d{2}\/\d{2}$/;
-
-    // Check if the formatted date matches the date format
-    return dateRegex.test(formattedDate);
+    const regex = /^\d{4}-\d{2}-\d{2}$/; // Assuming the date format is YYYY-MM-DD
+    return regex.test(dateString);
 };
 
 
