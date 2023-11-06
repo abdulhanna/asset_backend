@@ -11,9 +11,11 @@ export const attachCookie = (res, { access_token: accessToken }) => {
 };
 
 export const revokeCookie = async (req, res) => {
-     res.clearCookie('access_token');
-     const user = userModel.findByIdAndUpdate(
-          {_id:req.user.data._id},
-          {token: null},
-          );
+      const userId = req.user.data._id;
+        const user =   await userModel.findOneAndUpdate(
+               { userId},
+               { token: null, updatedAt : Date.now()},
+               { new: true }
+             );
+          res.clearCookie('access_token');
 };

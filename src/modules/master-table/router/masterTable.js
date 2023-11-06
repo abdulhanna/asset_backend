@@ -41,7 +41,10 @@ router.put("/uploadTableData",
     uploader.single("file"),
     httpHandler(async (req, res) => {
         const filePath = req.file.path;
+        const originalname = req.file.originalname;
         const tableCodeId = req.body.tableCodeId;
+        const publishStatus = req.body.publishStatus;
+        const ubdatedBy = req.user.data._id;
         
         // Check file format (XLSX or CSV)
         const fileExtension = path.extname(req.file.originalname).toLowerCase();
@@ -58,12 +61,15 @@ router.put("/uploadTableData",
             return res.status(400).json({ error: 'File size exceeds the 10MB limit.' });
         }
 
-        const result = await masterTableService.uploadMasterTableData(filePath, tableCodeId);
-
+        const result = await masterTableService.uploadMasterTableData(filePath, originalname, tableCodeId, ubdatedBy, publishStatus);
         // Remove the uploaded file after processing
         fs.unlinkSync(filePath); // Synchronously delete the file
-
-        res.send(result)
+        if(result.statusCode)
+        {
+          res.status(417).json({msg: 'something unwanted occured....', error: result.msg,'errorFile': result.errorFile, 'uploadedFile': result.uploadedFile});
+        }
+      
+          res.send(result)
     })
     )
 
@@ -72,11 +78,16 @@ router.put("/uploadTableData",
 router.get("/listAllTables",
     isLoggedIn,
     httpHandler(async (req, res)=> {
+
+      const currentPage = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.size) || 10;
+      const sortBy = req.query.sort ? JSON.parse(req.query.sort) : 'createdAt';
+
         const dashboardPermission = req.user.data.dashboardPermission;
         const publishStatus = req.query.publishStatus;
         const organizationId = req.user.data.organizationId;
 
-        const result = await masterTableService.getallTable(dashboardPermission, organizationId, publishStatus);
+        const result = await masterTableService.getallTable(dashboardPermission, organizationId, publishStatus, currentPage, limit, sortBy);
         res.send(result)
     })
     )
@@ -111,13 +122,26 @@ router.get("/listAllTables",
   httpHandler(async (req, res)=> {
     const tableId = req.params.tableId;
     const organizationId = req.user.data.organizationId;
-    const addedBy = req.user.data._id;
+    const ubdatedBy = req.user.data._id;
 
-    const rowData = await masterTableService.modifyableData(req.body, tableId, organizationId, addedBy)
+    const rowData = await masterTableService.modifyTableData(req.body, tableId, organizationId, ubdatedBy)
     res.send(rowData)
   })
   )
 
+
+  //////////////// edit the drafts table ////////////
+
+  router.put("/editTable/:tableId",
+  isLoggedIn,
+  httpHandler(async (req, res)=> {
+    const tableId = req.params.tableId;
+    const ubdatedBy = req.user.data._id;
+
+    const rowData = await masterTableService.editTableData(req.body, tableId, ubdatedBy)
+    res.send(rowData)
+  })
+  )
 
 
   /////////publish draft table by id /////////
@@ -133,7 +157,7 @@ router.get("/listAllTables",
 
 //////// delete draft table by id //////////
 
-router.delete("/deleteDraftTable/:id",
+router.delete("/discardDraftTable/:id",
 isLoggedIn,
 httpHandler(async (req, res)=> {
   const mstId = req.params.id;

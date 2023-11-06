@@ -2,7 +2,8 @@ import userModel from '../../auth/models/index.js';
 import organizationModel from '../models/organizations.js';
 import jwtService from '../../auth/services/jwt-services.js';
 import bcrypt from "bcryptjs";
-import {assetGroupModel} from "../models";
+import emailtemplate from '../../../helpers/send-email.js';
+
 
 const getOrganizations = async (currentPage, limit, sortBy) => {
      try {
@@ -24,7 +25,7 @@ const getOrganizations = async (currentPage, limit, sortBy) => {
              .limit(limit)
           .populate({
            path: 'userId',
-           select: 'email password is_email_verified',
+           select: 'email password is_email_verified is_phone_verified',
          })
 
          return {
@@ -67,10 +68,9 @@ const getOrganiztionById = async (id) => {
 const addOrganization = async (id, data) => {
    try {
      const token = await jwtService.generatePair(data.email);
-     const hashedPassword = bcrypt.hashSync(data.password, 8);
+
      const result = await userModel.create({
           email: data.email,
-          password: hashedPassword,
           role: "superadmin",
           userType: "superadmin",
           dashboardPermission: "superadmin_dashboard",
@@ -107,6 +107,12 @@ const addOrganization = async (id, data) => {
 
 
       const savedOrganization = await newOrganization.save();
+
+         // Send the invitation email to the member
+         await emailtemplate.sendInvitationEmail(
+          data.email,
+          token
+      );
        return savedOrganization;
 } catch (error) {
      console.log(error);
@@ -120,20 +126,13 @@ const addOrganization = async (id, data) => {
 const organizationUpdate = async (id, userId, data) => {
      try {
           
-          console.log(userId);
           const userData = {};
 
           if(data.email)
           {
                userData.email = data.email;
           }
-          if(data.password)
-          { 
-               const hashedPassword = bcrypt.hashSync(data.password, 8);
-               userData.password = hashedPassword;
-               
-          }
-
+         
           userData.updatedAt = Date.now();
 
           const userUpdate = await userModel.findByIdAndUpdate(
