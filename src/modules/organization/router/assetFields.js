@@ -453,9 +453,6 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
             protectAndUnlockCells(sheet);
         }
 
-
-        console.log('validationErrors', validationErrors);
-
         if (validationErrors.length > 0) {
             await workbook.xlsx.writeFile('output.xlsx'); // Save as a new file
             return res.status(400).json({message: 'Validation errors', errors: validationErrors});
