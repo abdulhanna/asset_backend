@@ -380,15 +380,17 @@ router.get('/export-excel-test', isLoggedIn, async (req, res) => {
 
             if (assetFormStepId) {
                 const stepInfo = await assetFormStepModel.findOne({_id: assetFormStepId});
+                console.log('stepInfo', stepInfo)
 
                 if (stepInfo) {
-                    const stepNo = stepInfo.stepNo;
+                    const stepName = stepInfo.stepName;
+                    const stepNo = stepInfo.stepNo
 
-                    if (!stepInfoMap.has(stepNo)) {
-                        stepInfoMap.set(stepNo, {stepFields: [], stepGroups: new Set()});
+                    if (!stepInfoMap.has(stepName)) {
+                        stepInfoMap.set(stepName, {stepFields: [], stepGroups: new Set(), stepNo: stepNo});
                     }
 
-                    const stepInfoData = stepInfoMap.get(stepNo);
+                    const stepInfoData = stepInfoMap.get(stepName);
 
                     stepInfoData.stepGroups.add(group._id.toString()); // Add group ID to set
 
@@ -411,14 +413,15 @@ router.get('/export-excel-test', isLoggedIn, async (req, res) => {
                         });
                     }
 
-                    stepInfoMap.set(stepNo, stepInfoData);
+                    stepInfoMap.set(stepName, stepInfoData);
                 }
             }
         }
 
         // Now, create worksheets for each step
-        for (const [stepNo, stepInfoData] of stepInfoMap) {
-            const sheetName = `Step_${stepNo}`;
+        for (const [stepName, stepInfoData] of stepInfoMap) {
+
+            const sheetName = `${stepName} - ${stepInfoData.stepNo}`;
             const worksheet = workbook.addWorksheet(sheetName);
 
             const headers = stepInfoData.stepFields.map(field => field.header); // Extracting headers
