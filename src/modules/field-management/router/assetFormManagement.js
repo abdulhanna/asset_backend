@@ -423,6 +423,11 @@ router.get('/export-excel-test', isLoggedIn, async (req, res) => {
 
             const sheetName = `${stepName} - ${stepInfoData.stepNo}`;
             const worksheet = workbook.addWorksheet(sheetName);
+            // Disable changing the sheet name
+            worksheet.protect('', {
+                sheet: true
+            });
+
 
             const headers = stepInfoData.stepFields.map(field => field.header); // Extracting headers
             worksheet.columns = stepInfoData.stepFields;
