@@ -25,8 +25,18 @@ const getAssetsByOrganization = async (organizationId) => {
 
 const saveAssetsToDatabase = async (organizationId, assets) => {
     try {
-        const result = await assetsModel.create({organizationId, assets});
-        return result;
+        // First, check if there are any existing assets with the same organizationId
+        const existingAssets = await assetsModel.findOne({organizationId});
+
+        if (existingAssets) {
+            // If existing assets are found, replace them with the new ones
+            await assetsModel.updateOne({organizationId}, {assets});
+            return {message: 'Assets updated successfully'};
+        } else {
+            // If no existing assets are found, create new assets
+            const result = await assetsModel.create({organizationId, assets});
+            return result;
+        }
     } catch (error) {
         throw new Error('Error saving assets to database');
     }
