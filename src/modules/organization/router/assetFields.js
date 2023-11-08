@@ -6,7 +6,9 @@ import {v2 as cloudinary} from 'cloudinary';
 import {secret} from '../../../config/secret.js';
 import Excel from 'exceljs';
 import assetFormManagementModel from '../../field-management/models/assetFormManagement';
+import assetFormStepModel from '../../field-management/models/assetFormStep'
 import {validate} from '@babel/core/lib/config/validation/options';
+import mongoose from "mongoose";
 
 
 cloudinary.config(secret.cloudinary);
@@ -176,10 +178,10 @@ const validateAsset = (asset, mapping) => {
     const fieldValue = asset[groupName][subgroupName][assetFieldName];
 
     if (mapping.fieldType === 'date') {
-        const isValidDate = validateDateFormat(fieldValue);
-        if (!isValidDate) {
-            return mapping.errorMessage;
-        }
+        // const isValidDate = validateDateFormat(fieldValue);
+        // if (!isValidDate) {
+        //     return mapping.errorMessage;
+        // }
     } else if (mapping.fieldType === 'string') {
         if (mapping.fieldLength && fieldValue && fieldValue.length > mapping.fieldLength) {
             return mapping.errorMessage;
@@ -333,15 +335,24 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
     }
 });
 
+const matchStepNameAndSerial = async (stepNo, stepName, stepDetails) => {
+    return stepDetails.find(step => step.stepNo === stepNo && step.stepName === stepName);
+};
+
+
 router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, res) => {
     try {
         const organizationId = req.user.data.organizationId;
         const workbook = new Excel.Workbook();
         await workbook.xlsx.readFile(req.file.path);
 
-        const stepSheets = ['Step_1', 'Step_2', 'Step_3'];
+        const stepDetails = await assetFormStepModel.find();
+        const stepSheets = stepDetails.map(step => `${step.stepName} - ${step.stepNo}`);
+        console.log(stepSheets, 'stepSheets');
+
         let mergedAssets = []; // Initialize an array to store merged assets
         const validationErrors = [];
+
 
         const assetFormManagement = await getAssetFormManagement(organizationId);
         const fieldsMapping = assetFormManagement.assetFormManagements.flatMap(group => {
@@ -370,6 +381,13 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
                     message: 'Invalid sheet name',
                     error: `Sheet with name '${sheetName}' not found.`
                 });
+            }
+
+            const [stepName, stepNo] = sheetName.split(' - ');
+            const matchingStep = await matchStepNameAndSerial(parseInt(stepNo), stepName, stepDetails);
+            console.log(matchingStep, 'matchingStep');
+            if (!matchingStep) {
+                return res.status(400).json({message: 'Invalid step details', error: 'Step details do not match.'});
             }
 
             const headers = sheet.getRow(1).values.filter(header => header !== undefined); // Filter out empty or undefined headers
@@ -446,7 +464,11 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
                     }
                 }
 
-                mergedAssets[rowIndex - 2] = {...mergedAssets[rowIndex - 2], ...rowAsset}; // Merge the row data into the merged assets
+                mergedAssets[rowIndex - 2] = {
+                    _id: new mongoose.Types.ObjectId(),
+                    ...mergedAssets[rowIndex - 2],
+                    ...rowAsset
+                }; // Merge the row data into the merged assets
                 rowIndex++;
             }
 
@@ -467,6 +489,25 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
     } catch (error) {
         console.log(error);
         return res.status(500).json({message: 'Error uploading data', error: error.message});
+    }
+});
+
+router.put('/asset/:id', isLoggedIn, (req, res) => {
+    try {
+        const organizationId = req.user.data.organizationId;
+        const id = req.params.id;
+        const {groupName, subgroupName, itemsData} = req.body;
+
+        const updatedAsset = assetService.updateAssetItems(organizationId, id, groupName, subgroupName, itemsData);
+
+        if (!updatedAsset) {
+            return res.status(404).json({message: 'Asset not found'});
+        }
+
+        return res.json({message: 'Asset items updated successfully', asset: updatedAsset});
+    } catch (error) {
+        return res.json({message: 'Server Error'});
+
     }
 });
 

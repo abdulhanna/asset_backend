@@ -32,8 +32,59 @@ const saveAssetsToDatabase = async (organizationId, assets) => {
     }
 };
 
+
+const updateAssetItems = async (organizationId, id, groupName, subgroupName, itemsData) => {
+    try {
+        const assetDocument = await assetsModel.findOneAndUpdate(
+            {organizationId},
+            {new: true}
+        );
+
+        if (!assetDocument) {
+            throw new Error('Asset not found');
+        }
+
+        const asset = assetDocument.assets.find((asset) => asset._id.toString() === id);
+        console.log(asset, 'asset before update');
+
+        if (!asset) {
+            throw new Error('Asset not found');
+        }
+
+        if (groupName === 'assetIdentification' && subgroupName === 'assetMeasurementsQuantity') {
+            const updatedItems = itemsData.map((item) => ({
+                serialNo: item.serialNo || null,
+                uniqueItemId: item.uniqueItemId || null,
+                ratePerPrice: item.ratePerPrice || null,
+            }));
+            console.log(updatedItems, 'updatedItems');
+
+            if (!asset[groupName][subgroupName].itemsData) {
+                asset[groupName][subgroupName].itemsData = [];
+                console.log(asset[groupName][subgroupName].itemsData, 'checkItemData');
+            }
+
+            // Push each item individually
+            updatedItems.forEach((item) => {
+                asset[groupName][subgroupName].itemsData.push(item);
+            });
+
+            console.log(asset, 'asset after update'); // Log the asset after making changes
+
+            // Save the changes to the assetDocument
+            await assetDocument.save();
+
+            return asset;
+        }
+    } catch (error) {
+        console.error(error);
+        throw new Error('Error updating asset items');
+    }
+};
+
 export const assetService = {
     createAsset,
     getAssetsByOrganization,
-    saveAssetsToDatabase
+    saveAssetsToDatabase,
+    updateAssetItems
 };
