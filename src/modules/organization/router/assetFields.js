@@ -384,8 +384,9 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
             }
 
             const [stepName, stepNo] = sheetName.split(' - ');
+            
             const matchingStep = await matchStepNameAndSerial(parseInt(stepNo), stepName, stepDetails);
-            console.log(matchingStep, 'matchingStep');
+
             if (!matchingStep) {
                 return res.status(400).json({message: 'Invalid step details', error: 'Step details do not match.'});
             }
