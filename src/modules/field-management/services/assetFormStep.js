@@ -10,7 +10,14 @@ const checkStepNoExists = async (stepNo) => {
         throw error;
     }
 };
-
+const checkGroupHasAssetFormStep = async (groupId) => {
+    try {
+        const foundGroup = await fieldManagementModel.findOne({_id: groupId, assetFormStepId: {$ne: null}});
+        return foundGroup;
+    } catch (error) {
+        throw new Error(`Error finding group with ID ${groupId}: ${error.message}`);
+    }
+};
 
 const getListOfGroups = async () => {
     try {
@@ -187,5 +194,7 @@ export const assetFormStepService = {
     deleteForm,
     getFormStepById,
     checkStepNoExists,
-    getListOfGroups
+    getListOfGroups,
+    checkGroupHasAssetFormStep
+
 };

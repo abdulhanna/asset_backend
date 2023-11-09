@@ -348,13 +348,51 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
 
         const stepDetails = await assetFormStepModel.find();
         const stepSheets = stepDetails.map(step => `${step.stepName} - ${step.stepNo}`);
-        console.log(stepSheets, 'stepSheets');
 
         let mergedAssets = []; // Initialize an array to store merged assets
         const validationErrors = [];
 
 
         const assetFormManagement = await getAssetFormManagement(organizationId);
+
+        // Extract all headers from all sheets
+        const headersSet = new Set();
+        workbook.eachSheet(sheet => {
+            const headers = [];
+            sheet.getRow(1).eachCell((cell, colNumber) => {
+                headers.push(cell.value);
+            });
+            headers.forEach(header => headersSet.add(header));
+        });
+
+
+        // Validation for headers
+
+        const headersInModel = new Set();
+        const invalidHeaders = [];
+
+        // Extract headers from assetFormManagement
+        assetFormManagement.assetFormManagements.forEach((group) => {
+            group.subgroups.forEach((subgroup) => {
+                subgroup.fields.forEach((field) => {
+                    headersInModel.add(field.name);
+                });
+            });
+        });
+
+        // Check if all headers in uploaded file exist in the model
+        for (const header of headersSet) {
+            if (!headersInModel.has(header)) {
+                invalidHeaders.push(header);
+            }
+        }
+
+        if (invalidHeaders.length > 0) {
+            return res.status(400).json({
+                message: 'Invalid headers detected',
+                error: `Headers '${invalidHeaders.join(', ')}' not allowed.`
+            });
+        }
         const fieldsMapping = assetFormManagement.assetFormManagements.flatMap(group => {
             if (group.subgroups && group.subgroups.length > 0) {
                 return group.subgroups.flatMap(subgroup =>
@@ -384,7 +422,7 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
             }
 
             const [stepName, stepNo] = sheetName.split(' - ');
-            
+
             const matchingStep = await matchStepNameAndSerial(parseInt(stepNo), stepName, stepDetails);
 
             if (!matchingStep) {
