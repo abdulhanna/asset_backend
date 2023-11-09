@@ -6,7 +6,9 @@ import {v2 as cloudinary} from 'cloudinary';
 import {secret} from '../../../config/secret.js';
 import Excel from 'exceljs';
 import assetFormManagementModel from '../../field-management/models/assetFormManagement';
+import assetFormStepModel from '../../field-management/models/assetFormStep'
 import {validate} from '@babel/core/lib/config/validation/options';
+import mongoose from "mongoose";
 
 
 cloudinary.config(secret.cloudinary);
@@ -164,26 +166,8 @@ function protectAndUnlockCells(worksheet) {
 }
 
 const validateDateFormat = (dateString) => {
-    // Parse the input date string
-    const dateObject = new Date(dateString);
-
-    // Check if the dateObject is valid
-    if (isNaN(dateObject.getTime())) {
-        return false;
-    }
-
-    // Convert the date to YYYY/MM/DD format
-    const year = dateObject.getFullYear();
-    const month = String(dateObject.getMonth() + 1).padStart(2, '0');
-    const day = String(dateObject.getDate()).padStart(2, '0');
-
-    const formattedDate = `${year}/${month}/${day}`;
-
-    // Regular expression to validate date format (YYYY/MM/DD)
-    const dateRegex = /^\d{4}\/\d{2}\/\d{2}$/;
-
-    // Check if the formatted date matches the date format
-    return dateRegex.test(formattedDate);
+    const regex = /^\d{4}-\d{2}-\d{2}$/; // Assuming the date format is YYYY-MM-DD
+    return regex.test(dateString);
 };
 
 
@@ -194,10 +178,10 @@ const validateAsset = (asset, mapping) => {
     const fieldValue = asset[groupName][subgroupName][assetFieldName];
 
     if (mapping.fieldType === 'date') {
-        const isValidDate = validateDateFormat(fieldValue);
-        if (!isValidDate) {
-            return mapping.errorMessage;
-        }
+        // const isValidDate = validateDateFormat(fieldValue);
+        // if (!isValidDate) {
+        //     return mapping.errorMessage;
+        // }
     } else if (mapping.fieldType === 'string') {
         if (mapping.fieldLength && fieldValue && fieldValue.length > mapping.fieldLength) {
             return mapping.errorMessage;
@@ -208,7 +192,6 @@ const validateAsset = (asset, mapping) => {
         }
     } else if (mapping.fieldType === 'list') {
         const validOptions = mapping.listOptions;
-        console.log('validOptions', validOptions);
         if (fieldValue && !validOptions.includes(fieldValue)) {
             return mapping.errorMessage;
         }
@@ -282,6 +265,7 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
 
                 const fieldValue = excelData[i][headers.indexOf(assetFieldName)];
 
+
                 if (assetFieldName) {
                     if (!newAsset[groupName]) {
                         newAsset[groupName] = {};
@@ -351,37 +335,67 @@ router.post('/upload', isLoggedIn, uploadTwo.single('file'), async (req, res) =>
     }
 });
 
+const matchStepNameAndSerial = async (stepNo, stepName, stepDetails) => {
+    return stepDetails.find(step => step.stepNo === stepNo && step.stepName === stepName);
+};
+
+
 router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, res) => {
     try {
         const organizationId = req.user.data.organizationId;
+        const workbook = new Excel.Workbook();
+        await workbook.xlsx.readFile(req.file.path);
+
+        const stepDetails = await assetFormStepModel.find();
+        const stepSheets = stepDetails.map(step => `${step.stepName} - ${step.stepNo}`);
+
+        let mergedAssets = []; // Initialize an array to store merged assets
+        const validationErrors = [];
+
+
         const assetFormManagement = await getAssetFormManagement(organizationId);
+
+        // Extract all headers from all sheets
+        const headersSet = new Set();
+        workbook.eachSheet(sheet => {
+            const headers = [];
+            sheet.getRow(1).eachCell((cell, colNumber) => {
+                headers.push(cell.value);
+            });
+            headers.forEach(header => headersSet.add(header));
+        });
+
+
+        // Validation for headers
+
         const headersInModel = new Set();
         const invalidHeaders = [];
 
         // Extract headers from assetFormManagement
-        assetFormManagement.assetFormManagements.forEach(group => {
-            group.subgroups.forEach(subgroup => {
-                subgroup.fields.forEach(field => {
+        assetFormManagement.assetFormManagements.forEach((group) => {
+            group.subgroups.forEach((subgroup) => {
+                subgroup.fields.forEach((field) => {
                     headersInModel.add(field.name);
                 });
             });
         });
 
-        const workbook = new Excel.Workbook();
-        await workbook.xlsx.readFile(req.file.path);
-
-        workbook.eachSheet(async (sheet, sheetId) => {
-            const headers = sheet.getRow(1).values; // Assuming headers are in the first row
-
-            if (!headers) {
-                return res.status(400).json({
-                    message: 'Invalid sheet format',
-                    error: 'Headers not found in the sheet.'
-                });
+        // Check if all headers in uploaded file exist in the model
+        for (const header of headersSet) {
+            if (!headersInModel.has(header)) {
+                invalidHeaders.push(header);
             }
+        }
 
-            const fieldsMapping = assetFormManagement.assetFormManagements.flatMap(group =>
-                group.subgroups.flatMap(subgroup =>
+        if (invalidHeaders.length > 0) {
+            return res.status(400).json({
+                message: 'Invalid headers detected',
+                error: `Headers '${invalidHeaders.join(', ')}' not allowed.`
+            });
+        }
+        const fieldsMapping = assetFormManagement.assetFormManagements.flatMap(group => {
+            if (group.subgroups && group.subgroups.length > 0) {
+                return group.subgroups.flatMap(subgroup =>
                     subgroup.fields.map(field => ({
                         assetFieldName: field.name,
                         groupName: group.groupName,
@@ -391,16 +405,44 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
                         errorMessage: field.errorMessage,
                         listOptions: field.listOptions
                     }))
-                )
-            );
+                );
+            } else {
+                return [];
+            }
+        });
 
-            const assets = [];
-            const validationErrors = [];
+        for (const sheetName of stepSheets) {
+            const sheet = workbook.getWorksheet(sheetName);
 
-            sheet.eachRow({includeEmpty: false}, (row, rowNum) => {
-                if (rowNum === 1) return; // Skip header row
+            if (!sheet) {
+                return res.status(400).json({
+                    message: 'Invalid sheet name',
+                    error: `Sheet with name '${sheetName}' not found.`
+                });
+            }
 
-                const newAsset = {};
+            const [stepName, stepNo] = sheetName.split(' - ');
+
+            const matchingStep = await matchStepNameAndSerial(parseInt(stepNo), stepName, stepDetails);
+
+            if (!matchingStep) {
+                return res.status(400).json({message: 'Invalid step details', error: 'Step details do not match.'});
+            }
+
+            const headers = sheet.getRow(1).values.filter(header => header !== undefined); // Filter out empty or undefined headers
+
+            if (!headers || headers.length === 0) {
+                return res.status(400).json({
+                    message: 'Invalid sheet format',
+                    error: 'Headers not found in the sheet.'
+                });
+            }
+
+            let rowIndex = 2; // Start from the second row
+
+            while (sheet.getRow(rowIndex).values.length > 0) {
+                const row = sheet.getRow(rowIndex);
+                let rowAsset = {};
 
                 for (const mapping of fieldsMapping) {
                     const assetFieldName = mapping.assetFieldName;
@@ -420,26 +462,22 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
 
                     const fieldValue = cell.value;
 
-                    if (assetFieldName) {
-                        if (!newAsset[groupName]) {
-                            newAsset[groupName] = {};
-                        }
-                        if (!newAsset[groupName][subgroupName]) {
-                            newAsset[groupName][subgroupName] = {};
-                        }
-                        newAsset[groupName][subgroupName][assetFieldName] = fieldValue;
+                    if (!rowAsset[groupName]) {
+                        rowAsset[groupName] = {};
+                    }
+                    if (!rowAsset[groupName][subgroupName]) {
+                        rowAsset[groupName][subgroupName] = {};
                     }
 
+                    rowAsset[groupName][subgroupName][assetFieldName] = fieldValue;
 
-                    const validationError = validateAsset(newAsset, mapping);
+
+                    const validationError = validateAsset(rowAsset, mapping);
 
                     if (validationError) {
-
                         validationErrors.push(validationError);
 
-                        // Set cell color to red if validation fails
-                        const cellAddress = `${String.fromCharCode(headers.indexOf(assetFieldName) + 65)}${rowNum}`;
-
+                        const cellAddress = `${String.fromCharCode(colIndex + 64)}${rowIndex}`;
                         const cellError = sheet.getCell(cellAddress);
 
                         cellError.note = {
@@ -465,18 +503,24 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
                     }
                 }
 
-                assets.push(newAsset);
-            });
-
-            if (validationErrors.length > 0) {
-                await workbook.xlsx.writeFile(`output_${sheetId}.xlsx`); // Save as a new file
-            } else {
-                await assetService.saveAssetsToDatabase(organizationId, assets);
+                mergedAssets[rowIndex - 2] = {
+                    _id: new mongoose.Types.ObjectId(),
+                    ...mergedAssets[rowIndex - 2],
+                    ...rowAsset
+                }; // Merge the row data into the merged assets
+                rowIndex++;
             }
 
-            // Protect and unlock cells after all processing
             protectAndUnlockCells(sheet);
-        });
+        }
+
+        if (validationErrors.length > 0) {
+            await workbook.xlsx.writeFile('output.xlsx'); // Save as a new file
+            return res.status(400).json({message: 'Validation errors', errors: validationErrors});
+        }
+
+
+        await assetService.saveAssetsToDatabase(organizationId, mergedAssets);
 
         await workbook.xlsx.writeFile(req.file.path);
 
@@ -484,6 +528,25 @@ router.post('/upload-test', isLoggedIn, uploadTwo.single('file'), async (req, re
     } catch (error) {
         console.log(error);
         return res.status(500).json({message: 'Error uploading data', error: error.message});
+    }
+});
+
+router.put('/asset/:id', isLoggedIn, (req, res) => {
+    try {
+        const organizationId = req.user.data.organizationId;
+        const id = req.params.id;
+        const {groupName, subgroupName, itemsData} = req.body;
+
+        const updatedAsset = assetService.updateAssetItems(organizationId, id, groupName, subgroupName, itemsData);
+
+        if (!updatedAsset) {
+            return res.status(404).json({message: 'Asset not found'});
+        }
+
+        return res.json({message: 'Asset items updated successfully', asset: updatedAsset});
+    } catch (error) {
+        return res.json({message: 'Server Error'});
+
     }
 });
 

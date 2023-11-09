@@ -19,13 +19,27 @@ router.post('/associateAssetFormStepWithGroups', isLoggedIn, async (req, res) =>
             }
         }
 
+        for (const group of groups) {
+            const foundGroup = await assetFormStepService.checkGroupHasAssetFormStep(group.groupId);
+            console.log('foundGroup', foundGroup)
+
+            if (foundGroup) {
+                return res.status(400).json({
+                    success: false,
+                    error: `Group ${foundGroup.groupName} is already associated with another step`
+                });
+            }
+        }
+
         await assetFormStepService.associateAssetFormStepWithGroups(stepNo, stepName, groups);
 
         return res.json({message: 'AssetFormStep associated with groups successfully'});
     } catch (error) {
+        console.error(error);
         return res.status(500).json({error: error.message});
     }
 });
+
 
 router.get('/groups', isLoggedIn, async (req, res) => {
     try {

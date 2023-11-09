@@ -111,7 +111,6 @@ const getDate = () => {
     const day = date.getDate();
     return [year, month, day];
 };
-
 const applyFieldValidation = (worksheet, field, startRow, endRow, headers) => {
     if (field.dataType === 'list') {
         const joinedDropdownList = field.listOptions.join(',');
@@ -178,6 +177,76 @@ const applyFieldValidation = (worksheet, field, startRow, endRow, headers) => {
     }
 };
 
+const applyFieldValidationTest = (worksheet, field, startRow, endRow, headers) => {
+    console.log('headers', headers);
+    if (field.dataType === 'list') {
+        const joinedDropdownList = field.listOptions.join(',');
+
+        const columnIndex = headers.indexOf(field.header);
+
+        for (let i = startRow; i <= endRow; i++) {
+            const cellAddress = String.fromCharCode(65 + columnIndex) + i; // Updated cell address calculation
+            worksheet.getCell(cellAddress).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: [`"${joinedDropdownList}"`],
+                showErrorMessage: true,
+                error: field.errorMessage
+            };
+        }
+    } else if (field.dataType === 'date') {
+        const currDate = getDate();
+        const columnIndex = headers.indexOf(field.header);
+        const formulae = [`${currDate[0]}/${currDate[1]}/${currDate[2] + 1}`];
+
+        for (let i = startRow; i <= endRow; i++) {
+            const cellAddress = String.fromCharCode(65 + columnIndex) + i; // Updated cell address calculation
+            worksheet.getCell(cellAddress).dataValidation = {
+                type: 'date',
+                allowBlank: true,
+                operator: 'lessThanOrEqual',
+                formulae,
+                showErrorMessage: true,
+                errorStyle: 'error',
+                errorTitle: 'Invalid Date',
+                error: `Please enter a date less than or equal to ${currDate[0]}/${currDate[1]}/${currDate[2] + 1}`,
+            };
+        }
+    } else if (field.dataType === 'string') {
+        const columnIndex = headers.indexOf(field.header);
+        for (let i = startRow; i <= endRow; i++) {
+            const cellAddress = String.fromCharCode(65 + columnIndex) + i; // Updated cell address calculation
+            if (field.fieldLength) {
+                worksheet.getCell(cellAddress).dataValidation = {
+                    type: 'textLength',
+                    allowBlank: true,
+                    operator: 'lessThanOrEqual',
+                    showInputMessage: true,
+                    showErrorMessage: true,
+                    formulae: [field.fieldLength],
+                    errorStyle: 'error',
+                    errorTitle: 'Invalid Length',
+                    error: `The length of this field should be less than or equal to ${field.fieldLength} characters.`
+                };
+            }
+        }
+    } else if (field.dataType === 'number') {
+        const columnIndex = headers.indexOf(field.header);
+        for (let i = startRow; i <= endRow; i++) {
+            const cellAddress = String.fromCharCode(65 + columnIndex) + i; // Updated cell address calculation
+
+            // Allow only decimal or whole numbers
+            worksheet.getCell(cellAddress).dataValidation = {
+                type: 'decimal',
+                allowBlank: true,
+                showErrorMessage: true,
+                errorStyle: 'error',
+                errorTitle: 'Invalid Number',
+                error: 'Please enter a valid number (whole or decimal).'
+            };
+        }
+    }
+};
 router.get('/export-excel', isLoggedIn, async (req, res) => {
     try {
         const organizationId = req.user.data.organizationId;
@@ -311,15 +380,17 @@ router.get('/export-excel-test', isLoggedIn, async (req, res) => {
 
             if (assetFormStepId) {
                 const stepInfo = await assetFormStepModel.findOne({_id: assetFormStepId});
+                console.log('stepInfo', stepInfo)
 
                 if (stepInfo) {
-                    const stepNo = stepInfo.stepNo;
+                    const stepName = stepInfo.stepName;
+                    const stepNo = stepInfo.stepNo
 
-                    if (!stepInfoMap.has(stepNo)) {
-                        stepInfoMap.set(stepNo, {stepFields: [], stepGroups: new Set()});
+                    if (!stepInfoMap.has(stepName)) {
+                        stepInfoMap.set(stepName, {stepFields: [], stepGroups: new Set(), stepNo: stepNo});
                     }
 
-                    const stepInfoData = stepInfoMap.get(stepNo);
+                    const stepInfoData = stepInfoMap.get(stepName);
 
                     stepInfoData.stepGroups.add(group._id.toString()); // Add group ID to set
 
@@ -342,22 +413,29 @@ router.get('/export-excel-test', isLoggedIn, async (req, res) => {
                         });
                     }
 
-                    stepInfoMap.set(stepNo, stepInfoData);
+                    stepInfoMap.set(stepName, stepInfoData);
                 }
             }
         }
 
         // Now, create worksheets for each step
-        for (const [stepNo, stepInfoData] of stepInfoMap) {
-            const sheetName = `Step_${stepNo}`;
-            const worksheet = workbook.addWorksheet(sheetName);
+        for (const [stepName, stepInfoData] of stepInfoMap) {
 
+            const sheetName = `${stepName} - ${stepInfoData.stepNo}`;
+            const worksheet = workbook.addWorksheet(sheetName);
+            // Disable changing the sheet name
+            worksheet.protect('', {
+                sheet: true
+            });
+
+
+            const headers = stepInfoData.stepFields.map(field => field.header); // Extracting headers
             worksheet.columns = stepInfoData.stepFields;
 
-            // Apply field validations
             stepInfoData.stepFields.forEach((field) => {
-                applyFieldValidation(worksheet, field, startRow, endRow, stepInfoData.stepFields);
+                applyFieldValidationTest(worksheet, field, startRow, endRow, headers); // Passing headers
             });
+
 
             const headersRow = worksheet.getRow(1);
 
