@@ -92,6 +92,24 @@ router.get("/listAllTables",
     })
     )
 
+////////////// list only table structures by user role ////////
+
+router.get("/listAllTableStructures",
+    isLoggedIn,
+    httpHandler(async (req, res)=> {
+
+      const currentPage = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.size) || 10;
+      const sortBy = req.query.sort ? JSON.parse(req.query.sort) : 'createdAt';
+
+        const dashboardPermission = req.user.data.dashboardPermission;
+        const publishStatus = req.query.publishStatus;
+        const organizationId = req.user.data.organizationId;
+
+        const result = await masterTableService.getallTableStructures(dashboardPermission, organizationId, publishStatus, currentPage, limit, sortBy);
+        res.send(result)
+    })
+    )
 
 
   //////////////// get single Table Data /////////
