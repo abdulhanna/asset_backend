@@ -374,11 +374,12 @@ masterTableService.getallTable = async (dashboardPermission, organizationId, pub
         finalOrganizationId = mongoose.Types.ObjectId(organizationId);
     }
  
-    const query = {
-        organizationId: finalOrganizationId,
-        isDeleted: false
-      };
       
+      const query = {
+        organizationId: finalOrganizationId,
+        isDeleted: false,
+        masterTableData: { $exists: true, $not: { $size: 0 } } // Exclude documents where masterTableData is blank
+    };
       if (publishStatus) {
         query.publishStatus = publishStatus;
       }
@@ -396,7 +397,7 @@ masterTableService.getallTable = async (dashboardPermission, organizationId, pub
              .skip((currentPage - 1) * limit)
              .limit(limit)
     .populate('addedByUserId', 'email userProfile.name')
-    .select('_id tableCodeId tableName applicableTo applicableId publishStatus createdAt')
+    .select('_id tableCodeId tableName applicableTo applicableId sampleFile publishStatus createdAt')
 
     assert(allTables, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"));
 
@@ -409,6 +410,7 @@ masterTableService.getallTable = async (dashboardPermission, organizationId, pub
         applicableId: table.applicableId,
         createdBy: table.addedByUserId.email, // Extract email from addedByUserId
         publishStatus: table.publishStatus,
+        sampleFile: table.sampleFile,
         createdAt: table.createdAt,
       }));
 
@@ -423,6 +425,70 @@ masterTableService.getallTable = async (dashboardPermission, organizationId, pub
         data:formattedResponse,
     };
 }
+
+
+
+
+//////////////////// get only table structres tables that has no data //////////
+masterTableService.getallTableStructures = async (dashboardPermission, organizationId, publishStatus, currentPage, limit,sortBy) => {
+    let finalOrganizationId;
+
+    if (dashboardPermission === 'root_dashboard') {
+        finalOrganizationId = null;
+    } else
+    {
+        finalOrganizationId = mongoose.Types.ObjectId(organizationId);
+    }
+ 
+    const query = {
+        organizationId: finalOrganizationId,
+        isDeleted: false,
+        masterTableData: { $exists: true, $size: 0 }, // Fetch only documents with blank masterTableData
+        publishStatus: 'unpublished',
+    };
+    
+
+    const totalDocuments = await masterTableModel.countDocuments(query);
+    const totalPages = Math.ceil(totalDocuments / limit);
+
+    let startSerialNumber = (currentPage - 1) * limit + 1;
+    let endSerialNumber = Math.min(currentPage * limit, totalDocuments);
+
+   
+    const allTables = await masterTableModel.find(query)
+    .sort(sortBy)
+             .skip((currentPage - 1) * limit)
+             .limit(limit)
+    .populate('addedByUserId', 'email userProfile.name')
+    .select('_id tableCodeId tableName applicableTo applicableId sampleFile publishStatus createdAt')
+
+    assert(allTables, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout"));
+
+
+    const formattedResponse = allTables.map(table => ({
+        _id: table._id,
+        tableCodeId: table.tableCodeId,
+        tableName: table.tableName,
+        applicableTo: table.applicableTo,
+        applicableId: table.applicableId,
+        createdBy: table.addedByUserId.email, // Extract email from addedByUserId
+        publishStatus: table.publishStatus,
+        sampleFile: table.sampleFile,
+        createdAt: table.createdAt,
+      }));
+
+    //   return formattedResponse;
+
+      return {
+        currentPage,
+        totalPages,
+        totalDocuments,
+        startSerialNumber,
+        endSerialNumber,
+        data:formattedResponse,
+    };
+}
+
 
 
 
