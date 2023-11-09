@@ -54,6 +54,10 @@ const masterTableSchema = new mongoose.Schema(
         },
         fields: [dynamicTableFieldSchema],
         masterTableData: [],
+        sampleFile:{
+           type: String,
+           default: null,
+        },
         addedByUserId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'users',

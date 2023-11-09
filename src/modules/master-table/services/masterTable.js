@@ -61,7 +61,22 @@ masterTableService.createMasterTable = async (data, dashboardPermission, organiz
         );
 
 
-        return savedMstTableColumn;
+        //////////// generate sample file /////////////
+        const getSampleFile = await masterTableService.generateSampelefile(savedMstTableColumn._id)
+
+        /// update the file Samplefile path in the collection
+
+        const updateTableStructure = await masterTableModel.findOneAndUpdate({_id: savedMstTableColumn._id},
+            {
+          sampleFile: getSampleFile.SampleFile,
+        },
+        { new: true }
+        )       
+        assert(
+            updateTableStructure,
+            createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout")
+        );
+        return updateTableStructure;
         }
         
 
