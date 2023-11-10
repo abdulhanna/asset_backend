@@ -21,21 +21,23 @@ const checkGroupHasAssetFormStep = async (groupId) => {
 
 const getListOfGroups = async () => {
     try {
-        const groups = await fieldManagementModel.find({
-            assetFormStepId: {$eq: null}
-        });
-        console.log('groups', groups);
+        const groups = await fieldManagementModel.find().populate('assetFormStepId');
 
         const filteredGroups = groups.map(group => {
             return {
                 _id: group._id,
-                groupName: group.groupName
+                groupName: group.groupName,
+                assetFormStep: group.assetFormStepId ? {
+                    _id: group.assetFormStepId._id,
+                    stepNo: group.assetFormStepId.stepNo,
+                    stepName: group.assetFormStepId.stepName
+                } : null
             };
         });
 
-        return filteredGroups;
+        return {filteredGroups,};
     } catch (error) {
-        throw error;
+        return {groups: null, error: error.message}; // Return error if an exception occurs
     }
 };
 
@@ -137,6 +139,28 @@ const getFormStepById = async (id) => {
     }
 };
 
+const checkDuplicateGroup = async (formId, groups) => {
+    try {
+        const promises = groups.map(async (group) => {
+            const {groupId} = group;
+
+            // Check if the group is already associated with another step
+            const existingGroup = await fieldManagementModel.findOne({
+                _id: groupId,
+                assetFormStepId: {$ne: formId},
+            });
+
+            return !!existingGroup; // Returns true if the group is already associated with another step, false otherwise
+        });
+
+        const results = await Promise.all(promises);
+        return results.includes(true);
+    } catch (error) {
+        throw error;
+    }
+};
+
+
 const updateForm = async (formId, stepNo, stepName, groups) => {
     try {
         const updatedForm = await assetFormStepModel.findByIdAndUpdate(formId, {stepNo, stepName}, {new: true});
@@ -195,6 +219,7 @@ export const assetFormStepService = {
     getFormStepById,
     checkStepNoExists,
     getListOfGroups,
-    checkGroupHasAssetFormStep
+    checkGroupHasAssetFormStep,
+    checkDuplicateGroup
 
 };
