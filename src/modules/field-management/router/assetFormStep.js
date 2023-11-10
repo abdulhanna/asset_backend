@@ -19,6 +19,16 @@ router.post('/associateAssetFormStepWithGroups', isLoggedIn, async (req, res) =>
             }
         }
 
+        // Check for duplicate groupIds in the groups array
+        const uniqueGroupIds = new Set(groups.map(group => group.groupId));
+        if (uniqueGroupIds.size !== groups.length) {
+            return res.status(400).json({
+                success: false,
+                error: 'Duplicate groups are not allowed. Please ensure each group is included only once.'
+            });
+        }
+
+
         for (const group of groups) {
             const foundGroup = await assetFormStepService.checkGroupHasAssetFormStep(group.groupId);
             console.log('foundGroup', foundGroup)
@@ -96,10 +106,11 @@ router.put('/update-form/:id', isLoggedIn, async (req, res) => {
 
         // Check for duplicate groupIds in the groups array
         const uniqueGroupIds = new Set(groups.map(group => group.groupId));
+        
         if (uniqueGroupIds.size !== groups.length) {
             return res.status(400).json({
                 success: false,
-                error: 'Duplicate groupIds found in the groups array',
+                error: 'Duplicate groups are not allowed. Please ensure each group is included only once.',
             });
         }
         await assetFormStepService.updateForm(formId, stepNo, stepName, groups);
