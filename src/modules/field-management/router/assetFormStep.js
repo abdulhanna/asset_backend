@@ -45,7 +45,7 @@ router.get('/groups', isLoggedIn, async (req, res) => {
     try {
         const groups = await assetFormStepService.getListOfGroups();
 
-        return res.json({groups});
+        return res.json(groups);
     } catch (error) {
         return res.status(500).json({error: error.message});
     }
@@ -94,6 +94,14 @@ router.put('/update-form/:id', isLoggedIn, async (req, res) => {
         const {stepNo, stepName, groups} = req.body;
         const formId = req.params.id;
 
+        // Check for duplicate groupIds in the groups array
+        const uniqueGroupIds = new Set(groups.map(group => group.groupId));
+        if (uniqueGroupIds.size !== groups.length) {
+            return res.status(400).json({
+                success: false,
+                error: 'Duplicate groupIds found in the groups array',
+            });
+        }
         await assetFormStepService.updateForm(formId, stepNo, stepName, groups);
 
         return res.json({message: 'Form updated successfully'});
