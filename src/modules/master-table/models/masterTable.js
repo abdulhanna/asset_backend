@@ -1,27 +1,5 @@
 import mongoose from 'mongoose';
 
-const dynamicTableFieldSchema = new mongoose.Schema({
-    fieldName: {
-        type: String,
-        required: true
-    },
-    fieldKey:{
-      type: String,
-      required: true,
-    },
-    dataType: {
-        type: String,
-        enum: ['string', 'number'],
-        default: null
-    },
-    depreciationType: {
-        type: String,
-        enum: ['SLM', 'WDV', 'Usage', null],
-        default: null
-    }
-});
-
-
 const masterTableSchema = new mongoose.Schema(
     {
         organizationId: {
@@ -52,12 +30,8 @@ const masterTableSchema = new mongoose.Schema(
             type: String,
             default: null
         },
-        fields: [dynamicTableFieldSchema],
+        fields: [],
         masterTableData: [],
-        sampleFile:{
-           type: String,
-           default: null,
-        },
         addedByUserId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'users',

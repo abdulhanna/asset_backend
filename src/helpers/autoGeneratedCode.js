@@ -41,6 +41,32 @@ autoCodeGeneration.getassetGrpCode = async(organizationName) => {
  }
 
 
+
+/////////// master table strucutures /////////////
+ autoCodeGeneration.getmtsCode = async(organizationName) => {
+  while (true) {
+    const code = Math.floor(Math.random() * 90000) + 10000;
+    if (!existingCodes.has(code)) {
+        existingCodes.add(code);
+        let codeId;
+        if(organizationName)
+        {
+             codeId = organizationName+'-'+'MTS'+code;
+        }
+        else
+        {
+             codeId = 'Default'+'-'+'MTS'+code;
+        }
+
+        return codeId;
+    }
+}
+
+
+ }
+
+
+ //////////// master Tables ///////////
  autoCodeGeneration.getmstCode = async(organizationName) => {
      while (true) {
          const code = Math.floor(Math.random() * 90000) + 10000;
