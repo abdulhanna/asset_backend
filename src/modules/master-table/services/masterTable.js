@@ -795,13 +795,18 @@ masterTableService.getSinlgleTable = async (mstId) => {
             };
         }
     });
+
+        //////////// generate sample file /////////////
+        const getSampleFile = await masterTableService.generateSampelefile(mstId);
+
      const formatData = {
         _id:getTableData._id,
         tableCodeId: getTableData.tableCodeId,
         tableName: getTableData.tableName,
         publishStatus: getTableData.publishStatus,
         masterTableHeader: formattedMasterTableHeader,
-        masterTableData:getTableData.masterTableData
+        masterTableData:getTableData.masterTableData,
+        sampleFile: getSampleFile.SampleFile
      }
      return formatData;
     }
@@ -831,13 +836,20 @@ masterTableService.getSinlgleTable = async (mstId) => {
             };
         }
     });
+
+
+
+        //////////// generate sample file /////////////
+        const getSampleFile = await masterTableService.generateStructureSampelefile(mstId);
+
         const formatData = {
             _id:getTableDataStructure._id,
             tableCodeId: getTableDataStructure.tableStructureCodeId,
             tableName: getTableDataStructure.tableName,
             publishStatus: '',
             masterTableHeader: formattedMasterTableHeader,
-            masterTableData:[]
+            masterTableData:[],
+            sampleFile: getSampleFile.SampleFile
          }
          return formatData;
 
