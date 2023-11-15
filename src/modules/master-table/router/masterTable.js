@@ -110,7 +110,7 @@ router.put("/uploadTableData",
             return res.status(400).json({ error: 'File size exceeds the 10MB limit.' });
         }
 
-        const result = await masterTableService.uploadMasterTableData(filePath, originalname, tableCodeId, ubdatedBy, publishStatus);
+        const result = await masterTableService.uploadDraftMasterTableData(filePath, originalname, tableCodeId, ubdatedBy, publishStatus);
         // Remove the uploaded file after processing
         fs.unlinkSync(filePath); // Synchronously delete the file
         if(result.statusCode)
@@ -172,12 +172,12 @@ router.get("/listAllTableStructures",
   )  
 
   //////////////// get single row data by row and table id
-  router.get("/table/:tableId/rowDetails/:rowId",
+  router.get("/table/:tableId/rowDetails/:codeno",
   isLoggedIn,
   httpHandler(async (req, res)=> {
     const tableId = req.params.tableId;
-    const rowId = req.params.rowId;
-    const rowData = await masterTableService.getSingleRow(tableId, rowId)
+    const codeno = req.params.codeno;
+    const rowData = await masterTableService.getSingleRow(tableId, codeno)
     res.send(rowData)
   })
   )
@@ -188,9 +188,9 @@ router.get("/listAllTableStructures",
   httpHandler(async (req, res)=> {
     const tableId = req.params.tableId;
     const organizationId = req.user.data.organizationId;
-    const ubdatedBy = req.user.data._id;
+    const addedBy = req.user.data._id;
 
-    const rowData = await masterTableService.modifyTableData(req.body, tableId, organizationId, ubdatedBy)
+    const rowData = await masterTableService.modifyTableData(req.body, tableId, organizationId, addedBy)
     res.send(rowData)
   })
   )

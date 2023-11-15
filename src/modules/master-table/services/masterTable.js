@@ -502,7 +502,6 @@ worksheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
 
         // Generate a new MongoDB ObjectId for each row
         const newRow = {
-            _id: new mongoose.Types.ObjectId(), // Assuming you're using Mongoose
             ...rowData
         };
 
@@ -557,8 +556,8 @@ worksheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
 
 
 
-// ////////// upload table data ////////////
-masterTableService.uploadMasterTableData = async (filePath, originalname, tableCodeId, ubdatedByUserId, publishStatus) => {
+// ////////// upload table data draft ////////////
+masterTableService.uploadDraftMasterTableData = async (filePath, originalname, tableCodeId, ubdatedByUserId, publishStatus) => {
 
     assertEvery(
         [tableCodeId, filePath],
@@ -608,9 +607,9 @@ worksheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
             
         });
 
-        // Generate a new MongoDB ObjectId for each row
+        // Pushing data of each row
         const newRow = {
-            _id: new mongoose.Types.ObjectId(), // Assuming you're using Mongoose
+            // _id: new mongoose.Types.ObjectId(), // Assuming you're using Mongoose
             ...rowData
         };
 
@@ -851,16 +850,16 @@ masterTableService.getSinlgleTable = async (mstId) => {
 
 
 ///////////// get single row data by row id ////////////////
-masterTableService.getSingleRow = async (tableId, rowId)=> {
+masterTableService.getSingleRow = async (tableId, codeno)=> {
    // Retrieve the existing document
    const existingDocument = await masterTableModel.findOne({_id : tableId, isDeleted: false});
    assert(existingDocument, createError(StatusCodes.BAD_REQUEST, `No Master Table is exist with id ${tableId}`))
     // Find the object within the masterTableData array using $elemMatch
     const objectData = existingDocument.masterTableData.find(
-        (data) => data._id.toString() === rowId
+        (data) => data.codeno.toString() === codeno
     );
 
-    assert(objectData, createError(StatusCodes.BAD_REQUEST, `No Row Data is exist with id ${rowId}`))
+    assert(objectData, createError(StatusCodes.BAD_REQUEST, `No Row Data is exist with Code No ${codeno} in Master Table with id ${tableId}`))
     return objectData;
 
 }
@@ -868,17 +867,10 @@ masterTableService.getSingleRow = async (tableId, rowId)=> {
 
 //   /////// modify obeject/row of  masterTableData array and create a new document ////////////////
 
-masterTableService.modifyTableData = async (updatedMasterTable, tableId, organizationId, ubdatedByUserId)=> {
+masterTableService.modifyTableData = async (updatedMasterTable, tableId, organizationId, addeddByUserId)=> {
         // Retrieve the existing document
-        const existingDocument = await masterTableModel.findById(tableId);
-        assert(existingDocument, createError(StatusCodes.CONFLICT, `Table not found with id ${tableId}`))
-
-        
-          // Check if 'masterTableData' is the same in existingDocument and updatedMasterTable
-    assert(
-        JSON.stringify(existingDocument.masterTableData) !== JSON.stringify(updatedMasterTable.masterTableData),
-        createError(StatusCodes.BAD_REQUEST, 'No changes made to masterTableData.')
-    );
+        const existingDocument = await masterTableStructureModel.findById(tableId);
+        assert(existingDocument, createError(StatusCodes.CONFLICT, `Table Structure not found with id ${tableId}`))
 
         // Make a deep copy of the existing document
         const copiedDocument = JSON.parse(JSON.stringify(existingDocument));
@@ -894,24 +886,25 @@ masterTableService.modifyTableData = async (updatedMasterTable, tableId, organiz
         const organizationName = await globalDetails.getOrganizationName(
             organizationId
         );
-   
-       
-        // add unique data and added by userId
-        copiedDocument._id = mongoose.Types.ObjectId();
-        copiedDocument.tableCodeId = await autoCodeGeneration.getmstCode(organizationName);
-        copiedDocument.masterTableData = updatedMasterTable.masterTableData;
-        copiedDocument.createdAt = Date.now();
-        copiedDocument.updatedByUserId = ubdatedByUserId;
-        copiedDocument.publishStatus = 'unpublished';
 
-        // Update the masterTable in the copied document
-        copiedDocument.masterTable = updatedMasterTable;
 
-        // Save the copied document as a new document
-        const newDocument = new masterTableModel(copiedDocument);
-        const savedDocument = await newDocument.save();
-        assert(savedDocument, createError(StatusCodes.REQUEST_TIMEOUT, "Request Timeout")); 
-        return savedDocument;
+                    // add unique data and added by userId
+            copiedDocument._id = mongoose.Types.ObjectId();
+            copiedDocument.organizationId = organizationId;
+            copiedDocument.codeGenerationType = 'auto';
+            copiedDocument.tableCodeId = await autoCodeGeneration.getmstCode(organizationName);
+            copiedDocument.masterTableData = updatedMasterTable.masterTableData;
+            copiedDocument.createdAt = Date.now();
+            copiedDocument.addedByUserId = addeddByUserId;
+            copiedDocument.ubdatedByUserId = null;
+            copiedDocument.publishStatus = updatedMasterTable.publishStatus;
+
+
+            // create a new  masterTable with Data in master table data
+            const newDocument = new masterTableModel(copiedDocument);
+            const savedDocument = await newDocument.save();
+            assert(savedDocument, createError(StatusCodes.REQUEST_TIMEOUT, "Error in uploading Data")); 
+            return savedDocument;
 }
 
 
