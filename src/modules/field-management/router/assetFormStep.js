@@ -19,9 +19,43 @@ router.post('/associateAssetFormStepWithGroups', isLoggedIn, async (req, res) =>
             }
         }
 
+        // Check for duplicate groupIds in the groups array
+        const uniqueGroupIds = new Set(groups.map(group => group.groupId));
+        if (uniqueGroupIds.size !== groups.length) {
+            return res.status(400).json({
+                success: false,
+                error: 'Duplicate groups are not allowed. Please ensure each group is included only once.'
+            });
+        }
+
+
+        for (const group of groups) {
+            const foundGroup = await assetFormStepService.checkGroupHasAssetFormStep(group.groupId);
+            console.log('foundGroup', foundGroup)
+
+            if (foundGroup) {
+                return res.status(400).json({
+                    success: false,
+                    error: `Group ${foundGroup.groupName} is already associated with another step`
+                });
+            }
+        }
+
         await assetFormStepService.associateAssetFormStepWithGroups(stepNo, stepName, groups);
 
         return res.json({message: 'AssetFormStep associated with groups successfully'});
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({error: error.message});
+    }
+});
+
+
+router.get('/groups', isLoggedIn, async (req, res) => {
+    try {
+        const groups = await assetFormStepService.getListOfGroups();
+
+        return res.json(groups);
     } catch (error) {
         return res.status(500).json({error: error.message});
     }
@@ -54,12 +88,12 @@ router.get('/listAllSteps', isLoggedIn, async (req, res) => {
 router.get('/stepDetails/:id', isLoggedIn, async (req, res) => {
     try {
         const {id} = req.params;
-    const formStepDataById = await assetFormStepService.getFormStepById(id);
+        const formStepDataById = await assetFormStepService.getFormStepById(id);
 
-    return res.status(200).json({
-        success: true,
-        formStepDataById
-    });
+        return res.status(200).json({
+            success: true,
+            formStepDataById
+        });
     } catch (error) {
         return res.status(500).json({error: error.message});
     }
@@ -70,6 +104,15 @@ router.put('/update-form/:id', isLoggedIn, async (req, res) => {
         const {stepNo, stepName, groups} = req.body;
         const formId = req.params.id;
 
+        // Check for duplicate groupIds in the groups array
+        const uniqueGroupIds = new Set(groups.map(group => group.groupId));
+        
+        if (uniqueGroupIds.size !== groups.length) {
+            return res.status(400).json({
+                success: false,
+                error: 'Duplicate groups are not allowed. Please ensure each group is included only once.',
+            });
+        }
         await assetFormStepService.updateForm(formId, stepNo, stepName, groups);
 
         return res.json({message: 'Form updated successfully'});

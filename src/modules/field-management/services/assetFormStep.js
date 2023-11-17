@@ -10,6 +10,37 @@ const checkStepNoExists = async (stepNo) => {
         throw error;
     }
 };
+const checkGroupHasAssetFormStep = async (groupId) => {
+    try {
+        const foundGroup = await fieldManagementModel.findOne({_id: groupId, assetFormStepId: {$ne: null}});
+        return foundGroup;
+    } catch (error) {
+        throw new Error(`Error finding group with ID ${groupId}: ${error.message}`);
+    }
+};
+
+const getListOfGroups = async () => {
+    try {
+        const groups = await fieldManagementModel.find().populate('assetFormStepId');
+
+        const filteredGroups = groups.map(group => {
+            return {
+                _id: group._id,
+                groupName: group.groupName,
+                assetFormStep: group.assetFormStepId ? {
+                    _id: group.assetFormStepId._id,
+                    stepNo: group.assetFormStepId.stepNo,
+                    stepName: group.assetFormStepId.stepName
+                } : null
+            };
+        });
+
+        return {filteredGroups,};
+    } catch (error) {
+        return {groups: null, error: error.message}; // Return error if an exception occurs
+    }
+};
+
 
 const associateAssetFormStepWithGroups = async (stepNo, stepName, groups) => {
     try {
@@ -82,7 +113,7 @@ const listForms = async (page, limit, sortBy) => {
 const getFormStepById = async (id) => {
     try {
         // Find the asset form step by its Id
-        const step = await assetFormStepModel.findOne({ _id: id });
+        const step = await assetFormStepModel.findOne({_id: id});
 
         if (!step) {
             throw new Error(`Step with ID ${id} not found`);
@@ -107,6 +138,28 @@ const getFormStepById = async (id) => {
         throw error;
     }
 };
+
+const checkDuplicateGroup = async (formId, groups) => {
+    try {
+        const promises = groups.map(async (group) => {
+            const {groupId} = group;
+
+            // Check if the group is already associated with another step
+            const existingGroup = await fieldManagementModel.findOne({
+                _id: groupId,
+                assetFormStepId: {$ne: formId},
+            });
+
+            return !!existingGroup; // Returns true if the group is already associated with another step, false otherwise
+        });
+
+        const results = await Promise.all(promises);
+        return results.includes(true);
+    } catch (error) {
+        throw error;
+    }
+};
+
 
 const updateForm = async (formId, stepNo, stepName, groups) => {
     try {
@@ -164,5 +217,9 @@ export const assetFormStepService = {
     updateForm,
     deleteForm,
     getFormStepById,
-    checkStepNoExists
+    checkStepNoExists,
+    getListOfGroups,
+    checkGroupHasAssetFormStep,
+    checkDuplicateGroup
+
 };

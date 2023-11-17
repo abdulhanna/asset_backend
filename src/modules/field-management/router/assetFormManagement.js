@@ -1,7 +1,7 @@
 import express from 'express';
 import {assetFormManagementService} from '../services/assetFormManagement.js';
 import {isLoggedIn} from '../../auth/router/passport.js';
-import {assetFormManagementModel} from '../models';
+import {assetFormManagementModel, assetFormStepModel} from '../models';
 import path from 'path';
 import fs from 'fs';
 import Excel from 'exceljs';
@@ -111,7 +111,6 @@ const getDate = () => {
     const day = date.getDate();
     return [year, month, day];
 };
-
 const applyFieldValidation = (worksheet, field, startRow, endRow, headers) => {
     if (field.dataType === 'list') {
         const joinedDropdownList = field.listOptions.join(',');
@@ -178,6 +177,76 @@ const applyFieldValidation = (worksheet, field, startRow, endRow, headers) => {
     }
 };
 
+const applyFieldValidationTest = (worksheet, field, startRow, endRow, headers) => {
+    console.log('headers', headers);
+    if (field.dataType === 'list') {
+        const joinedDropdownList = field.listOptions.join(',');
+
+        const columnIndex = headers.indexOf(field.header);
+
+        for (let i = startRow; i <= endRow; i++) {
+            const cellAddress = String.fromCharCode(65 + columnIndex) + i; // Updated cell address calculation
+            worksheet.getCell(cellAddress).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: [`"${joinedDropdownList}"`],
+                showErrorMessage: true,
+                error: field.errorMessage
+            };
+        }
+    } else if (field.dataType === 'date') {
+        const currDate = getDate();
+        const columnIndex = headers.indexOf(field.header);
+        const formulae = [`${currDate[0]}/${currDate[1]}/${currDate[2] + 1}`];
+
+        for (let i = startRow; i <= endRow; i++) {
+            const cellAddress = String.fromCharCode(65 + columnIndex) + i; // Updated cell address calculation
+            worksheet.getCell(cellAddress).dataValidation = {
+                type: 'date',
+                allowBlank: true,
+                operator: 'lessThanOrEqual',
+                formulae,
+                showErrorMessage: true,
+                errorStyle: 'error',
+                errorTitle: 'Invalid Date',
+                error: `Please enter a date less than or equal to ${currDate[0]}/${currDate[1]}/${currDate[2] + 1}`,
+            };
+        }
+    } else if (field.dataType === 'string') {
+        const columnIndex = headers.indexOf(field.header);
+        for (let i = startRow; i <= endRow; i++) {
+            const cellAddress = String.fromCharCode(65 + columnIndex) + i; // Updated cell address calculation
+            if (field.fieldLength) {
+                worksheet.getCell(cellAddress).dataValidation = {
+                    type: 'textLength',
+                    allowBlank: true,
+                    operator: 'lessThanOrEqual',
+                    showInputMessage: true,
+                    showErrorMessage: true,
+                    formulae: [field.fieldLength],
+                    errorStyle: 'error',
+                    errorTitle: 'Invalid Length',
+                    error: `The length of this field should be less than or equal to ${field.fieldLength} characters.`
+                };
+            }
+        }
+    } else if (field.dataType === 'number') {
+        const columnIndex = headers.indexOf(field.header);
+        for (let i = startRow; i <= endRow; i++) {
+            const cellAddress = String.fromCharCode(65 + columnIndex) + i; // Updated cell address calculation
+
+            // Allow only decimal or whole numbers
+            worksheet.getCell(cellAddress).dataValidation = {
+                type: 'decimal',
+                allowBlank: true,
+                showErrorMessage: true,
+                errorStyle: 'error',
+                errorTitle: 'Invalid Number',
+                error: 'Please enter a valid number (whole or decimal).'
+            };
+        }
+    }
+};
 router.get('/export-excel', isLoggedIn, async (req, res) => {
     try {
         const organizationId = req.user.data.organizationId;
@@ -276,6 +345,142 @@ router.get('/export-excel', isLoggedIn, async (req, res) => {
         //         fs.unlinkSync(filePath); // Remove the file after download
         //     }
         // });
+    } catch (error) {
+        console.error('Error exporting Excel:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+
+router.get('/export-excel-test', isLoggedIn, async (req, res) => {
+    try {
+        const organizationId = req.user.data.organizationId;
+        const assetFormManagement = await assetFormManagementModel.findOne({organizationId});
+
+        if (!assetFormManagement) {
+            return res.status(404).send('No assetFormManagement found for the provided organizationId.');
+        }
+
+        const workbook = new Excel.Workbook();
+        const exportsDir = path.join(__dirname, '../../../../public/exports/assetFormFields');
+
+        if (!fs.existsSync(exportsDir)) {
+            fs.mkdirSync(exportsDir, {recursive: true});
+        }
+
+        const startRow = 1;
+        const endRow = 1000;
+
+        const assetFormStepIds = assetFormManagement.assetFormManagements.map(group => group.assetFormStepId).filter(id => id);
+
+        const stepInfoMap = new Map(); // Create a map to store step info
+
+        for (const group of assetFormManagement.assetFormManagements) {
+            const assetFormStepId = group.assetFormStepId;
+
+            if (assetFormStepId) {
+                const stepInfo = await assetFormStepModel.findOne({_id: assetFormStepId});
+                console.log('stepInfo', stepInfo)
+
+                if (stepInfo) {
+                    const stepName = stepInfo.stepName;
+                    const stepNo = stepInfo.stepNo
+
+                    if (!stepInfoMap.has(stepName)) {
+                        stepInfoMap.set(stepName, {stepFields: [], stepGroups: new Set(), stepNo: stepNo});
+                    }
+
+                    const stepInfoData = stepInfoMap.get(stepName);
+
+                    stepInfoData.stepGroups.add(group._id.toString()); // Add group ID to set
+
+                    if (group.subgroups && group.subgroups.length > 0) {
+                        group.subgroups.forEach((subgroup) => {
+                            if (subgroup.fields && subgroup.fields.length > 0) {
+                                subgroup.fields.forEach((field) => {
+                                    if (field.name && !stepInfoData.stepFields.some(existingField => existingField.header === field.name)) {
+                                        const headerInfo = {
+                                            header: field.name,
+                                            key: field.name,
+                                            width: 30,
+                                            ...field
+                                        };
+
+                                        stepInfoData.stepFields.push(headerInfo);
+                                    }
+                                });
+                            }
+                        });
+                    }
+
+                    stepInfoMap.set(stepName, stepInfoData);
+                }
+            }
+        }
+
+        // Now, create worksheets for each step
+        for (const [stepName, stepInfoData] of stepInfoMap) {
+
+            const sheetName = `${stepName} - ${stepInfoData.stepNo}`;
+            const worksheet = workbook.addWorksheet(sheetName);
+            // Disable changing the sheet name
+            worksheet.protect('', {
+                sheet: true
+            });
+
+
+            const headers = stepInfoData.stepFields.map(field => field.header); // Extracting headers
+            worksheet.columns = stepInfoData.stepFields;
+
+            stepInfoData.stepFields.forEach((field) => {
+                applyFieldValidationTest(worksheet, field, startRow, endRow, headers); // Passing headers
+            });
+
+
+            const headersRow = worksheet.getRow(1);
+
+            for (let rowNumber = 2; rowNumber <= 1000; rowNumber++) {
+                const row = worksheet.getRow(rowNumber);
+
+                headersRow.eachCell((headerCell, colNumber) => {
+                    const cell = row.getCell(colNumber);
+                    cell.protection = {
+                        locked: false
+                    };
+                });
+            }
+
+            worksheet.protect('123');
+            worksheet.sheetProtection.sheet = true;
+            worksheet.sheetProtection.insertRows = false;
+            worksheet.sheetProtection.formatCells = false;
+
+            headersRow.eachCell((cell) => {
+                cell.font = {
+                    color: {argb: 'FF000000'},
+                    bold: true,
+                };
+            });
+
+            // Additional logic based on stepInfoData.stepGroups set
+            // You can use stepInfoData.stepGroups.size to get the number of groups for this step
+        }
+
+        const filePath = path.join(exportsDir, `export_${organizationId}.xlsx`);
+        await workbook.xlsx.writeFile(filePath);
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename=export_${organizationId}.xlsx`);
+
+        const fileStream = fs.createReadStream(filePath);
+
+        fileStream.pipe(res);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Excel file generated successfully'
+        });
+
     } catch (error) {
         console.error('Error exporting Excel:', error);
         res.status(500).send('Internal Server Error');

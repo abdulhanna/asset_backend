@@ -1,27 +1,5 @@
 import mongoose from 'mongoose';
 
-const dynamicTableFieldSchema = new mongoose.Schema({
-    fieldName: {
-        type: String,
-        required: true
-    },
-    fieldKey:{
-      type: String,
-      required: true,
-    },
-    dataType: {
-        type: String,
-        enum: ['alphanumeric', 'number'],
-        default: null
-    },
-    depreciationType: {
-        type: String,
-        enum: ['SLM', 'WDV', 'Usage', null],
-        default: null
-    }
-});
-
-
 const masterTableSchema = new mongoose.Schema(
     {
         organizationId: {
@@ -52,17 +30,22 @@ const masterTableSchema = new mongoose.Schema(
             type: String,
             default: null
         },
-        fields: [dynamicTableFieldSchema],
+        fields: [],
         masterTableData: [],
         addedByUserId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'users',
-            required: true
+            default: null
+        },
+        updatedByUserId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'users',
+            default: null
         },
         publishStatus:{
             type: String,
             enum: ['published', 'unpublished'],
-            default: 'published'
+            default: 'unpublished'
         },
         isDeleted: {
             type: Boolean,

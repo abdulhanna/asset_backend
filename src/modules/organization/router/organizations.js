@@ -47,10 +47,10 @@ router.post('/add', isLoggedIn, async (req, res) => {
           const id = req.user.data._id;
 
           // Check if any of the required fields are missing
-          if (!req.body.email || !req.body.organizationName || !req.body.password || !req.body.confirmPassword || !req.body.mainAddress.country || !req.body.organizationRegistrationNumber || !req.body.pan || !req.body.gstin) {
+          if (!req.body.email || !req.body.organizationName || !req.body.mainAddress.country || !req.body.pan || !req.body.gstin) {
                return res.status(400).json({
                     success: false,
-                    error: 'Required fields are missing!!! Email, Password, Organization name, Country, Registration No., PAN No.,GSTIN are mandatory fields',
+                    error: 'Required fields are missing!!! Email, Organization name, Country, PAN No., GSTIN are mandatory fields',
                });
           }
                const existingUser = await userModel.findOne(
@@ -80,13 +80,6 @@ router.post('/add', isLoggedIn, async (req, res) => {
                });
           }
 
-
-          if (req.body.password !== req.body.confirmPassword) {
-               return res.status(409).json({
-                    success: false,
-                    error: `Password and confirm Password don\'t match`,
-               });
-          }
 
 
 
@@ -152,7 +145,7 @@ router.put('/edit/:id', isLoggedIn, async (req, res) => {
           const getUserId = await organizationModel.findById(id)
 
           // Check if any of the required fields are missing
-          if (!req.body.email || !req.body.organizationName || !req.body.mainAddress.country || !req.body.organizationRegistrationNumber || !req.body.pan || !req.body.gstin) {
+          if (!req.body.email || !req.body.organizationName || !req.body.mainAddress.country || !req.body.pan || !req.body.gstin) {
                return res.status(400).json({
                     success: false,
                     error: 'Required fields are missing!!! Email, Organization name, Country, Registration No., PAN No.,GSTIN are mandatory fields',
@@ -185,16 +178,6 @@ router.put('/edit/:id', isLoggedIn, async (req, res) => {
                          error: 'Company Name already exists',
                     });
                }
-
-
-          /// matching password and confirm password
-               // if(req.body.password !== req.body.confirmPassword)
-               // {
-               //      return res.status(409).json({
-               //           success: false,
-               //           error: `Password and confirm Password don\'t match`,
-               //      });
-               // }
 
 
                const existingRegNumber = await organizationModel.findOne({
